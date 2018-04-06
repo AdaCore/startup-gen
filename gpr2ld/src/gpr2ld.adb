@@ -5,7 +5,7 @@ with GNAT.Strings;
 
 with Ada.Text_IO; use Ada.Text_IO;
 
-procedure Main is
+procedure GPR2LD is
    use GNAT.Command_Line;
    use GNAT.Strings;
 
@@ -48,4 +48,4 @@ begin
   -- exception
   --    when others =>
   --          New_Line;
-end Main;
+end GPR2LD;
