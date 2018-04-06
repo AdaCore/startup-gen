@@ -1,0 +1,19 @@
+project Memory is
+
+   package Memory is
+
+      for Memory_List use ("ROM1", "RAM1");
+
+      --  ROM1
+      for Size("ROM1") use "0x1000";
+      for Start("ROM1") use "0x1000";
+
+      -- RAM1
+      for Size("RAM1") use "0x1000";
+      for Start("RAM1") use "0x1000";
+
+   end Memory;
+
+   for Target use "truc";
+
+end Memory;
