@@ -4,16 +4,20 @@ project Memory is
 
       for Types use ("ROM1", "RAM1");
 
+      --  TODO: the user does not handle the naming of the memory
+--      for Mem_Type("ROM1") use ("ROM");
+--      for Mem_Type("RAM1") use ("RAM");
+
       --  ROM1
-      for Size("ROM1") use "0x1000";
       for Start("ROM1") use "0x1000";
+      for Size("ROM1") use "0x1000";
 
       -- RAM1
-      for Size("RAM1") use "0xDEADBEEF";
       for Start("RAM1") use "0xDEAD";
+      for Size("RAM1") use "0xDEADBEEF";
 
    end Memory;
 
-   for Target use "truc";
+   for Target use "arm-eabi";
 
 end Memory;

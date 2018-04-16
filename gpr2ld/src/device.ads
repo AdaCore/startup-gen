@@ -8,18 +8,10 @@ with GNATCOLL.Projects; use GNATCOLL.Projects;
 package Device is
 
    type Spec is tagged private;
-   --  TODO In post-condition we check that the memory is well formed.
-   procedure Set_Memory_List (Self : in out Spec; Path : String) with
-      Post => (True);
 
-   --  TODO: move in a different package, it does not belong here
-   --  Calls Register_New_Attribute with the correct attributes to setup the
-   --  syntax for a GPR file containing a memory map.
-   procedure Register_Memory_Map_Attributes with
-      Post => (Attribute_Registered ("Types", "Memory")
-           and Attribute_Registered ("Size", "Memory")
-           and Attribute_Registered ("Start", "Memory")
-         );
+   procedure Set_Memory_List (Self : in out Spec; Path : String);
+
+   procedure Dump (Self : Spec);
 
 private
    type Interrupt_Type is
@@ -37,11 +29,12 @@ private
 
    type Memory_Kind is (RAM, ROM, TCM, CCM);
 
+   --  TODO: replace by Natural and Positive typesj
    type Memory_Type is
       record
          Name : Unbounded_String;
-         Start : Natural; --  We can start the ROM at zero.
-         Size : Positive;
+         Start : Unbounded_String;
+         Size : Unbounded_String;
          Kind : Memory_Kind;
       end record;
 

@@ -5,6 +5,7 @@ with GNAT.Strings;
 with Ada.Text_IO; use Ada.Text_IO;
 
 with Setup;
+with Utils;
 
 --  with Ada.Text_IO; use Ada.Text_IO;
 
@@ -29,13 +30,11 @@ begin
    --  Is not the same as Get_arguments provided by GNAT.Command_Line.
    Setup.Get_Arguments (Config, Config_File, Output_Dir);
 
-   if Config_File = null or Output_Dir = null then
-      return;
-   end if;
-
-   Register_Memory_Map_Attributes;
+   Utils.Register_Memory_Map_Attributes;
 
    Spec.Set_Memory_List (Config_File.all);
+
+   Spec.Dump;
 
    exception
       --  We catch the exception from the command line the user called the
