@@ -16,10 +16,10 @@ package Device is
    --  Calls Register_New_Attribute with the correct attributes to setup the
    --  syntax for a GPR file containing a memory map.
    procedure Register_Memory_Map_Attributes with
-      Post => (Attribute_Registered ("Memory_List", "Memory")
-                     and Attribute_Registered ("Size", "Memory")
-                     and Attribute_Registered ("Start", "Memory")
-                  );
+      Post => (Attribute_Registered ("Types", "Memory")
+           and Attribute_Registered ("Size", "Memory")
+           and Attribute_Registered ("Start", "Memory")
+         );
 
 private
    type Interrupt_Type is

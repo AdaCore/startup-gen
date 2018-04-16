@@ -4,21 +4,16 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 package body Device is
 
-   procedure Set_Memory_List (Self : in out Spec; Path : String)
-   is
+   procedure Set_Memory_List (Self : in out Spec; Path : String) is
+      use Device.Mem_Vect;
+
       Tree : Project_Tree;
       Root : Project_Type;
       VFS : constant Virtual_File := Create_From_Base
                                        (Filesystem_String (Path));
-      Memory_List : constant Attribute_Pkg_List := Build
-                                       ("memory",
-                                        "memory_list");
-      Size_Table : constant Attribute_Pkg_String := Build
-                                       ("memory",
-                                        "size");
-      Start_Table : constant Attribute_Pkg_String := Build
-                                       ("memory",
-                                        "start");
+      Memory_List : constant Attribute_Pkg_List := Build ("memory", "types");
+      Size_Table : constant Attribute_Pkg_String := Build ("memory", "size");
+      Start_Table : constant Attribute_Pkg_String := Build ("memory", "start");
 
    begin
       GNATCOLL.Projects.Load (Tree,
@@ -34,13 +29,14 @@ package body Device is
 
             Start : constant String := Root.Attribute_Value (Start_Table,
                                                    Index => Memory.all);
-           --   Memory_Unit : Memory_Type :=
-           --                         (Name => To_Unbounded_String ("TestRAM"),
-           --                          Start => 16#0#,
-           --                          Size => 16#100#,
-           --                          Kind => RAM);
-
+            Memory_Unit : constant Memory_Type :=
+                                  (Name => To_Unbounded_String ("TestRAM"),
+                                   Start => 16#0#,
+                                   Size => 16#100#,
+                                   Kind => RAM);
          begin
+            Self.Memory := Self.Memory & Memory_Unit;
+
             Put_Line ("Mem  : " & Memory.all);
             Put_Line ("Size : " & Size);
             Put_Line ("Start: " & Start);
@@ -54,7 +50,7 @@ package body Device is
    procedure Register_Memory_Map_Attributes
    is
       Error1 : constant String := Register_New_Attribute
-                              ("Memory_List",
+                              ("Types",
                               "Memory",
                               Is_List => True);
 
