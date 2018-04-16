@@ -7,7 +7,7 @@ package body Setup is
    begin
 
       Define_Switch (Config, Output_Dir'Access, "-o:",
-         Help => "<dir> Directory in which generated files will be put.");
+         Help => "Directory in which generated files will be put.");
 
       Getopt (Config);
 
