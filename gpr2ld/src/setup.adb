@@ -15,8 +15,6 @@ package body Setup is
 
       Define_Switch (Config, Output_Dir'Access, "-o:",
          Help => "<dir> Directory in which generated files will be put.");
-      Define_Argument (Config, Config_File'Access,
-         Help => "Configuration file for the tool.");
 
       Getopt (Config, Callback'Access);
 
