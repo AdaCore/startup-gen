@@ -8,10 +8,9 @@ package Utils is
    package UString_Vect is new
            Ada.Containers.Vectors (Positive, Unbounded_String);
 
-   procedure Register_Memory_Map_Attributes with
-      Post => (Attribute_Registered ("Mem_Kind", "Memory")
-               and Attribute_Registered ("Size", "Memory")
-               and Attribute_Registered ("Start", "Memory")
-               and Attribute_Registered ("Memories", "Memory")
-               );
+   procedure Register_Memory_Map_Attributes;
+
+   --  procedure Register_Attributes (Package : in String;
+   --                                Attributes : in UString_Vect);
+
 end Utils;

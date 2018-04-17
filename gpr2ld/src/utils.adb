@@ -22,13 +22,22 @@ package body Utils is
                            "Memory",
                            Is_List => True);
 
+      Error5 : aliased constant String := Register_New_Attribute
+                           ("Name", "CPU");
+
+      Error6 : aliased constant String := Register_New_Attribute
+                           ("Float_Handling", "CPU");
+
       type Err_Str_Access is access constant String;
       type Strings is array (Integer range <>) of Err_Str_Access;
       Errors : constant Strings :=
          (1 => Error1'Access,
           2 => Error2'Access,
           3 => Error3'Access,
-          4 => Error4'Access);
+          4 => Error4'Access,
+          5 => Error5'Access,
+          6 => Error6'Access
+         );
    begin
       for Str of Errors loop
          if Str.all /= "" then

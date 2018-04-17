@@ -4,8 +4,9 @@ package body Device is
 
    procedure Display (Self : Spec) is
    begin
---   Put_Line ("CPU: " & To_String (Self.CPU.Name));
---   Put_Line ("Float_Handling: " & Float_Type'Image(Self.CPU.Float_Handling));
+      Put_Line ("CPU: " & To_String (Self.CPU.Name));
+      Put_Line ("Float_Handling: " &
+                 Float_Type'Image (Self.CPU.Float_Handling));
       for Memory of Self.Memory loop
          Put_Line ("Name : " & To_String (Memory.Name));
          Put_Line ("Start : " & To_String (Memory.Start));
@@ -52,8 +53,16 @@ package body Device is
 
    procedure Get_CPU_From_File (Self : in out Spec;
                                 Spec_Project : Project_Type) is
+
+      Name : constant String :=  Spec_Project.
+                           Attribute_Value (Build ("cpu", "name"));
+
+      Float_Handling : constant String :=  Spec_Project.
+                           Attribute_Value (Build ("cpu", "float_handling"));
    begin
-      null;
+      Self.CPU := (To_Unbounded_String (Name),
+                   Float_Type'Value (Float_Handling));
+
    end Get_CPU_From_File;
 
 end Device;
