@@ -13,8 +13,8 @@ package body Setup is
 
       Config_File := new String'(Get_Argument);
 
-      Put_Line ("Config" & Config_File.all);
-      Put_Line ("Out Dir" & Output_Dir.all);
+      Put_Line ("Config " & Config_File.all);
+      Put_Line ("Out Dir " & Output_Dir.all);
 
    end Get_Arguments;
 

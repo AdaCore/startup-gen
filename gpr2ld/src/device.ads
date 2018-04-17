@@ -2,16 +2,19 @@ pragma Ada_12;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Containers.Vectors;
-
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 
 package Device is
 
    type Spec is tagged private;
 
-   procedure Set_Memory_List (Self : in out Spec; Path : String);
+   procedure Get_Memory_List_From_File (Self : in out Spec;
+                                        Spec_Project : Project_Type);
 
-   procedure Dump (Self : Spec);
+   procedure Get_CPU_From_File (Self : in out Spec;
+                                Spec_Project : Project_Type);
+
+   procedure Display (Self : Spec);
 
 private
    type Interrupt_Type is

@@ -1,59 +1,59 @@
-with GNATCOLL.VFS; use GNATCOLL.VFS;
-with GNAT.Strings; use GNAT.Strings;
 with Ada.Text_IO; use Ada.Text_IO;
 
 package body Device is
 
-   procedure Dump (Self : Spec) is
+   procedure Display (Self : Spec) is
    begin
+--   Put_Line ("CPU: " & To_String (Self.CPU.Name));
+--   Put_Line ("Float_Handling: " & Float_Type'Image(Self.CPU.Float_Handling));
       for Memory of Self.Memory loop
          Put_Line ("Name : " & To_String (Memory.Name));
          Put_Line ("Start : " & To_String (Memory.Start));
          Put_Line ("Size : " & To_String (Memory.Size));
          Put_Line ("Kind : " & Memory_Kind'Image (Memory.Kind));
       end loop;
-   end Dump;
+   end Display;
 
-   procedure Set_Memory_List (Self : in out Spec; Path : String) is
-      use Device.Mem_Vect;
-
-      Tree : Project_Tree;
-      Root : Project_Type;
-      VFS : constant Virtual_File := Create_From_Base
-                                       (Filesystem_String (Path));
-
-      --  TODO: Can we group some of those
-      Memory_List : constant Attribute_Pkg_List := Build ("memory", "types");
+   procedure Get_Memory_List_From_File (Self : in out Spec;
+                                        Spec_Project : Project_Type) is
+      use Mem_Vect;
+      --  Can we group some of those. No we cant, probably.
+      Memory_List : constant Attribute_Pkg_List :=
+                     Build ("memory", "memories");
       Size_Table : constant Attribute_Pkg_String := Build ("memory", "size");
       Start_Table : constant Attribute_Pkg_String := Build ("memory", "start");
 
+      Kind_Table : constant Attribute_Pkg_String :=
+                     Build ("memory", "mem_kind");
+
    begin
-      GNATCOLL.Projects.Load (Tree,
-         Root_Project_Path => VFS,
-         Packages_To_Check => All_Packs);
-
-      Root := Tree.Root_Project;
-
-      --  TODO dont hardcode the memory type.
-      for Memory of Root.Attribute_Value (Memory_List).all loop
+      for Memory of Spec_Project.Attribute_Value (Memory_List).all loop
          declare
-            Size : constant String := Root.Attribute_Value (Size_Table,
-                                                   Index => Memory.all);
+            Size : constant String := Spec_Project.
+                     Attribute_Value (Size_Table, Index => Memory.all);
 
-            Start : constant String := Root.Attribute_Value (Start_Table,
-                                                   Index => Memory.all);
+            Start : constant String := Spec_Project.
+                     Attribute_Value (Start_Table, Index => Memory.all);
+
+            Kind : constant String := Spec_Project.
+                     Attribute_Value (Kind_Table, Index => Memory.all);
+
             Memory_Unit : constant Memory_Type :=
-                                  (Name => To_Unbounded_String ("TestRAM"),
+                                  (Name => To_Unbounded_String (Memory.all),
                                    Start => To_Unbounded_String (Start),
                                    Size => To_Unbounded_String (Size),
-                                   Kind => RAM);
+                                   Kind => Memory_Kind'Value (Kind));
          begin
             Self.Memory := Self.Memory & Memory_Unit;
          end;
       end loop;
 
-      Self.CPU := (Name => To_Unbounded_String (""),
-                            Float_Handling => Soft);
-   end Set_Memory_List;
+   end Get_Memory_List_From_File;
+
+   procedure Get_CPU_From_File (Self : in out Spec;
+                                Spec_Project : Project_Type) is
+   begin
+      null;
+   end Get_CPU_From_File;
 
 end Device;
