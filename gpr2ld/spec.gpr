@@ -3,11 +3,13 @@
 
 project Spec is
 
---   package CPU is
---      --  This name will be passed to '-mcpu' option of GCC.
---      for Name use "cortex-a53";
---      for Float_Handling use "hard";
---   end CPU;
+   package CPU is
+      --  This name will be passed to the '-mcpu' switch of GCC.
+      for Name use "cortex-a53";
+      --  This attribute will be passed to the '-mfloat-abi' switch of GCC.
+      for Float_Handling use "hard";
+
+   end CPU;
 
    package Memory is
 
