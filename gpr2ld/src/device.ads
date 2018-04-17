@@ -32,7 +32,7 @@ private
 
    type Memory_Kind is (RAM, ROM, TCM, CCM);
 
-   --  TODO: replace by Natural and Positive typesj
+   --  TODO: replace by Natural and Positive types.
    type Memory_Type is
       record
          Name : Unbounded_String;
