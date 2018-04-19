@@ -10,7 +10,4 @@ package Utils is
 
    procedure Register_Memory_Map_Attributes;
 
-   --  procedure Register_Attributes (Package : in String;
-   --                                Attributes : in UString_Vect);
-
 end Utils;
