@@ -2,7 +2,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 package body Device is
 
-   procedure Display (Self : Spec) is
+   procedure Display (Self : in out Spec) is
    begin
       Put_Line ("CPU: " & To_String (Self.CPU.Name));
       Put_Line ("Float_Handling: " &
@@ -15,6 +15,12 @@ package body Device is
       end loop;
    end Display;
 
+   procedure Dump_Linker_Script (Self : in out Spec; VLD : Virtual_File) is
+      Handle : Writable_File := Write_File (VLD);
+   begin
+      Write (Handle, "Got " & To_String (Self.Memory (1).Name));
+      Close (Handle);
+   end Dump_Linker_Script;
    procedure Get_Memory_List_From_Project (Self : in out Spec;
                                         Spec_Project : Project_Type) is
       use Mem_Vect;

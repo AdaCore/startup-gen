@@ -3,6 +3,7 @@ pragma Ada_12;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Containers.Vectors;
 
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 
 package Device is
@@ -15,7 +16,9 @@ package Device is
    procedure Get_CPU_From_Project (Self : in out Spec;
                                 Spec_Project : Project_Type);
 
-   procedure Display (Self : Spec);
+   procedure Display (Self : in out Spec);
+
+   procedure Dump_Linker_Script (Self : in out Spec; VLD : Virtual_File);
 
 private
    type Interrupt_Type is

@@ -36,6 +36,10 @@ begin
                         (Filesystem_String (Config_File.all));
       Tree : Project_Tree;
 
+      --  TODO: read linker script name from cmdline
+      Linker_Script : constant Virtual_File := Create_From_Base
+                        (Filesystem_String (String'("linker.ld")));
+
    begin
       Tree.Load (Root_Project_Path => VFS,
                  Packages_To_Check => All_Packs);
@@ -43,6 +47,8 @@ begin
       Spec.Get_Memory_List_From_Project (Tree.Root_Project);
 
       Spec.Get_CPU_From_Project (Tree.Root_Project);
+
+      Spec.Dump_Linker_Script (Linker_Script);
 
       Spec.Display;
    end;
