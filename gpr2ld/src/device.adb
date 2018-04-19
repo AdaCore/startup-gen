@@ -15,7 +15,7 @@ package body Device is
       end loop;
    end Display;
 
-   procedure Get_Memory_List_From_File (Self : in out Spec;
+   procedure Get_Memory_List_From_Project (Self : in out Spec;
                                         Spec_Project : Project_Type) is
       use Mem_Vect;
       --  Can we group some of those. No we cant, probably.
@@ -49,9 +49,9 @@ package body Device is
          end;
       end loop;
 
-   end Get_Memory_List_From_File;
+   end Get_Memory_List_From_Project;
 
-   procedure Get_CPU_From_File (Self : in out Spec;
+   procedure Get_CPU_From_Project (Self : in out Spec;
                                 Spec_Project : Project_Type) is
 
       Name : constant String :=  Spec_Project.
@@ -63,6 +63,6 @@ package body Device is
       Self.CPU := (To_Unbounded_String (Name),
                    Float_Type'Value (Float_Handling));
 
-   end Get_CPU_From_File;
+   end Get_CPU_From_Project;
 
 end Device;

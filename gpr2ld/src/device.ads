@@ -2,16 +2,17 @@ pragma Ada_12;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Containers.Vectors;
+
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 
 package Device is
 
    type Spec is tagged private;
 
-   procedure Get_Memory_List_From_File (Self : in out Spec;
+   procedure Get_Memory_List_From_Project (Self : in out Spec;
                                         Spec_Project : Project_Type);
 
-   procedure Get_CPU_From_File (Self : in out Spec;
+   procedure Get_CPU_From_Project (Self : in out Spec;
                                 Spec_Project : Project_Type);
 
    procedure Display (Self : Spec);
@@ -32,7 +33,6 @@ private
 
    type Memory_Kind is (RAM, ROM, TCM, CCM);
 
-   --  TODO: replace by Natural and Positive types.
    type Memory_Type is
       record
          Name : Unbounded_String;
