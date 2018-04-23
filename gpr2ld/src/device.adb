@@ -47,13 +47,13 @@ package body Device is
       use Mem_Vect;
 
       Memory_List : constant Attribute_Pkg_List :=
-                     Build ("Memory", "memories");
+                     Build ("Memory_map", "memories");
       Size_Table : constant Attribute_Pkg_String :=
-                     Build ("Memory", "Size");
+                     Build ("Memory_map", "Size");
       Address_Table : constant Attribute_Pkg_String :=
-                     Build ("Memory", "Start");
+                     Build ("Memory_map", "Start");
       Kind_Table : constant Attribute_Pkg_String :=
-                     Build ("Memory", "mem_kind");
+                     Build ("Memory_map", "mem_kind");
 
    begin
       for Memory of Spec_Project.Attribute_Value (Memory_List).all loop
