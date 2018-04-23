@@ -9,4 +9,6 @@ the specs.
 
 Options:
         -o ARG : Arg is the directory in which the generated files will be put.
+        -l ARG : Arg is the name of the generated ldscript.
+                Default value is linker.ld.
 
