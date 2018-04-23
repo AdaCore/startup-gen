@@ -20,7 +20,6 @@ package File_Writer is
                     Line : Unbounded_String;
                     Indented : Boolean := False);
 
-
    procedure Put_Indented_Line (Self : in out Indented_File_Writer;
                                 Line : String;
                                 Indented : Boolean := True) renames Put_Line;
