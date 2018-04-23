@@ -1,6 +1,3 @@
-with GNAT.Strings; use GNAT.Strings;
-with Ada.Text_IO;
-
 package body File_Writer is
 
    procedure Put_Line (Self : in out Indented_File_Writer;

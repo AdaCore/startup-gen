@@ -1,7 +1,6 @@
 with GNATCOLL.VFS;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Finalization;
 
 package File_Writer is
 
