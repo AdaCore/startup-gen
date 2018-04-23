@@ -6,9 +6,15 @@ with Ada.Containers.Vectors;
 with GNATCOLL.VFS; use GNATCOLL.VFS;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
 
+with File_Writer; use File_Writer;
 package Device is
 
    type Spec is tagged private;
+
+   package Package_String_Vector is new
+      Ada.Containers.Vectors (Positive, Unbounded_String);
+
+   package SV renames Package_String_Vector;
 
    procedure Get_Memory_List_From_Project (Self : in out Spec;
                                         Spec_Project : Project_Type);
@@ -18,9 +24,13 @@ package Device is
 
    procedure Display (Self : in out Spec);
 
-   procedure Dump_Linker_Script (Self : in out Spec; VLD : Virtual_File);
+   procedure Dump_Linker_Script (Self : in out Spec; VF : Virtual_File);
+
+   procedure Dump_Sections (Self : in out Spec;
+                            File : in out Indented_File_Writer);
 
 private
+
    type Interrupt_Type is
       record
          Name : Unbounded_String;

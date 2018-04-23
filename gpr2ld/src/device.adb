@@ -15,23 +15,45 @@ package body Device is
       end loop;
    end Display;
 
-   procedure Dump_Linker_Script (Self : in out Spec; VLD : Virtual_File) is
-      Handle : Writable_File := Write_File (VLD);
+   --  Dump Linker Script --
+   procedure Dump_Linker_Script (Self : in out Spec; VF : Virtual_File) is
+      File : Indented_File_Writer := Make (Handle => Write_File (VF));
    begin
-      Write (Handle, "Got " & To_String (Self.Memory (1).Name));
-      Close (Handle);
+      File.Put_Line ("SEARCH_DIR(.)");
+
+      --  TODO: replace `rom` by starting memory, for now we boot in ROM
+      File.Put_Line ("ENTRY(_start_rom);");
+
+      Self.Dump_Sections (File);
+
+      File.Close;
    end Dump_Linker_Script;
+
+   procedure Dump_Sections (Self : in out Spec;
+                            File : in out Indented_File_Writer) is
+   begin
+      File.Put_Line ("SECTIONS");
+      File.Put_Line ("{");
+      File.Indent;
+
+      --  TODO
+
+      File.Unindent;
+      File.Put_Line ("}");
+   end Dump_Sections;
+
    procedure Get_Memory_List_From_Project (Self : in out Spec;
                                         Spec_Project : Project_Type) is
       use Mem_Vect;
-      --  Can we group some of those. No we cant, probably.
-      Memory_List : constant Attribute_Pkg_List :=
-                     Build ("memory", "memories");
-      Size_Table : constant Attribute_Pkg_String := Build ("memory", "size");
-      Start_Table : constant Attribute_Pkg_String := Build ("memory", "start");
 
+      Memory_List : constant Attribute_Pkg_List :=
+                     Build ("Memory", "memories");
+      Size_Table : constant Attribute_Pkg_String :=
+                     Build ("Memory", "Size");
+      Address_Table : constant Attribute_Pkg_String :=
+                     Build ("Memory", "Start");
       Kind_Table : constant Attribute_Pkg_String :=
-                     Build ("memory", "mem_kind");
+                     Build ("Memory", "mem_kind");
 
    begin
       for Memory of Spec_Project.Attribute_Value (Memory_List).all loop
@@ -40,7 +62,7 @@ package body Device is
                      Attribute_Value (Size_Table, Index => Memory.all);
 
             Start : constant String := Spec_Project.
-                     Attribute_Value (Start_Table, Index => Memory.all);
+                     Attribute_Value (Address_Table, Index => Memory.all);
 
             Kind : constant String := Spec_Project.
                      Attribute_Value (Kind_Table, Index => Memory.all);
