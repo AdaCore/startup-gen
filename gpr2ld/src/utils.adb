@@ -4,22 +4,22 @@ package body Utils is
    is
       Error1 : aliased constant String := Register_New_Attribute
                               ("Mem_Kind",
-                              "Memory",
+                              "Memory_Map",
                               Indexed => True);
 
       Error2 : aliased constant String := Register_New_Attribute
                            ("Size",
-                           "Memory",
+                           "Memory_Map",
                            Indexed => True);
 
       Error3 : aliased constant String := Register_New_Attribute
-                           ("Start",
-                           "Memory",
+                           ("Address",
+                           "Memory_Map",
                            Indexed => True);
 
       Error4 : aliased constant String := Register_New_Attribute
                            ("Memories",
-                           "Memory",
+                           "Memory_Map",
                            Is_List => True);
 
       Error5 : aliased constant String := Register_New_Attribute
@@ -27,6 +27,10 @@ package body Utils is
 
       Error6 : aliased constant String := Register_New_Attribute
                            ("Float_Handling", "CPU");
+
+      Error7 : aliased constant String := Register_New_Attribute
+                           ("Boot_Memory",
+                           "Memory_Map");
 
       type Err_Str_Access is access constant String;
       type Strings is array (Integer range <>) of Err_Str_Access;
@@ -36,7 +40,8 @@ package body Utils is
           3 => Error3'Access,
           4 => Error4'Access,
           5 => Error5'Access,
-          6 => Error6'Access
+          6 => Error6'Access,
+          7 => Error7'Access
          );
    begin
       for Str of Errors loop

@@ -11,24 +11,30 @@ project Spec is
 
    end CPU;
 
-   package Memory is
+   --  Entry point of the program.
+   --  Usually _start_rom or _start_ram.
+--   for Entry_Point use "_start_rom";
 
-      --  Those names will be the names used in the linker script.
+   package Memory_Map is
+
+      --  MEMORY MAP
       for Memories use ("ROM", "RAM");
+
+      for Boot_Memory use "ROM";
 
       --  TODO: the user does not handle the naming of the memory
       for Mem_Kind("ROM") use "ROM";
       for Mem_Kind("RAM") use "RAM";
 
-      --  ROM1
-      for Start("ROM") use "0x1000";
+      --  ROM
+      for Address("ROM") use "0x1000";
       for Size("ROM") use "0x1000";
 
-      -- RAM1
-      for Start("RAM") use "0xDEAD";
+      -- RAM
+      for Address("RAM") use "0xDEAD";
       for Size("RAM") use "0xDEADBEEF";
 
-   end Memory;
+   end Memory_Map;
 
    for Target use "arm-eabi";
 
