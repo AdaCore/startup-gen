@@ -32,9 +32,7 @@ package Device is
 
    procedure Dump_Linker_Script (Self : in out Spec; VF : Virtual_File);
 
-   procedure Dump_Sections
-      (Self : in out Spec;
-       File : in out Indented_File_Writer);
+   procedure Dump_Memory_Map (Self : in out Spec; VF : Virtual_File);
 
 private
 
@@ -66,5 +64,18 @@ private
       CPU             : CPU_Type;
       InterruptVector : Int_Vect.Vector;
    end record;
+
+   --  Private procedures  --
+
+   procedure Dump_Sections
+      (Self : in out Spec;
+       File : in out Indented_File_Writer);
+
+   procedure Dump_Memory
+      (File        : in out Indented_File_Writer;
+       Name        :  Unbounded_String;
+       Permissions :  Unbounded_String;
+       Start       :  Unbounded_String;
+       Size        : Unbounded_String);
 
 end Device;

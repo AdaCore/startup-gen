@@ -29,12 +29,16 @@ begin
    Utils.Register_Memory_Map_Attributes;
 
    declare
+      Tree : Project_Tree;
+
       Spec_File : constant Virtual_File :=
         Create_From_Base (Filesystem_String (Input.Project_File.all));
-      Tree : Project_Tree;
 
       Linker_Script : constant Virtual_File :=
         Create_From_Base (Filesystem_String (Input.Linker_File.all));
+
+      Memory_Map : constant Virtual_File :=
+        Create_From_Base (Filesystem_String (Input.Memory_Map_File.all));
 
    begin
       Tree.Load
@@ -45,6 +49,8 @@ begin
       Spec.Get_CPU_From_Project (Tree.Root_Project);
 
       Spec.Dump_Linker_Script (Linker_Script);
+
+      Spec.Dump_Memory_Map (Memory_Map);
 
       Spec.Display;
    end;
