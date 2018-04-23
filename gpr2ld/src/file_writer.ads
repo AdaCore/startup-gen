@@ -8,7 +8,7 @@ package File_Writer is
    type Indented_File_Writer is tagged private;
 
    function Make (Handle : GNATCOLL.VFS.Writable_File;
-                  Indentation_Size : Integer := 2;
+                  Indentation_Size : Positive := 2;
                   Indentation_Character : Character := ' ')
                   return Indented_File_Writer;
 
@@ -40,8 +40,8 @@ private
    type Indented_File_Writer is tagged
       record
          Handle : GNATCOLL.VFS.Writable_File;
-         Indentation_Level : Integer;
-         Indentation_Size : Integer;
+         Indentation_Level : Natural;
+         Indentation_Size : Positive;
          Indentation_Character : Character;
       end record;
 

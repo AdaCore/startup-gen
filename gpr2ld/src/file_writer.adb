@@ -40,7 +40,7 @@ package body File_Writer is
    end Unindent;
 
    function Make (Handle : GNATCOLL.VFS.Writable_File;
-                  Indentation_Size : Integer := 2;
+                  Indentation_Size : Positive := 2;
                   Indentation_Character : Character := ' ')
                   return Indented_File_Writer is
 
