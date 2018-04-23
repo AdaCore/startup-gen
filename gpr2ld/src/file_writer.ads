@@ -29,6 +29,9 @@ package File_Writer is
                                 Line : Unbounded_String;
                                 Indented : Boolean := True) renames Put_Line;
 
+   procedure Indent (Self : in out Indented_File_Writer);
+
+   procedure Unindent (Self : in out Indented_File_Writer);
 
    procedure Close (Self : in out Indented_File_Writer);
 

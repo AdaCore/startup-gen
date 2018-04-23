@@ -29,6 +29,16 @@ package body File_Writer is
    end Put_Line;
 
 
+   procedure Indent (Self : in out Indented_File_Writer) is
+   begin
+      Self.Indentation_Level := Self.Indentation_Level + 1;
+   end Indent;
+
+   procedure Unindent (Self : in out Indented_File_Writer) is
+   begin
+      Self.Indentation_Level := Self.Indentation_Level - 1;
+   end Unindent;
+
    function Make (Handle : GNATCOLL.VFS.Writable_File;
                   Indentation_Size : Integer := 2;
                   Indentation_Character : Character := ' ')
