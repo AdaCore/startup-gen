@@ -59,6 +59,50 @@ package body Device is
       File.Put_Line ("}");
    end Dump_Sections;
 
+   ---------------------
+   -- Dump_Memory_Map --
+   ---------------------
+
+   procedure Dump_Memory_Map
+      (Self : in out Spec;
+       VF   : Virtual_File) is
+       File : Indented_File_Writer := Make
+            (Handle => Write_File (VF));
+   begin
+      File.Put_Line ("MEMORY");
+      File.Put_Line ("{");
+      File.Indent;
+
+      for Memory of Self.Memory loop
+         declare
+            Permissions : constant Unbounded_String :=
+                     To_Unbounded_String (if Memory.Kind = ROM
+                                             then "(rx)"
+                                             else "(rwx)");
+         begin
+            Dump_Memory (File, Memory.Name, Permissions,
+                               Memory.Start, Memory.Size);
+         end;
+      end loop;
+
+      File.Unindent;
+      File.Put_Line ("}");
+
+      File.Close;
+   end Dump_Memory_Map;
+
+   -----------------
+   -- Dump_Memory --
+   -----------------
+
+   procedure Dump_Memory (File : in out Indented_File_Writer;
+                          Name, Permissions, Start, Size : Unbounded_String)
+                          is
+   begin
+      File.Put_Indented_Line (Name & " " & Permissions & " : ORIGIN = " &
+                              Start & ", LENGTH = " & Size);
+   end Dump_Memory;
+
    ----------------------------------
    -- Get_Memory_List_From_Project --
    ----------------------------------

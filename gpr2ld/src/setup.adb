@@ -12,6 +12,7 @@ package body Setup is
    -------------------
 
    procedure Get_Arguments (Values : aliased out Command_Line_Values)
+
    is
       Config : Command_Line_Configuration;
    begin
@@ -28,6 +29,11 @@ package body Setup is
          "-l:",
          Help => "Name of the generated linker script.");
 
+      Define_Switch
+         (Config,
+          Values.Memory_Map_File'Access, "-m:",
+          Help => "Name of the generated memory map.");
+
       Getopt (Config);
 
       Values.Project_File := new String'(Get_Argument);
@@ -35,6 +41,7 @@ package body Setup is
       Put_Line ("Config " & Values.Project_File.all);
       Put_Line ("Out Dir " & Values.Output_Dir.all);
       Put_Line ("Linker Script " & Values.Linker_File.all);
+      Put_Line ("Memory Map " & Values.Memory_Map_File.all);
 
    end Get_Arguments;
 
