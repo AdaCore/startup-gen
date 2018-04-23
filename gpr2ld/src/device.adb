@@ -51,7 +51,7 @@ package body Device is
       Size_Table : constant Attribute_Pkg_String :=
                      Build ("Memory_map", "Size");
       Address_Table : constant Attribute_Pkg_String :=
-                     Build ("Memory_map", "Start");
+                     Build ("Memory_map", "Address");
       Kind_Table : constant Attribute_Pkg_String :=
                      Build ("Memory_map", "mem_kind");
 
