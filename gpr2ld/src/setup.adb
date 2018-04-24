@@ -12,18 +12,24 @@ package body Setup is
    -------------------
 
    procedure Get_Arguments
-     (Config_File, Linker_File, Output_Dir : aliased out String_Access)
+     (Config_File : aliased out String_Access;
+      Linker_File : aliased out String_Access;
+      Output_Dir  : aliased out String_Access)
    is
 
       Config : Command_Line_Configuration;
    begin
 
       Define_Switch
-        (Config, Output_Dir'Access, "-o:",
+        (Config,
+         Output_Dir'Access,
+         "-o:",
          Help => "Directory in which generated files will be put.");
 
       Define_Switch
-        (Config, Linker_File'Access, "-l:",
+        (Config,
+         Linker_File'Access,
+         "-l:",
          Help => "Name of the generated linker script.");
 
       Getopt (Config);
