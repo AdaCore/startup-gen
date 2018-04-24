@@ -19,27 +19,22 @@ procedure Main is
    --  Spec representing the target device
    Spec : Device.Spec;
 
-   --  Path to the GPR configuration file
-   Config_File : aliased String_Access;
-
-   Linker_File : aliased String_Access := new String'("linker.ld");
-
-   --  Directory in which will be put all the generated files.
-   Output_Dir : aliased String_Access := new String'("./");
+   use Setup;
+   Input : aliased Command_Line_Values;
 
 begin
 
-   Setup.Get_Arguments (Config_File, Linker_File, Output_Dir);
+   Setup.Get_Arguments (Input);
 
    Utils.Register_Memory_Map_Attributes;
 
    declare
       Spec_File : constant Virtual_File :=
-        Create_From_Base (Filesystem_String (Config_File.all));
+        Create_From_Base (Filesystem_String (Input.Config_File.all));
       Tree : Project_Tree;
 
       Linker_Script : constant Virtual_File :=
-        Create_From_Base (Filesystem_String (Linker_File.all));
+        Create_From_Base (Filesystem_String (Input.Linker_File.all));
 
    begin
       Tree.Load

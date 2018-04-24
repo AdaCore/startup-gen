@@ -7,12 +7,15 @@ with Ada.IO_Exceptions; use Ada.IO_Exceptions;
 
 package Setup is
 
+   type Command_Line_Values is record
+      Config_File : aliased String_Access := null;
+      Output_Dir  : aliased String_Access := new String'("./");
+      Linker_File : aliased String_Access := new String'("linker.ld");
+   end record;
+
   --  We verify that the mandatory arguments are correct.
-   procedure Get_Arguments
-     (Config_File : aliased out String_Access;
-      Linker_File : aliased out String_Access;
-      Output_Dir  : aliased out String_Access)
-      with Post => (Config_File.all /= "")
+   procedure Get_Arguments (Values : aliased out Command_Line_Values)
+      with Post => (Values.Config_File.all /= "")
       or else raise Name_Error
         with "You must pass a file on the command line.";
 
