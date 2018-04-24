@@ -20,38 +20,17 @@ package Device is
       Unbounded_String);
 
    package SV renames Package_String_Vector;
-
-   ----------------------------------
-   -- Get_Memory_List_From_Project --
-   ----------------------------------
-
    procedure Get_Memory_List_From_Project
       (Self         : in out Spec;
        Spec_Project : Project_Type);
-
-   --------------------------
-   -- Get_CPU_From_Project --
-   --------------------------
 
    procedure Get_CPU_From_Project
       (Self         : in out Spec;
        Spec_Project : Project_Type);
 
-   -------------
-   -- Display --
-   -------------
-
    procedure Display (Self : in out Spec);
 
-   ------------------------
-   -- Dump_Linker_Script --
-   ------------------------
-
    procedure Dump_Linker_Script (Self : in out Spec; VF : Virtual_File);
-
-   -------------------
-   -- Dump_Sections --
-   -------------------
 
    procedure Dump_Sections
       (Self : in out Spec;
