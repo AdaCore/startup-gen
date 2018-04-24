@@ -1,18 +1,29 @@
-with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Text_IO;       use Ada.Text_IO;
 with GNAT.Command_Line; use GNAT.Command_Line;
+
+-----------
+-- Setup --
+-----------
 
 package body Setup is
 
-   procedure Get_Arguments (Config_File,
-      Linker_File, Output_Dir : aliased out String_Access) is
+   -------------------
+   -- Get_Arguments --
+   -------------------
+
+   procedure Get_Arguments
+     (Config_File, Linker_File, Output_Dir : aliased out String_Access)
+   is
 
       Config : Command_Line_Configuration;
    begin
 
-      Define_Switch (Config, Output_Dir'Access, "-o:",
+      Define_Switch
+        (Config, Output_Dir'Access, "-o:",
          Help => "Directory in which generated files will be put.");
 
-      Define_Switch (Config, Linker_File'Access, "-l:",
+      Define_Switch
+        (Config, Linker_File'Access, "-l:",
          Help => "Name of the generated linker script.");
 
       Getopt (Config);
