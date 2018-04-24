@@ -44,8 +44,9 @@ package body Device is
    -- Dump_Sections --
    -------------------
 
-   procedure Dump_Sections (Self : in out Spec;
-      File                       : in out Indented_File_Writer)
+   procedure Dump_Sections
+      (Self : in out Spec;
+       File : in out Indented_File_Writer)
    is
    begin
       File.Put_Line ("SECTIONS");
@@ -62,8 +63,9 @@ package body Device is
    -- Get_Memory_List_From_Project --
    ----------------------------------
 
-   procedure Get_Memory_List_From_Project (Self : in out Spec;
-      Spec_Project                              :        Project_Type)
+   procedure Get_Memory_List_From_Project
+      (Self         : in out Spec;
+       Spec_Project : Project_Type)
    is
       use Mem_Vect;
 
@@ -105,8 +107,9 @@ package body Device is
    -- Get_CPU_From_Project --
    --------------------------
 
-   procedure Get_CPU_From_Project (Self : in out Spec;
-      Spec_Project                      :        Project_Type)
+   procedure Get_CPU_From_Project
+      (Self         : in out Spec;
+       Spec_Project : Project_Type)
    is
 
       Name : constant String :=
@@ -116,7 +119,8 @@ package body Device is
         Spec_Project.Attribute_Value (Build ("cpu", "float_handling"));
    begin
       Self.CPU :=
-        (To_Unbounded_String (Name), Float_Type'Value (Float_Handling));
+        (To_Unbounded_String (Name),
+         Float_Type'Value (Float_Handling));
 
    end Get_CPU_From_Project;
 
