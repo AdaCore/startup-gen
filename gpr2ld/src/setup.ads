@@ -7,10 +7,7 @@ with Ada.IO_Exceptions; use Ada.IO_Exceptions;
 
 package Setup is
 
-   -------------------
-   -- Get_Arguments --
-   -------------------
-   --  We verify that the mandatory arguments are correct.
+  --  We verify that the mandatory arguments are correct.
    procedure Get_Arguments
      (Config_File : aliased out String_Access;
       Linker_File : aliased out String_Access;
