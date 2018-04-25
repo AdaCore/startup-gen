@@ -16,7 +16,7 @@ package Device is
 
    type Spec is tagged private;
 
-   package Unbounded_String_Vector is new Ada.Containers.Vectors
+   package Unbounded_String_Vectors is new Ada.Containers.Vectors
       (Positive, Unbounded_String);
 
    procedure Get_Memory_List_From_Project
@@ -55,16 +55,16 @@ private
       Kind  : Memory_Kind;
    end record;
 
-   package Interrupt_Vector is new Ada.Containers.Vectors
+   package Interrupt_Vectors is new Ada.Containers.Vectors
       (Positive, Interrupt);
 
-   package Memory_Region_Vector is new Ada.Containers.Vectors
+   package Memory_Region_Vectors is new Ada.Containers.Vectors
       (Positive, Memory_Region);
 
    type Spec is tagged record
-      Memory          : Memory_Region_Vector.Vector;
-      CPU             : CPU_Type;
-      Interrupts : Interrupt_Vector.Vector;
+      Memory           : Memory_Region_Vectors.Vector;
+      CPU              : CPU_Type;
+      Interrupt_Vector : Interrupt_Vectors.Vector;
    end record;
 
    --  Private procedures  --
