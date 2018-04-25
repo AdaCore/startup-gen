@@ -8,6 +8,8 @@ with GNATCOLL.Projects; use GNATCOLL.Projects;
 
 with File_Writer; use File_Writer;
 
+with Sections;
+
 ------------
 -- Device --
 ------------
@@ -23,9 +25,15 @@ package Device is
       (Self         : in out Spec;
        Spec_Project : Project_Type);
 
+   procedure Get_Boot_Memory_From_Project
+      (Self         : in out Spec;
+       Spec_Project : Project_Type);
+
    procedure Get_CPU_From_Project
       (Self         : in out Spec;
        Spec_Project : Project_Type);
+
+   procedure Generate_Sections (Self : in out Spec);
 
    procedure Display (Self : in out Spec);
 
@@ -34,7 +42,6 @@ package Device is
    procedure Dump_Memory_Map (Self : in out Spec; VF : Virtual_File);
 
 private
-
    type Interrupt is record
       Name : Unbounded_String;
    end record;
@@ -63,8 +70,10 @@ private
 
    type Spec is tagged record
       Memory           : Memory_Region_Vectors.Vector;
+      Boot_Memory      : Unbounded_String;
       CPU              : CPU_Type;
       Interrupt_Vector : Interrupt_Vectors.Vector;
+      Section_Vector   : Sections.Sect_Vect.Vector;
    end record;
 
    --  Private procedures  --
