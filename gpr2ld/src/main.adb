@@ -30,7 +30,7 @@ begin
 
    declare
       Spec_File : constant Virtual_File :=
-        Create_From_Base (Filesystem_String (Input.Config_File.all));
+        Create_From_Base (Filesystem_String (Input.Project_File.all));
       Tree : Project_Tree;
 
       Linker_Script : constant Virtual_File :=
