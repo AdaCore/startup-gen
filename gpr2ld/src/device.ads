@@ -16,10 +16,9 @@ package Device is
 
    type Spec is tagged private;
 
-   package Package_String_Vector is new Ada.Containers.Vectors (Positive,
-      Unbounded_String);
+   package Unbounded_String_Vector is new Ada.Containers.Vectors
+      (Positive, Unbounded_String);
 
-   package SV renames Package_String_Vector;
    procedure Get_Memory_List_From_Project
       (Self         : in out Spec;
        Spec_Project : Project_Type);
@@ -36,7 +35,7 @@ package Device is
 
 private
 
-   type Interrupt_Type is record
+   type Interrupt is record
       Name : Unbounded_String;
    end record;
 
@@ -49,33 +48,38 @@ private
 
    type Memory_Kind is (RAM, ROM, TCM, CCM);
 
-   type Memory_Type is record
+   type Memory_Region is record
       Name  : Unbounded_String;
       Start : Unbounded_String;
       Size  : Unbounded_String;
       Kind  : Memory_Kind;
    end record;
 
-   package Int_Vect is new Ada.Containers.Vectors (Positive, Interrupt_Type);
-   package Mem_Vect is new Ada.Containers.Vectors (Positive, Memory_Type);
+   package Interrupt_Vector is new Ada.Containers.Vectors
+      (Positive, Interrupt);
+
+   package Memory_Region_Vector is new Ada.Containers.Vectors
+      (Positive, Memory_Region);
 
    type Spec is tagged record
-      Memory          : Mem_Vect.Vector;
+      Memory          : Memory_Region_Vector.Vector;
       CPU             : CPU_Type;
-      InterruptVector : Int_Vect.Vector;
+      Interrupts : Interrupt_Vector.Vector;
    end record;
 
    --  Private procedures  --
 
+   --  Dump all the current memory sections to the file.
    procedure Dump_Sections
       (Self : in out Spec;
        File : in out Indented_File_Writer);
 
+   --  Dump a single line representing a memory region to the file.
    procedure Dump_Memory
       (File        : in out Indented_File_Writer;
-       Name        :  Unbounded_String;
-       Permissions :  Unbounded_String;
-       Start       :  Unbounded_String;
+       Name        : Unbounded_String;
+       Permissions : Unbounded_String;
+       Start       : Unbounded_String;
        Size        : Unbounded_String);
 
 end Device;
