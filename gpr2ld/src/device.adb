@@ -111,7 +111,7 @@ package body Device is
       (Self         : in out Spec;
        Spec_Project : Project_Type)
    is
-      use Mem_Vect;
+      use Memory_Region_Vector;
 
       Memory_List : constant Attribute_Pkg_List :=
         Build ("Memory_map", "memories");
@@ -135,7 +135,7 @@ package body Device is
             Kind : constant String :=
               Spec_Project.Attribute_Value (Kind_Table, Index => Memory.all);
 
-            Memory_Unit : constant Memory_Type :=
+            Memory_Unit : constant Memory_Region :=
               (Name  => To_Unbounded_String (Memory.all),
                Start => To_Unbounded_String (Start),
                Size  => To_Unbounded_String (Size),
