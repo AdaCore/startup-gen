@@ -46,6 +46,8 @@ begin
 
       Spec.Get_Memory_List_From_Project (Tree.Root_Project);
 
+      Spec.Get_Boot_Memory_From_Project (Tree.Root_Project);
+
       Spec.Get_CPU_From_Project (Tree.Root_Project);
 
       Spec.Dump_Linker_Script (Linker_Script);
