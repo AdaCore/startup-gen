@@ -30,9 +30,9 @@ package body Setup is
 
       Getopt (Config);
 
-      Values.Config_File := new String'(Get_Argument);
+      Values.Project_File := new String'(Get_Argument);
 
-      Put_Line ("Config " & Values.Config_File.all);
+      Put_Line ("Config " & Values.Project_File.all);
       Put_Line ("Out Dir " & Values.Output_Dir.all);
       Put_Line ("Linker Script " & Values.Linker_File.all);
 
