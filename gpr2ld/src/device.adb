@@ -111,7 +111,7 @@ package body Device is
       (Self         : in out Spec;
        Spec_Project : Project_Type)
    is
-      use Memory_Region_Vector;
+      use Memory_Region_Vectors;
 
       Memory_List : constant Attribute_Pkg_List :=
         Build ("Memory_map", "memories");
