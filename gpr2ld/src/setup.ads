@@ -7,7 +7,7 @@ with Ada.IO_Exceptions; use Ada.IO_Exceptions;
 
 package Setup is
 
-   type Command_Line_Values is record
+   type Command_Line_Values is tagged record
       Project_File    : aliased String_Access := null;
       Output_Dir      : aliased String_Access := new String'("./");
       Linker_File     : aliased String_Access := new String'("linker.ld");
@@ -20,4 +20,5 @@ package Setup is
      or else raise Name_Error
         with "You must pass a file on the command line.";
 
+   procedure Display (Values : in out Command_Line_Values);
 end Setup;

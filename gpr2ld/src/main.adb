@@ -25,7 +25,9 @@ procedure Main is
 
 begin
 
-   Setup.Get_Arguments (Input);
+   Input.Get_Arguments;
+
+   Input.Display;
 
    Utils.Register_Memory_Map_Attributes;
 
@@ -36,10 +38,14 @@ begin
         Create_From_Base (Filesystem_String (Input.Project_File.all));
 
       Linker_Script : constant Virtual_File :=
-        Create_From_Base (Filesystem_String (Input.Linker_File.all));
+        Create_From_Dir
+         (Dir => Create (Filesystem_String (Input.Output_Dir.all)),
+          Base_Name => Filesystem_String (Input.Linker_File.all));
 
       Memory_Map : constant Virtual_File :=
-        Create_From_Base (Filesystem_String (Input.Memory_Map_File.all));
+        Create_From_Dir
+         (Dir => Create (Filesystem_String (Input.Output_Dir.all)),
+          Base_Name => Filesystem_String (Input.Memory_Map_File.all));
 
    begin
       Tree.Load
