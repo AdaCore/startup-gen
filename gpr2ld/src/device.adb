@@ -316,12 +316,7 @@ package body Device is
 
       --  XXX: Hardcoded stack for the BSS.
       if Section.Name = "bss" then
-         File.Put_Indented_Line ("__interrupt_stack_start = .;");
-         File.Put_Indented_Line ("*(.interrupt_stacks)");
-         File.Put_Indented_Line (". = ALIGN(0x8);");
-         File.Put_Indented_Line ("__interrupt_stack_end = .;");
-
-         File.New_Line;
+        File.New_Line;
 
          File.Put_Indented_Line ("__stack_start = .;");
          File.Put_Indented_Line (". += DEFINED (__stack_size) ?" &
