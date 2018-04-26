@@ -118,6 +118,7 @@ package body Device is
                        Name         => TUS ("bss"),
                        Reloc_Memory => TUS ("RAM"),
                        Force_Init   => True,
+                       Load         => False,
                        Init_Code    => Clear_Memory_Code
                        );
 
@@ -220,11 +221,63 @@ package body Device is
       File.Put_Line ("{");
       File.Indent;
 
-      --  TODO
+      for Section of Self.Section_Vector loop
+         Self.Dump_Section (File, Section);
+      end loop;
 
       File.Unindent;
       File.Put_Line ("}");
    end Dump_Sections;
+
+   ------------------
+   -- Dump_Section --
+   ------------------
+
+   procedure Dump_Section
+      (Self    : in out Spec;
+       File    : in out Indented_File_Writer;
+       Section : in out Sections.Section)
+   is
+      Load_String : constant Unbounded_String :=
+         To_Unbounded_String
+            (if not Section.To_Load
+             then " (NOLOAD)"
+             else "");
+      Dot_Name : constant Unbounded_String :=
+         To_Unbounded_String (".") & Section.Name;
+   begin
+
+      if Section.To_Init then
+         File.Put_Indented_Line ("" & Section.Name & "_load = .;");
+      end if;
+
+      File.Put_Indented_Line (Dot_Name & Load_String &":" );
+      File.Put_Indented_Line ("{");
+      File.Indent;
+
+      if Section.To_Init then
+         File.Put_Indented_Line ("__" & Section.Name & "_start = .;");
+      end if;
+
+      File.Put_Indented_Line
+         ("*(" & Dot_Name & " " & Dot_Name & ".*)");
+
+      if Section.To_Init then
+         File.Put_Indented_Line ("__" & Section.Name & "_end = .;");
+      end if;
+
+      File.Put_Indented_Line (". = ALIGN(0x4);");
+
+
+      File.Unindent;
+      --  TODO: if reloc /= boot, put AT> here
+      File.Put_Indented_Line ("} > " & Section.Reloc_Memory);
+      if Section.To_Init then
+         File.Put_Indented_Line
+            ("__" & Section.Name & "_words = (__" & Section.Name & "_end - __" &
+               Section.Name & "_start) >> 2;");
+      end if;
+   end Dump_Section;
 
    -----------------
    -- Dump_Memory --

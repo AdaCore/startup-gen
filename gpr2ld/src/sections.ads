@@ -16,6 +16,7 @@ package Sections is
       Name               : Unbounded_String;
       Reloc_Memory       : Unbounded_String;
       To_Init            : Boolean;
+      To_Load            : Boolean;
       Init_Code          : Algorithm;
       Additional_Content : Unbounded_String_Vectors.Vector;
    end record;
@@ -25,7 +26,8 @@ package Sections is
        Name         : Unbounded_String;
        Reloc_Memory : Unbounded_String;
        Init_Code    : Algorithm := No_Code;
-       Force_Init   : Boolean := False)
+       Force_Init   : Boolean := False;
+       Load         : Boolean := True)
        return Section;
 
    package Section_Vectors is new Ada.Containers.Vectors
