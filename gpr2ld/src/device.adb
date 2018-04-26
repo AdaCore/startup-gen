@@ -275,20 +275,16 @@ package body Device is
       File.Put_Indented_Line ("{");
       File.Indent;
 
+      File.Put_Indented_Line ("__" & Section.Name & "_start = .;");
+
       for Content of Section.Additional_Content loop
          File.Put_Indented_Line (Content);
       end loop;
 
-      if Section.To_Init then
-         File.Put_Indented_Line ("__" & Section.Name & "_start = .;");
-      end if;
-
       File.Put_Indented_Line
          ("*(" & Dot_Name & " " & Dot_Name & ".*)");
 
-      if Section.To_Init then
-         File.Put_Indented_Line ("__" & Section.Name & "_end = .;");
-      end if;
+      File.Put_Indented_Line ("__" & Section.Name & "_end = .;");
 
       File.Put_Indented_Line (". = ALIGN(0x4);");
 
