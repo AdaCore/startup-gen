@@ -1,5 +1,7 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
+with Startup; use Startup;
+
 ------------
 -- Device --
 ------------
@@ -95,37 +97,45 @@ package body Device is
       function TUS (Str : String) return Unbounded_String
          renames To_Unbounded_String;
 
+      --  In the long term we want to be able to specify
+      --  the sections that corresponds to the target architecture.
+      --  For now and for ARM processors, it will do.
+
       TEXT : constant Section :=
-          Make_Section (Boot_Memory        => Self.Boot_Memory,
-                        Name               => TUS ("text"),
-                        Reloc_Memory       => Self.Boot_Memory
+         Make_Section (Boot_Memory  => Self.Boot_Memory,
+                       Name         => TUS ("text"),
+                       Reloc_Memory => Self.Boot_Memory
                        );
 
       RODATA : constant Section :=
-          Make_Section (Boot_Memory  => Self.Boot_Memory,
-                        Name         => TUS ("rodata"),
-                        Reloc_Memory => Self.Boot_Memory
+         Make_Section (Boot_Memory  => Self.Boot_Memory,
+                       Name         => TUS ("rodata"),
+                       Reloc_Memory => Self.Boot_Memory
                        );
 
        BSS : constant Section :=
-         Make_Section (Boot_Memory    => Self.Boot_Memory,
-                       Name           => TUS ("bss"),
-                       Reloc_Memory   => TUS ("RAM"),
-                       Force_Init     => True
+         Make_Section (Boot_Memory  => Self.Boot_Memory,
+                       Name         => TUS ("bss"),
+                       Reloc_Memory => TUS ("RAM"),
+                       Force_Init   => True,
+                       Init_Code    => Clear_Memory_Code
                        );
 
       DATA : constant Section :=
-         Make_Section (Boot_Memory    => Self.Boot_Memory,
-                       Name           => TUS ("data"),
-                       Reloc_Memory   => TUS ("RAM")
+         Make_Section (Boot_Memory  => Self.Boot_Memory,
+                       Name         => TUS ("data"),
+                       Reloc_Memory => TUS ("RAM"),
+                       Init_Code    => Copy_Memory_Code
                        );
 
        CCMDATA : constant Section :=
-         Make_Section (Boot_Memory    => Self.Boot_Memory,
-                       Name           => TUS ("ccmdata"),
-                       Reloc_Memory   => TUS ("RAM")
+         Make_Section (Boot_Memory  => Self.Boot_Memory,
+                       Name         => TUS ("ccmdata"),
+                       Reloc_Memory => TUS ("RAM"),
+                       Init_Code    => Copy_Memory_Code
                      );
-       use Sections.Sect_Vect;
+
+       use Sections.Section_Vectors;
    begin
         Self.Section_Vector := Self.Section_Vector &
           TEXT & RODATA & BSS & DATA & CCMDATA;

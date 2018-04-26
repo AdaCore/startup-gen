@@ -50,6 +50,8 @@ begin
 
       Spec.Get_CPU_From_Project (Tree.Root_Project);
 
+      Spec.Generate_Sections;
+
       Spec.Dump_Linker_Script (Linker_Script);
 
       Spec.Dump_Memory_Map (Memory_Map);
