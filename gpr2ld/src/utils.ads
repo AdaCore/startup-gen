@@ -6,6 +6,6 @@ with GNATCOLL.Projects; use GNATCOLL.Projects;
 
 package Utils is
 
-  procedure Register_Memory_Map_Attributes;
+   procedure Register_Memory_Map_Attributes;
 
 end Utils;

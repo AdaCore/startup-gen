@@ -14,7 +14,7 @@ package Setup is
       Memory_Map_File : aliased String_Access := new String'("memory_map.ld");
    end record;
 
-  --  We verify that the mandatory arguments are correct.
+   --  We verify that the mandatory arguments are correct.
    procedure Get_Arguments (Values : aliased out Command_Line_Values)
       with Post => (Values.Project_File.all /= "")
      or else raise Name_Error
