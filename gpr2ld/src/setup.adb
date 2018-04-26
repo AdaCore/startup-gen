@@ -37,12 +37,19 @@ package body Setup is
       Getopt (Config);
 
       Values.Project_File := new String'(Get_Argument);
+  end Get_Arguments;
 
+   -------------
+   -- Display --
+   -------------
+
+   procedure Display (Values : in out Command_Line_Values)
+   is
+   begin
       Put_Line ("Config " & Values.Project_File.all);
       Put_Line ("Out Dir " & Values.Output_Dir.all);
       Put_Line ("Linker Script " & Values.Linker_File.all);
-      Put_Line ("Memory Map " & Values.Memory_Map_File.all);
-
-   end Get_Arguments;
+      Put_Line ("Memory_Map " &  Values.Memory_Map_File.all);
+   end Display;
 
 end Setup;
