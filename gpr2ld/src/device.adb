@@ -233,6 +233,20 @@ package body Device is
       for Section of Self.Section_Vector loop
          Self.Dump_Section (File, Section);
          File.New_Line;
+         if Section.Name = "text" then
+            File.Put_Indented_Line
+            (".ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } > "&
+             Self.Boot_Memory);
+            File.New_Line;
+            File.Put_Indented_Line (".ARM.exidx : {");
+            File.Indent;
+            File.Put_Indented_Line ("PROVIDE_HIDDEN (__exidx_start = .);");
+            File.Put_Indented_Line ("*(.ARM.exidx* .gnu.linkonce.armexidx.*)");
+            File.Put_Indented_Line ("PROVIDE_HIDDEN (__exidx_end = .);");
+            File.Unindent;
+            File.Put_Indented_Line ("} > " & Self.Boot_Memory);
+            File.New_Line;
+         end if;
       end loop;
 
       File.Unindent;
