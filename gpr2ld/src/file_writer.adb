@@ -59,6 +59,15 @@ package body File_Writer is
       Self.Indentation_Level := Self.Indentation_Level - 1;
    end Unindent;
 
+   --------------
+   -- New_Line --
+   --------------
+   procedure New_Line (Self : in out Indented_File_Writer)
+   is
+   begin
+       GNATCOLL.VFS.Write (Self.Handle, "" & ASCII.LF);
+   end New_Line;
+
    ----------
    -- Make --
    ----------

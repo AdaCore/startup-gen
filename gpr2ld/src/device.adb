@@ -94,6 +94,7 @@ package body Device is
 
    procedure Generate_Sections (Self : in out Spec) is
       use Sections;
+      use Unbounded_String_Vectors;
       function TUS (Str : String) return Unbounded_String
          renames To_Unbounded_String;
 
@@ -102,10 +103,13 @@ package body Device is
       --  For now and for ARM processors, it will do.
 
       TEXT : constant Section :=
-         Make_Section (Boot_Memory  => Self.Boot_Memory,
-                       Name         => TUS ("text"),
-                       Reloc_Memory => Self.Boot_Memory
-                       );
+         Make_Section
+            (Boot_Memory        => Self.Boot_Memory,
+             Name               => TUS ("text"),
+             Reloc_Memory       => Self.Boot_Memory,
+             Additional_Content => Unbounded_String_Vectors.Empty_Vector &
+                                    TUS ("KEEP (*(.vectors))")
+            );
 
       RODATA : constant Section :=
          Make_Section (Boot_Memory  => Self.Boot_Memory,
@@ -168,8 +172,9 @@ package body Device is
    begin
       File.Put_Line ("SEARCH_DIR(.)");
 
-      --  TODO: replace `rom` by starting memory, for now we boot in ROM
-      File.Put_Line ("ENTRY(_start_rom);");
+      File.New_Line;
+      File.Put_Line ("ENTRY(_start_" & Self.Boot_Memory & ");");
+      File.New_Line;
 
       Self.Dump_Sections (File);
 
@@ -223,6 +228,7 @@ package body Device is
 
       for Section of Self.Section_Vector loop
          Self.Dump_Section (File, Section);
+         File.New_Line;
       end loop;
 
       File.Unindent;
@@ -254,6 +260,10 @@ package body Device is
       File.Put_Indented_Line (Dot_Name & Load_String &":" );
       File.Put_Indented_Line ("{");
       File.Indent;
+
+      for Content of Section.Additional_Content loop
+         File.Put_Indented_Line (Content);
+      end loop;
 
       if Section.To_Init then
          File.Put_Indented_Line ("__" & Section.Name & "_start = .;");
