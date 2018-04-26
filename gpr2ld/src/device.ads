@@ -73,7 +73,7 @@ private
       Boot_Memory      : Unbounded_String;
       CPU              : CPU_Type;
       Interrupt_Vector : Interrupt_Vectors.Vector;
-      Section_Vector   : Sections.Sect_Vect.Vector;
+      Section_Vector   : Sections.Section_Vectors.Vector;
    end record;
 
    --  Private procedures  --

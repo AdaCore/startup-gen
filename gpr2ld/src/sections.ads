@@ -1,6 +1,8 @@
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
+with Startup; use Startup;
+
 --------------
 -- Sections --
 --------------
@@ -14,6 +16,7 @@ package Sections is
       Name               : Unbounded_String;
       Reloc_Memory       : Unbounded_String;
       To_Init            : Boolean;
+      Init_Code          : Algorithm;
       Additional_Content : Unbounded_String_Vectors.Vector;
    end record;
 
@@ -21,6 +24,7 @@ package Sections is
       (Boot_Memory  : Unbounded_String;
        Name         : Unbounded_String;
        Reloc_Memory : Unbounded_String;
+       Init_Code    : Algorithm := No_Code;
        Force_Init   : Boolean := False)
        return Section;
 
