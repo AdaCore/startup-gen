@@ -16,6 +16,7 @@ with Device; use Device;
 
 procedure Main is
    use GNAT.Strings;
+
    --  Spec representing the target device
    Spec : Device.Spec;
 
@@ -42,7 +43,8 @@ begin
 
    begin
       Tree.Load
-        (Root_Project_Path => Spec_File, Packages_To_Check => All_Packs);
+        (Root_Project_Path => Spec_File,
+         Packages_To_Check => All_Packs);
 
       Spec.Get_Memory_List_From_Project (Tree.Root_Project);
 
@@ -59,8 +61,8 @@ begin
       Spec.Display;
    end;
 exception
-   --  We catch the exception from the command line the user called the
-   --  executable with "-h" or "--help"
+   --  We catch the exception from the command line when
+   --  the user called the executable with "-h" or "--help"
    when GNAT.Command_Line.Exit_From_Command_Line =>
       New_Line;
 
