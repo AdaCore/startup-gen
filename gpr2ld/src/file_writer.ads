@@ -38,6 +38,8 @@ package File_Writer is
       Indented :        Boolean := True)
       renames Put_Line;
 
+   procedure New_Line (Self : in out Indented_File_Writer);
+
    procedure Indent (Self : in out Indented_File_Writer);
 
    procedure Unindent (Self : in out Indented_File_Writer);

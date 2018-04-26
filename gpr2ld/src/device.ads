@@ -18,9 +18,6 @@ package Device is
 
    type Spec is tagged private;
 
-   package Unbounded_String_Vectors is new Ada.Containers.Vectors
-      (Positive, Unbounded_String);
-
    procedure Get_Memory_List_From_Project
       (Self         : in out Spec;
        Spec_Project : Project_Type);

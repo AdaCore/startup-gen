@@ -11,12 +11,14 @@ package body Sections is
    ------------------
 
    function Make_Section
-      (Boot_Memory  : Unbounded_String;
-       Name         : Unbounded_String;
-       Reloc_Memory : Unbounded_String;
-       Init_Code    : Algorithm := No_Code;
-       Force_Init   : Boolean := False;
-       Load         : Boolean := True)
+      (Boot_Memory        : Unbounded_String;
+       Name               : Unbounded_String;
+       Reloc_Memory       : Unbounded_String;
+       Init_Code          : Algorithm := No_Code;
+       Force_Init         : Boolean := False;
+       Load               : Boolean := True;
+       Additional_Content : Unbounded_String_Vectors.Vector:=
+         Unbounded_String_Vectors.Empty_Vector)
        return Section
    is
       To_Init : constant Boolean := Force_Init or else
@@ -29,7 +31,7 @@ package body Sections is
           To_Init            => To_Init,
           To_Load            => Load,
           Init_Code          => Init_Code,
-          Additional_Content => Unbounded_String_Vectors.Empty_Vector);
+          Additional_Content => Additional_Content);
    begin
       Temp.Init_Code.Format_Code_With_Name (Temp.Name);
      return Temp;
