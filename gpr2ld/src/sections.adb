@@ -15,7 +15,8 @@ package body Sections is
        Name         : Unbounded_String;
        Reloc_Memory : Unbounded_String;
        Init_Code    : Algorithm := No_Code;
-       Force_Init   : Boolean := False)
+       Force_Init   : Boolean := False;
+       Load         : Boolean := True)
        return Section
    is
       To_Init : constant Boolean := Force_Init or else
@@ -26,6 +27,7 @@ package body Sections is
          (Name               => Lowered_Name,
           Reloc_Memory       => Reloc_Memory,
           To_Init            => To_Init,
+          To_Load            => Load,
           Init_Code          => Init_Code,
           Additional_Content => Unbounded_String_Vectors.Empty_Vector);
    begin

@@ -83,6 +83,12 @@ private
       (Self : in out Spec;
        File : in out Indented_File_Writer);
 
+   --  Dump a single section to the file.
+   procedure Dump_Section
+      (Self    : in out Spec;
+       File    : in out Indented_File_Writer;
+       Section : in out Sections.Section);
+
    --  Dump a single line representing a memory region to the file.
    procedure Dump_Memory
       (File        : in out Indented_File_Writer;
