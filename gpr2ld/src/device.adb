@@ -87,7 +87,6 @@ package body Device is
 
    end Get_CPU_From_Project;
 
-
    -----------------------
    -- Generate_Sections --
    -----------------------
@@ -235,10 +234,11 @@ package body Device is
          File.New_Line;
          if Section.Name = "text" then
             File.Put_Indented_Line
-            (".ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } > "&
-             Self.Boot_Memory);
+            (".ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } > " &
+              Self.Boot_Memory);
             File.New_Line;
-            File.Put_Indented_Line (".ARM.exidx : {");
+            File.Put_Indented_Line (".ARM.exidx:");
+            File.Put_Indented_Line ("{");
             File.Indent;
             File.Put_Indented_Line ("PROVIDE_HIDDEN (__exidx_start = .);");
             File.Put_Indented_Line ("*(.ARM.exidx* .gnu.linkonce.armexidx.*)");
@@ -281,11 +281,9 @@ package body Device is
       --  If the section has initalization code, we dump the
       --  symbols required by the startup code.
 
-      if Section.To_Init then
-         File.Put_Indented_Line ("" & Section.Name & "_load = .;");
-      end if;
+      File.Put_Indented_Line ("" & Section.Name & "_load = .;");
 
-      File.Put_Indented_Line (Dot_Name & Load_String &":" );
+      File.Put_Indented_Line (Dot_Name & Load_String & ":");
       File.Put_Indented_Line ("{");
       File.Indent;
 
@@ -304,11 +302,9 @@ package body Device is
 
       File.Unindent;
       File.Put_Indented_Line ("} > " & Destination_Memory);
-      if Section.To_Init then
-         File.Put_Indented_Line
-            ("__" & Section.Name & "_words = (__" & Section.Name & "_end - __" &
-               Section.Name & "_start) >> 2;");
-      end if;
+      File.Put_Indented_Line
+         ("__" & Section.Name & "_words = (__" & Section.Name
+         & "_end - __" & Section.Name & "_start) >> 2;");
    end Dump_Section;
 
    -----------------
@@ -326,6 +322,5 @@ package body Device is
       File.Put_Indented_Line (Name & " " & Permissions & " : ORIGIN = " &
                               Start & ", LENGTH = " & Size);
    end Dump_Memory;
-
 
 end Device;
