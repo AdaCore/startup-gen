@@ -240,9 +240,11 @@ package body Device is
             File.Put_Indented_Line (".ARM.exidx:");
             File.Put_Indented_Line ("{");
             File.Indent;
+
             File.Put_Indented_Line ("PROVIDE_HIDDEN (__exidx_start = .);");
             File.Put_Indented_Line ("*(.ARM.exidx* .gnu.linkonce.armexidx.*)");
             File.Put_Indented_Line ("PROVIDE_HIDDEN (__exidx_end = .);");
+
             File.Unindent;
             File.Put_Indented_Line ("} > " & Self.Boot_Memory);
             File.New_Line;
