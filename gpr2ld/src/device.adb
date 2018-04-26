@@ -112,32 +112,36 @@ package body Device is
             );
 
       RODATA : constant Section :=
-         Make_Section (Boot_Memory  => Self.Boot_Memory,
-                       Name         => TUS ("rodata"),
-                       Reloc_Memory => Self.Boot_Memory
+         Make_Section
+            (Boot_Memory  => Self.Boot_Memory,
+             Name         => TUS ("rodata"),
+             Reloc_Memory => Self.Boot_Memory
                        );
 
        BSS : constant Section :=
-         Make_Section (Boot_Memory  => Self.Boot_Memory,
-                       Name         => TUS ("bss"),
-                       Reloc_Memory => TUS ("RAM"),
-                       Force_Init   => True,
-                       Load         => False,
-                       Init_Code    => Clear_Memory_Code
+         Make_Section
+            (Boot_Memory  => Self.Boot_Memory,
+             Name         => TUS ("bss"),
+             Reloc_Memory => TUS ("RAM"),
+             Force_Init   => True,
+             Load         => False,
+             Init_Code    => Clear_Memory_Code
                        );
 
       DATA : constant Section :=
-         Make_Section (Boot_Memory  => Self.Boot_Memory,
-                       Name         => TUS ("data"),
-                       Reloc_Memory => TUS ("RAM"),
-                       Init_Code    => Copy_Memory_Code
+         Make_Section
+            (Boot_Memory  => Self.Boot_Memory,
+             Name         => TUS ("data"),
+             Reloc_Memory => TUS ("RAM"),
+             Init_Code    => Copy_Memory_Code
                        );
 
        CCMDATA : constant Section :=
-         Make_Section (Boot_Memory  => Self.Boot_Memory,
-                       Name         => TUS ("ccmdata"),
-                       Reloc_Memory => TUS ("RAM"),
-                       Init_Code    => Copy_Memory_Code
+         Make_Section
+            (Boot_Memory  => Self.Boot_Memory,
+             Name         => TUS ("ccmdata"),
+             Reloc_Memory => TUS ("RAM"),
+             Init_Code    => Copy_Memory_Code
                      );
 
        use Sections.Section_Vectors;
