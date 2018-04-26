@@ -177,7 +177,7 @@ package body Device is
       File.New_Line;
       File.Put_Line ("__DYNAMIC = 0;");
       File.New_Line;
-      File.Put_Line ("_DEFAULT_STACK_SIZE = 0;");
+      File.Put_Line ("_DEFAULT_STACK_SIZE = 4 * 1024;");
 
       File.New_Line;
       File.Put_Line ("ENTRY(_start_" & Self.Boot_Memory & ");");
