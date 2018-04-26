@@ -146,7 +146,7 @@ package body Device is
        use Sections.Section_Vectors;
    begin
         Self.Section_Vector := Self.Section_Vector &
-          TEXT & RODATA & BSS & DATA & CCMDATA;
+          TEXT & RODATA & DATA & BSS & CCMDATA;
    end Generate_Sections;
 
    -------------
@@ -241,7 +241,7 @@ package body Device is
             (".ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } > " &
               Self.Boot_Memory);
             File.New_Line;
-            File.Put_Indented_Line (".ARM.exidx:");
+            File.Put_Indented_Line (".ARM.exidx :");
             File.Put_Indented_Line ("{");
             File.Indent;
 
@@ -281,7 +281,7 @@ package body Device is
                and then Section.To_Load
           then (To_String (Section.Reloc_Memory) & (" AT> ") &
                 To_String (Self.Boot_Memory))
-          else To_String (Self.Boot_Memory));
+          else To_String (Section.Reloc_Memory));
    begin
 
       --  If the section has initalization code, we dump the
@@ -289,7 +289,7 @@ package body Device is
 
       File.Put_Indented_Line ("__" & Section.Name & "_load = .;");
 
-      File.Put_Indented_Line (Dot_Name & Load_String & ":");
+      File.Put_Indented_Line (Dot_Name & Load_String & " :");
       File.Put_Indented_Line ("{");
       File.Indent;
 
@@ -318,7 +318,7 @@ package body Device is
       if Section.Name = "bss" then
          File.Put_Indented_Line ("__interrupt_stack_start = .;");
          File.Put_Indented_Line ("*(.interrupt_stacks)");
-         File.Put_Indented_Line (". = ALIGN(0x8)");
+         File.Put_Indented_Line (". = ALIGN(0x8);");
          File.Put_Indented_Line ("__interrupt_stack_end = .;");
 
          File.New_Line;
@@ -326,7 +326,7 @@ package body Device is
          File.Put_Indented_Line ("__stack_start = .;");
          File.Put_Indented_Line (". += DEFINED (__stack_size) ?" &
                " __stack_size : _DEFAULT_STACK_SIZE;");
-         File.Put_Indented_Line (". = ALIGN(0x8)");
+         File.Put_Indented_Line (". = ALIGN(0x8);");
          File.Put_Indented_Line ("__stack_end = .;");
 
          File.New_Line;
