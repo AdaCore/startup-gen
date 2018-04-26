@@ -292,7 +292,6 @@ package body Device is
 
       File.Put_Indented_Line (". = ALIGN(0x4);");
 
-
       File.Unindent;
       File.Put_Indented_Line ("} > " & Destination_Memory);
       if Section.To_Init then
