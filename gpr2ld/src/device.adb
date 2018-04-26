@@ -174,6 +174,10 @@ package body Device is
       File : Indented_File_Writer := Make (Handle => Write_File (VF));
    begin
       File.Put_Line ("SEARCH_DIR(.)");
+      File.New_Line;
+      File.Put_Line ("__DYNAMIC = 0;");
+      File.New_Line;
+      File.Put_Line ("_DEFAULT_STACK_SIZE = 0;");
 
       File.New_Line;
       File.Put_Line ("ENTRY(_start_" & Self.Boot_Memory & ");");
@@ -298,9 +302,35 @@ package body Device is
       File.Put_Indented_Line
          ("*(" & Dot_Name & " " & Dot_Name & ".*)");
 
-      File.Put_Indented_Line ("__" & Section.Name & "_end = .;");
+      --  XXX: Hardcoded content for the BSS.
+      --  Note that we can put the alignement in the section record.
+      if Section.Name = "bss" then
+         File.Put_Indented_Line ("*(COMMON)");
+         File.Put_Indented_Line (". = ALIGN(0x8);");
+      else
+         File.Put_Indented_Line (". = ALIGN(0x4);");
+      end if;
 
-      File.Put_Indented_Line (". = ALIGN(0x4);");
+      File.Put_Indented_Line ("__" & Section.Name & "_end = .;");
+      File.New_Line;
+
+      --  XXX: Hardcoded stack for the BSS.
+      if Section.Name = "bss" then
+         File.Put_Indented_Line ("__interrupt_stack_start = .;");
+         File.Put_Indented_Line ("*(.interrupt_stacks)");
+         File.Put_Indented_Line (". = ALIGN(0x8)");
+         File.Put_Indented_Line ("__interrupt_stack_end = .;");
+
+         File.New_Line;
+
+         File.Put_Indented_Line ("__stack_start = .;");
+         File.Put_Indented_Line (". += DEFINED (__stack_size) ?" &
+               " __stack_size : _DEFAULT_STACK_SIZE;");
+         File.Put_Indented_Line (". = ALIGN(0x8)");
+         File.Put_Indented_Line ("__stack_end = .;");
+
+         File.New_Line;
+      end if;
 
       File.Unindent;
       File.Put_Indented_Line ("} > " & Destination_Memory);
