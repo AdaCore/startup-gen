@@ -11,10 +11,10 @@ package body Sections is
    ------------------
 
    function Make_Section
-      (Boot_Memory : Unbounded_String;
-       Name : Unbounded_String;
+      (Boot_Memory  : Unbounded_String;
+       Name         : Unbounded_String;
        Reloc_Memory : Unbounded_String;
-       Force_Init : Boolean := False)
+       Force_Init   : Boolean := False)
        return Section
    is
       To_Init : constant Boolean := Force_Init or else
