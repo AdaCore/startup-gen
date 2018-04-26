@@ -283,7 +283,7 @@ package body Device is
       --  If the section has initalization code, we dump the
       --  symbols required by the startup code.
 
-      File.Put_Indented_Line ("" & Section.Name & "_load = .;");
+      File.Put_Indented_Line ("__" & Section.Name & "_load = .;");
 
       File.Put_Indented_Line (Dot_Name & Load_String & ":");
       File.Put_Indented_Line ("{");
