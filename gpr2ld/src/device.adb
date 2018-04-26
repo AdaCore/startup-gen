@@ -255,7 +255,17 @@ package body Device is
              else "");
       Dot_Name : constant Unbounded_String :=
          To_Unbounded_String (".") & Section.Name;
+
+      Destination_Memory : constant String :=
+         (if (Self.Boot_Memory /= Section.Reloc_Memory)
+               and then Section.To_Load
+          then (To_String (Section.Reloc_Memory) & (" AT> ") &
+                To_String (Self.Boot_Memory))
+          else To_String (Self.Boot_Memory));
    begin
+
+      --  If the section has initalization code, we dump the
+      --  symbols required by the startup code.
 
       if Section.To_Init then
          File.Put_Indented_Line ("" & Section.Name & "_load = .;");
@@ -284,8 +294,7 @@ package body Device is
 
 
       File.Unindent;
-      --  TODO: if reloc /= boot, put AT> here
-      File.Put_Indented_Line ("} > " & Section.Reloc_Memory);
+      File.Put_Indented_Line ("} > " & Destination_Memory);
       if Section.To_Init then
          File.Put_Indented_Line
             ("__" & Section.Name & "_words = (__" & Section.Name & "_end - __" &
