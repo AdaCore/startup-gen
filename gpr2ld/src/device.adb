@@ -235,6 +235,8 @@ package body Device is
       for Section of Self.Section_Vector loop
          Self.Dump_Section (File, Section);
          File.New_Line;
+
+         --  XXX: Hardcoded content specific to ARM target.
          if Section.Name = "text" then
             File.Put_Indented_Line
             (".ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } > " &
