@@ -4,16 +4,12 @@
 project Spec is
 
    package CPU is
-      --  This name will be passed to the '-mcpu' switch of GCC.
+      --  This attribute will be written in the startup code.
       for Name use "cortex-m4";
-      --  This attribute will be passed to the '-mfloat-abi' switch of GCC.
+      --  This attribute will be written in the startup code.
       for Float_Handling use "hard";
 
    end CPU;
-
-   --  Entry point of the program.
-   --  Usually _start_rom or _start_ram.
---   for Entry_Point use "_start_rom";
 
    package Memory_Map is
 
