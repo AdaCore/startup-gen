@@ -264,6 +264,7 @@ package body Device is
       File.New_Line;
       File.New_Line;
 
+      File.Put_Line ("_start_" & Self.Boot_Memory & ":");
       Self.Dump_Sections_Init_Code (File);
 
       File.Indent;
