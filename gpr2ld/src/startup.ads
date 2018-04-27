@@ -37,7 +37,6 @@ private
 
    type Algorithm is tagged record
       Code : Unbounded_String_Vector.Vector;
-      Load : Boolean;
    end record;
 
    function TUS (Str : String) return Unbounded_String
@@ -46,8 +45,7 @@ private
    --  Private constants  --
 
    Clear_Memory_Code : constant Algorithm :=
-      (Load => False,
-       Code => SV.Empty_Vector &
+      (Code => SV.Empty_Vector &
             TUS ("/* Clear $NAME */") &
             TUS ("$INDENTmovw  r0,#:lower16:__$NAME_start") &
             TUS ("$INDENTmovw  r0,#:uppper16:__$NAME_start") &
@@ -63,8 +61,7 @@ private
          );
 
       Copy_Memory_Code : constant Algorithm :=
-         (Load => True,
-          Code => SV.Empty_Vector &
+         (Code => SV.Empty_Vector &
                TUS ("/* Copy $NAME */") &
                TUS ("$INDENTmovw  r0,#:lower16:__$NAME_start") &
                TUS ("$INDENTmovw  r0,#:uppper16:__$NAME_start") &
@@ -80,8 +77,6 @@ private
                TUS ("1:")
             );
 
-      No_Code : constant Algorithm :=
-         (Load => True,
-          Code => SV.Empty_Vector);
+      No_Code : constant Algorithm := (Code => SV.Empty_Vector);
 
 end Startup;
