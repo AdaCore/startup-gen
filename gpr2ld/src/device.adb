@@ -278,7 +278,7 @@ package body Device is
          To_Unbounded_String (".") & Section.Name;
 
       Destination_Memory : constant String :=
-         (if (Self.Boot_Memory /= Section.Reloc_Memory)
+         (if Self.Boot_Memory /= Section.Reloc_Memory
                and then Section.To_Load
           then (To_String (Section.Reloc_Memory) & (" AT> ") &
                 To_String (Self.Boot_Memory))
