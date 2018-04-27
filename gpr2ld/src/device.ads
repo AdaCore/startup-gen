@@ -38,6 +38,8 @@ package Device is
 
    procedure Dump_Memory_Map (Self : in out Spec; VF : Virtual_File);
 
+   procedure Dump_Startup_Code (Self : in out Spec; VF : Virtual_File);
+
 private
    type Interrupt is record
       Name : Unbounded_String;
@@ -75,6 +77,10 @@ private
 
    --  Private procedures  --
 
+   procedure Dump_Header
+      (Self : in out Spec;
+       File : in out Indented_File_Writer);
+
    --  Dump all the current memory sections to the file.
    procedure Dump_Sections
       (Self : in out Spec;
@@ -88,11 +94,22 @@ private
 
    --  Dump a single line representing a memory region to the file.
    procedure Dump_Memory
-      (File        : in out Indented_File_Writer;
+      (Self        : in out Spec;
+       File        : in out Indented_File_Writer;
        Name        : Unbounded_String;
        Permissions : Unbounded_String;
        Start       : Unbounded_String;
        Size        : Unbounded_String);
+
+   --  XXX: Dump a typical ARM interrupt vector used for ZFP.
+   procedure Dump_Interrupt_Vector
+      (Self : in out Spec;
+       File : in out Indented_File_Writer);
+
+   --  XXX: Dump the init code for initializing each section (if needed).
+   procedure Dump_Sections_Init_Code
+      (Self : in out Spec;
+       File : in out Indented_File_Writer);
 
    --  Translate the size string into a C style hexa notation if needed.
    --  If it is already C style or if it is of the form `192K` we dont

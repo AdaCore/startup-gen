@@ -25,7 +25,7 @@ package body Sections is
                                        (Boot_Memory /= Reloc_Memory);
       Lowered_Name : constant Unbounded_String :=
          To_Unbounded_String (To_Lower (To_String (Name)));
-      Temp : Section :=
+      Temp : constant Section :=
          (Name               => Lowered_Name,
           Reloc_Memory       => Reloc_Memory,
           To_Init            => To_Init,
@@ -33,7 +33,6 @@ package body Sections is
           Init_Code          => Init_Code,
           Additional_Content => Additional_Content);
    begin
-      Temp.Init_Code.Format_Code_With_Name (Temp.Name);
      return Temp;
    end Make_Section;
 

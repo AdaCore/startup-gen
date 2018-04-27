@@ -8,10 +8,11 @@ with Ada.IO_Exceptions; use Ada.IO_Exceptions;
 package Setup is
 
    type Command_Line_Values is tagged record
-      Project_File    : aliased String_Access := null;
-      Output_Dir      : aliased String_Access := new String'("./");
-      Linker_File     : aliased String_Access := new String'("linker.ld");
-      Memory_Map_File : aliased String_Access := new String'("memory_map.ld");
+      Project_File      : aliased String_Access := null;
+      Output_Dir        : aliased String_Access := new String'("./");
+      Linker_File       : aliased String_Access := new String'("linker.ld");
+      Memory_Map_File   : aliased String_Access := new String'("memory_map.ld");
+      Startup_Code_File : aliased String_Access := new String'("startup.S");
    end record;
 
    --  We verify that the mandatory arguments are correct.
