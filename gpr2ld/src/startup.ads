@@ -11,11 +11,9 @@ package Startup is
 
    type Algorithm is tagged private;
 
-   function Clear_Memory_Code return Algorithm;
-
-   function Copy_Memory_Code return Algorithm;
-
-   function No_Code return Algorithm;
+   Clear_Memory_Code : constant Algorithm;
+   Copy_Memory_Code  : constant Algorithm;
+   No_Code           : constant Algorithm;
 
    procedure Format_Code
       (Self : in out Algorithm;
@@ -44,5 +42,46 @@ private
 
    function TUS (Str : String) return Unbounded_String
       renames To_Unbounded_String;
+
+   --  Private constants  --
+
+   Clear_Memory_Code : constant Algorithm :=
+      (Load => False,
+       Code => SV.Empty_Vector &
+            TUS ("/* Clear $NAME */") &
+            TUS ("$INDENTmovw  r0,#:lower16:__$NAME_start") &
+            TUS ("$INDENTmovw  r0,#:uppper16:__$NAME_start") &
+            TUS ("$INDENTmovw  r1,#:lower16:__$NAME_words") &
+            TUS ("$INDENTmovw  r2,#0") &
+            TUS ("$INDENTmovw  r1,1f") &
+            TUS ("$INDENTcbz  r1,1f") &
+            TUS ("0:$INDENTstr  r2,[r0],#4") &
+            TUS ("$INDENTsubs  r1,r1,#1") &
+            TUS ("$INDENTbne  0b") &
+            TUS ("") &
+            TUS ("1:")
+         );
+
+      Copy_Memory_Code : constant Algorithm :=
+         (Load => True,
+          Code => SV.Empty_Vector &
+               TUS ("/* Copy $NAME */") &
+               TUS ("$INDENTmovw  r0,#:lower16:__$NAME_start") &
+               TUS ("$INDENTmovw  r0,#:uppper16:__$NAME_start") &
+               TUS ("$INDENTmovw  r1,#:lower16:__$NAME_words") &
+               TUS ("$INDENTmovw  r2,#:lower16:__$NAME_load") &
+               TUS ("$INDENTmovw  r2,#:uppper16:__$NAME_load") &
+               TUS ("$INDENTcbz  r1,1f") &
+               TUS ("0:$INDENTldr  r4,[r2],#4") &
+               TUS ("$INDENTstr  r4,[r0],#4") &
+               TUS ("$INDENTsubs  r1,r1,#1") &
+               TUS ("$INDENTbne  0b") &
+               TUS ("") &
+               TUS ("1:")
+            );
+
+      No_Code : constant Algorithm :=
+         (Load => True,
+          Code => SV.Empty_Vector);
 
 end Startup;
