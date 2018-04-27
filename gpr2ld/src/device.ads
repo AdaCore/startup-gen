@@ -102,4 +102,8 @@ private
    --  Translates an Ada based literal string to a C style hexa string.
    function Ada_Style_Hex_To_C_Style_Hex (Size : String) return String;
 
+   --  Returns True if the String passed
+   --  in parameter is an Ada based literal.
+   function Is_Based_Literal (Number : String) return Boolean;
+
 end Device;
