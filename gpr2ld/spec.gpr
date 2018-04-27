@@ -23,7 +23,7 @@ project Spec is
       for Mem_Kind("RAM") use "RAM";
 
       --  ROM
-      for Address("ROM") use "0x20000000";
+      for Address("ROM") use "0x00400000";
       for Size("ROM") use "0x100000";
 
       -- RAM
