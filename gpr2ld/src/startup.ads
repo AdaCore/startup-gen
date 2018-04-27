@@ -57,10 +57,9 @@ private
       (Code => SV.Empty_Vector &
             TUS ("/* Clear ${NAME} */") &
             TUS ("${INDENT}movw  r0,#:lower16:__${NAME}_start") &
-            TUS ("${INDENT}movw  r0,#:uppper16:__${NAME}_start") &
+            TUS ("${INDENT}movt  r0,#:upper16:__${NAME}_start") &
             TUS ("${INDENT}movw  r1,#:lower16:__${NAME}_words") &
             TUS ("${INDENT}movw  r2,#0") &
-            TUS ("${INDENT}movw  r1,1f") &
             TUS ("${INDENT}cbz  r1,1f") &
             TUS ("0:${INDENT}str  r2,[r0],#4") &
             TUS ("${INDENT}subs  r1,r1,#1") &
@@ -73,10 +72,10 @@ private
          (Code => SV.Empty_Vector &
                TUS ("/* Copy ${NAME} */") &
                TUS ("${INDENT}movw  r0,#:lower16:__${NAME}_start") &
-               TUS ("${INDENT}movw  r0,#:uppper16:__${NAME}_start") &
+               TUS ("${INDENT}movt  r0,#:upper16:__${NAME}_start") &
                TUS ("${INDENT}movw  r1,#:lower16:__${NAME}_words") &
                TUS ("${INDENT}movw  r2,#:lower16:__${NAME}_load") &
-               TUS ("${INDENT}movw  r2,#:uppper16:__${NAME}_load") &
+               TUS ("${INDENT}movt  r2,#:upper16:__${NAME}_load") &
                TUS ("${INDENT}cbz  r1,1f") &
                TUS ("0:${INDENT}ldr  r4,[r2],#4") &
                TUS ("${INDENT}str  r4,[r0],#4") &
