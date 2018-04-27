@@ -3,7 +3,7 @@ with Ada.Long_Integer_Text_IO; use Ada.Long_Integer_Text_IO;
 
 with Ada.Numerics.Elementary_Functions;
 
-with GNATCOLL.Utils;
+with GNAT.Regexp;
 
 with Startup; use Startup;
 
@@ -356,15 +356,38 @@ package body Device is
                               Start & ", LENGTH = " & Size);
    end Dump_Memory;
 
+   -----------------------
+   -- Is_Based_Litteral --
+   -----------------------
+
+   function Is_Based_Literal (Number : String) return Boolean
+   is
+   use GNAT.Regexp;
+      Numeral       : constant String := "([0-9]+)";
+
+      Base          : constant String := "([2-9])|(1[0-6])";
+
+      Based_Numeral : constant String := "(([0-9])|([A-F]|[a-f]))*";
+
+      Exponent      : constant String :=
+         "((" & "E-" & Numeral & ")|(" & "E\+?" & Numeral & "))*";
+
+      Pattern       : constant String :=
+         Base & "#" & "\.?" & Based_Numeral & "#" & Exponent;
+
+      Expr : constant Regexp := Compile (Pattern => Pattern);
+   begin
+      return Match (Number, Expr);
+   end Is_Based_Literal;
+
    --------------------
    -- To_Size_String --
    --------------------
 
    function To_Size_String (Size : String) return String
    is
-      use GNATCOLL.Utils;
       Size_Temp : constant String :=
-         (if Ends_With (Size, "#")
+         (if Is_Based_Literal (Size)
           then Ada_Style_Hex_To_C_Style_Hex (Size)
           else Size
          );
