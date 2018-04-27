@@ -1,4 +1,9 @@
 with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Long_Integer_Text_IO; use Ada.Long_Integer_Text_IO;
+
+with Ada.Numerics.Elementary_Functions;
+
+with GNATCOLL.Utils;
 
 with Startup; use Startup;
 
@@ -42,8 +47,8 @@ package body Device is
 
             Memory_Unit : constant Memory_Region :=
               (Name  => To_Unbounded_String (Memory.all),
-               Start => To_Unbounded_String (Start),
-               Size  => To_Unbounded_String (Size),
+               Start => To_Unbounded_String (To_Size_String (Start)),
+               Size  => To_Unbounded_String (To_Size_String (Size)),
                Kind  => Memory_Kind'Value (Kind));
          begin
             Self.Memory := Self.Memory & Memory_Unit;
@@ -350,5 +355,44 @@ package body Device is
       File.Put_Indented_Line (Name & " " & Permissions & " : ORIGIN = " &
                               Start & ", LENGTH = " & Size);
    end Dump_Memory;
+
+   --------------------
+   -- To_Size_String --
+   --------------------
+
+   function To_Size_String (Size : String) return String
+   is
+      use GNATCOLL.Utils;
+      Size_Temp : constant String :=
+         (if Ends_With (Size, "#")
+          then Ada_Style_Hex_To_C_Style_Hex (Size)
+          else Size
+         );
+   begin
+      return Size_Temp;
+   end To_Size_String;
+
+   ----------------------------------
+   -- Ada_Style_Hex_To_C_Style_Hex --
+   ----------------------------------
+
+   function Ada_Style_Hex_To_C_Style_Hex (Size : String) return String
+   is
+      use Ada.Numerics.Elementary_Functions;
+
+      Integer_Form : constant Long_Integer := Long_Integer'Value(Size);
+
+      Size_Of_String_Representation : constant Integer :=
+         Integer (Float'Ceiling (Log (Float (Integer_Form), 16.0)));
+
+      Temp_String : String(1..Size_Of_String_Representation + 4);
+   begin
+      Put
+         (To   => Temp_String,
+          Item => Integer_Form,
+          Base => 16);
+
+      return ("0x" & Temp_String (4..Temp_String'Last - 1));
+   end Ada_Style_Hex_To_C_Style_Hex;
 
 end Device;

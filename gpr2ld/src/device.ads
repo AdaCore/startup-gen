@@ -94,4 +94,12 @@ private
        Start       : Unbounded_String;
        Size        : Unbounded_String);
 
+   --  Translate the size string into a C style hexa notation if needed.
+   --  If it is already C style or if it is of the form `192K` we dont
+   --  change it and return it untouched.
+   function To_Size_String (Size : String) return String;
+
+   --  Translates an Ada based literal string to a C style hexa string.
+   function Ada_Style_Hex_To_C_Style_Hex (Size : String) return String;
+
 end Device;
