@@ -364,16 +364,14 @@ package body Device is
    is
    use GNAT.Regexp;
       Numeral       : constant String := "([0-9]+)";
-
       Base          : constant String := "([2-9])|(1[0-6])";
-
       Based_Numeral : constant String := "(([0-9])|([A-F]|[a-f]))*";
 
       Exponent      : constant String :=
-         "((" & "E-" & Numeral & ")|(" & "E\+?" & Numeral & "))*";
+        "((" & "E-" & Numeral & ")|(" & "E\+?" & Numeral & "))*";
 
       Pattern       : constant String :=
-         Base & "#" & "\.?" & Based_Numeral & "#" & Exponent;
+        Base & "#" & "\.?" & Based_Numeral & "#" & Exponent;
 
       Expr : constant Regexp := Compile (Pattern => Pattern);
    begin
