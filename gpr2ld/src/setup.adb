@@ -34,6 +34,11 @@ package body Setup is
           Values.Memory_Map_File'Access, "-m:",
           Help => "Name of the generated memory map.");
 
+      Define_Switch
+         (Config,
+          Values.Startup_Code_File'Access, "-s:",
+          Help => "Name of the generated startup code.");
+
       Getopt (Config);
 
       Values.Project_File := new String'(Get_Argument);

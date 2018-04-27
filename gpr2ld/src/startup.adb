@@ -1,4 +1,21 @@
+with Ada.Text_IO; use Ada.Text_IO;
+
 package body Startup is
+
+   ------------
+   -- Format --
+   ------------
+
+   procedure Format
+      (Self   : in out Algorithm;
+       Name   : Unbounded_String;
+       Indent : Unbounded_String)
+   is
+   begin
+      Self.Format_Code_With_Name (Name);
+      Self.Format_Code_With_Indent (Indent);
+   end Format;
+
 
    -----------------
    -- Format_Code --
@@ -8,8 +25,9 @@ package body Startup is
       (Self : in out Algorithm;
        Subst : Substitution_Value)
    is
-      Substitutions : constant Substitution_Array :=
-         (1 => Subst);
+      Substitutions : Substitution_Array :=
+         (1 => Subst
+         );
    begin
       for Line of Self.Code loop
          declare
@@ -19,6 +37,7 @@ package body Startup is
                            Delimiter  => '$');
          begin
             Line := To_Unbounded_String (Substituted_Code);
+            Put_Line (Substituted_Code);
          end;
       end loop;
    end Format_Code;
@@ -50,5 +69,12 @@ package body Startup is
             (Subst => (Name  => new String'("INDENT"),
                        Value => new String'(To_String (Indent))));
        end Format_Code_With_Indent;
+
+   function Get_Lines (Self : in out Algorithm)
+      return Unbounded_String_Vector.Vector
+   is
+   begin
+      return Self.Code;
+   end Get_Lines;
 
 end Startup;

@@ -13,4 +13,6 @@ Options:
                 Default value is linker.ld.
         -m ARG : Arg is the name of the generated memory map.
                 Default value is memory_map.ld.
+        -s ARG: Arg is the name of the generated startup code.
+                Default value is startup.S
 
