@@ -69,7 +69,6 @@ package body Device is
    --------------------------
    -- Get_CPU_From_Project --
    --------------------------
-
    procedure Get_CPU_From_Project
       (Self         : in out Spec;
        Spec_Project : Project_Type)
@@ -316,7 +315,7 @@ package body Device is
 
       --  XXX: Hardcoded stack for the BSS.
       if Section.Name = "bss" then
-        File.New_Line;
+         File.New_Line;
 
          File.Put_Indented_Line ("__stack_start = .;");
          File.Put_Indented_Line (". += DEFINED (__stack_size) ?" &
