@@ -1,6 +1,4 @@
---  with "interruptions"
-
-
+with "interruptions";
 project Spec is
 
    package CPU is

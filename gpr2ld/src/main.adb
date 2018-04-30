@@ -57,17 +57,22 @@ begin
         (Root_Project_Path => Project_File,
          Packages_To_Check => All_Packs);
 
+      --  TODO: Put all that in a function that setup the spec.
+      --  TODO: Instead of taking the root project, we probably
+      --  want to iterate over all the projects, to let users override stuff.
       Spec.Get_Memory_List_From_Project (Tree.Root_Project);
 
       Spec.Get_Boot_Memory_From_Project (Tree.Root_Project);
 
-      --  Spec.Get_Interrupt_Vector_From_Project (Tree.Root_Project);
+      Spec.Get_Interrupt_Vector_From_Project
+         (Tree.Project_From_Name ("interruptions"));
 
       Spec.Get_CPU_From_Project (Tree.Root_Project);
 
       Spec.Validate;
 
       Spec.Generate_Sections;
+      --  TODO End of setup.
 
       Spec.Dump_Linker_Script (Linker_Script);
 

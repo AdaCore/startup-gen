@@ -1,0 +1,14 @@
+project Interruptions is
+
+   --  Sample of the first 3 interruptions
+   --  for the atsam4e16c board.
+   --  We consider that if we dont have an interrupt, its reserved.
+   --  For the interrupt table, the index starts at 0;
+   --  TODO: allow negative indexes to modify systick for example.
+   package Interrupt_Vector is
+      for Interrupt("5") use "PMC";
+      for Interrupt("6") use "EFC";
+      for Interrupt("7") use "UART0";
+   end Interrupt_Vector;
+
+end Interruptions;

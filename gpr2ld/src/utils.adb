@@ -38,6 +38,11 @@ package body Utils is
       Error7 : aliased constant String :=
         Register_New_Attribute ("Boot_Memory", "Memory_Map");
 
+      Error8 : aliased constant String := Register_New_Attribute
+         ("Interrupt",
+          "Interrupt_Vector",
+          Indexed => True);
+
       type Err_Str_Access is access constant String;
       type Strings is array (Integer range <>) of Err_Str_Access;
       Errors : constant Strings :=
@@ -47,7 +52,9 @@ package body Utils is
          4 => Error4'Access,
          5 => Error5'Access,
          6 => Error6'Access,
-         7 => Error7'Access);
+         7 => Error7'Access,
+         8 => Error8'Access
+         );
    begin
       for Str of Errors loop
          if Str.all /= "" then
