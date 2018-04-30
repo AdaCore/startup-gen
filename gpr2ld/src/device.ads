@@ -22,6 +22,10 @@ package Device is
       (Self         : in out Spec;
        Spec_Project : Project_Type);
 
+   procedure Get_Interrupt_Vector_From_Project
+      (Self         : in out Spec;
+       Spec_Project : Project_Type);
+
    procedure Get_Boot_Memory_From_Project
       (Self         : in out Spec;
        Spec_Project : Project_Type);

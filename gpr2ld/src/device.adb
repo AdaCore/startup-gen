@@ -57,6 +57,24 @@ package body Device is
 
    end Get_Memory_List_From_Project;
 
+   ---------------------------------------
+   -- Get_Interrupt_Vector_From_Project --
+   ---------------------------------------
+
+   procedure Get_Interrupt_Vector_From_Project
+      (Self         : in out Spec;
+       Spec_Project : Project_Type)
+   is
+      Interrupts : constant Attribute_Pkg_String :=
+        Build
+           (Package_Name   => "Interrupt_Vector",
+            Attribute_Name => "Interrupt");
+   begin
+      for Interrupt of Spec_Project.Attribute_Indexes (Interrupts) loop
+         Put_Line ("Int : " & Interrupt.all);
+      end loop;
+   end Get_Interrupt_Vector_From_Project;
+
    ----------------------------------
    -- Get_Boot_Memory_From_Project --
    ----------------------------------
@@ -443,11 +461,36 @@ package body Device is
       --  XXX: Hardcoded for now, we will use Self.Interrupt_Vector when
       --  the handling of the interrupt vector is done.
       File.Put_Line ("__vectors:");
-      File.Put_Indented_Line (".word __stack_end");
-      File.Put_Indented_Line (".word _start_" & Self.Boot_Memory);
-      File.Put_Indented_Line (".word hang");
-      File.Put_Indented_Line (".word hang");
-      File.Put_Indented_Line (".word hang");
+      File.Put_Indented_Line (".word __stack_end /* top of the stack */");
+      File.Put_Indented_Line (".word _start_" &
+                               Self.Boot_Memory & "/* Reset */");
+      File.Put_Indented_Line (".word hang /* NMI */");
+      File.Put_Indented_Line (".word hang /* Hard Fault */");
+      File.Put_Indented_Line (".word hang /* MemManage */");
+      File.Put_Indented_Line (".word hang /* Bus Fault */");
+      File.Put_Indented_Line (".word hang /* Usage Fault */");
+      File.Put_Indented_Line (".word 0    /* reserved */");
+      File.Put_Indented_Line (".word 0    /* reserved */");
+      File.Put_Indented_Line (".word 0    /* reserved */");
+      File.Put_Indented_Line (".word 0    /* reserved */");
+      File.Put_Indented_Line (".word hang /* SVC */");
+      File.Put_Indented_Line (".word hang /* DebugMon */");
+      File.Put_Indented_Line (".word 0    /* reserved */");
+      File.Put_Indented_Line (".word hang /* PendSV */");
+      File.Put_Indented_Line (".word hang /* SysTick */");
+
+
+      --  We add the interrupts corresponding
+      --  to what is in the interrupt vector.
+--      for I in range (0..Last) loop
+--         if I is in range (First..Last) then
+--            --  We have 
+--         else
+--         end if;
+--      end loop;
+
+
+
       File.Unindent;
    end Dump_Interrupt_Vector;
 
