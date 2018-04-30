@@ -23,9 +23,7 @@ package body Startup is
       (Self : in out Algorithm;
        Subst : Substitution_Value)
    is
-      Substitutions : Substitution_Array :=
-         (1 => Subst
-         );
+      Substitutions : constant Substitution_Array := (1 => Subst);
    begin
       for Line of Self.Code loop
          declare
