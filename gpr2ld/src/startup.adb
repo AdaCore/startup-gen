@@ -1,5 +1,3 @@
-with Ada.Text_IO; use Ada.Text_IO;
-
 package body Startup is
 
    ------------
@@ -37,7 +35,6 @@ package body Startup is
                            Delimiter  => '$');
          begin
             Line := To_Unbounded_String (Substituted_Code);
-            Put_Line (Substituted_Code);
          end;
       end loop;
    end Format_Code;
