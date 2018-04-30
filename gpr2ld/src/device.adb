@@ -38,7 +38,7 @@ package body Device is
             Size : constant String :=
               Spec_Project.Attribute_Value (Size_Table, Index => Memory.all);
 
-            Start : constant String :=
+            Address : constant String :=
               Spec_Project.Attribute_Value
                 (Address_Table, Index => Memory.all);
 
@@ -46,10 +46,10 @@ package body Device is
               Spec_Project.Attribute_Value (Kind_Table, Index => Memory.all);
 
             Memory_Unit : constant Memory_Region :=
-              (Name  => To_Unbounded_String (Memory.all),
-               Start => To_Unbounded_String (To_Size_String (Start)),
-               Size  => To_Unbounded_String (To_Size_String (Size)),
-               Kind  => Memory_Kind'Value (Kind));
+              (Name    => To_Unbounded_String (Memory.all),
+               Address => To_Unbounded_String (To_Size_String (Address)),
+               Size    => To_Unbounded_String (To_Size_String (Size)),
+               Kind    => Memory_Kind'Value (Kind));
          begin
             Self.Memory := Self.Memory & Memory_Unit;
          end;
@@ -139,20 +139,22 @@ package body Device is
              Init_Code    => Copy_Memory_Code
                        );
 
-      --  XXX: for now we dont use it.
-       CCMDATA : constant Section :=
-         Make_Section
-            (Boot_Memory  => Self.Boot_Memory,
-             Name         => TUS ("ccmdata"),
-             Reloc_Memory => TUS ("RAM"),
-             Init_Code    => Copy_Memory_Code
-                     );
-
        use Sections.Section_Vectors;
    begin
         Self.Section_Vector := Self.Section_Vector &
           TEXT & RODATA & DATA & BSS;
    end Generate_Sections;
+
+   --------------
+   -- Validate --
+   --------------
+
+   procedure Validate (Self : in out Spec) is
+   begin
+      Self.Validate_Input;
+      Self.Validate_Memory_Regions;
+      Self.Validate_Interrupts;
+   end Validate;
 
    -------------
    -- Display --
@@ -164,10 +166,10 @@ package body Device is
       Put_Line
         ("Float_Handling: " & Float_Type'Image (Self.CPU.Float_Handling));
       for Memory of Self.Memory loop
-         Put_Line ("Name : " & To_String (Memory.Name));
-         Put_Line ("Start : " & To_String (Memory.Start));
-         Put_Line ("Size : " & To_String (Memory.Size));
-         Put_Line ("Kind : " & Memory_Kind'Image (Memory.Kind));
+         Put_Line ("Name    : " & To_String (Memory.Name));
+         Put_Line ("Address : " & To_String (Memory.Address));
+         Put_Line ("Size    : " & To_String (Memory.Size));
+         Put_Line ("Kind    : " & Memory_Kind'Image (Memory.Kind));
       end loop;
    end Display;
 
@@ -213,13 +215,13 @@ package body Device is
 
       for Memory of Self.Memory loop
          declare
+            --  XXX: Hardcoded permissions for now
             Permissions : constant Unbounded_String :=
                      To_Unbounded_String (if Memory.Kind = ROM
                                              then "(rx)"
                                              else "(rwx)");
          begin
-            Self.Dump_Memory (File, Memory.Name, Permissions,
-                                    Memory.Start, Memory.Size);
+            Dump_Memory (File, Memory, Permissions);
          end;
       end loop;
 
@@ -416,16 +418,16 @@ package body Device is
    -----------------
 
    procedure Dump_Memory
-       (Self        : in out Spec;
-        File        : in out Indented_File_Writer;
-        Name        : Unbounded_String;
-        Permissions : Unbounded_String;
-        Start       : Unbounded_String;
-        Size        : Unbounded_String)
+        (File        : in out Indented_File_Writer;
+         Memory      : Memory_Region;
+         Permissions : Unbounded_String)
    is
+      Name         : constant Unbounded_String  := Memory.Name;
+      Address      : constant Unbounded_String  := Memory.Address;
+      Size         : constant Unbounded_String  := Memory.Size;
    begin
       File.Put_Indented_Line (Name & " " & Permissions & " : ORIGIN = " &
-                              Start & ", LENGTH = " & Size);
+                              Address & ", LENGTH = " & Size);
    end Dump_Memory;
 
    ---------------------------
@@ -438,6 +440,8 @@ package body Device is
    is
    begin
       File.Indent;
+      --  XXX: Hardcoded for now, we will use Self.Interrupt_Vector when
+      --  the handling of the interrupt vector is done.
       File.Put_Line ("__vectors:");
       File.Put_Indented_Line (".word __stack_end");
       File.Put_Indented_Line (".word _start_" & Self.Boot_Memory);
@@ -480,7 +484,7 @@ package body Device is
    use GNAT.Regexp;
       Numeral       : constant String := "([0-9]+)";
       Base          : constant String := "([2-9])|(1[0-6])";
-      Based_Numeral : constant String := "(([0-9])|([A-F]|[a-f]))*";
+      Based_Numeral : constant String := "(([0-9])|([A-F]|[a-f]))+";
 
       Exponent      : constant String :=
         "((" & "E-" & Numeral & ")|(" & "E\+?" & Numeral & "))*";
@@ -501,18 +505,18 @@ package body Device is
    is
       Size_Temp : constant String :=
          (if Is_Based_Literal (Size)
-          then Ada_Style_Hex_To_C_Style_Hex (Size)
+          then Ada_Based_Literal_To_C_Style_Hex (Size)
           else Size
          );
    begin
       return Size_Temp;
    end To_Size_String;
 
-   ----------------------------------
-   -- Ada_Style_Hex_To_C_Style_Hex --
-   ----------------------------------
+   --------------------------------------
+   -- Ada_Based_Literal_To_C_Style_Hex --
+   --------------------------------------
 
-   function Ada_Style_Hex_To_C_Style_Hex (Size : String) return String
+   function Ada_Based_Literal_To_C_Style_Hex (Size : String) return String
    is
       use Ada.Numerics.Elementary_Functions;
 
@@ -529,6 +533,142 @@ package body Device is
           Base => 16);
 
       return ("0x" & Temp_String (4..Temp_String'Last - 1));
-   end Ada_Style_Hex_To_C_Style_Hex;
+   end Ada_Based_Literal_To_C_Style_Hex;
+
+   --------------------
+   -- Validate_Input --
+   --------------------
+
+   procedure Validate_Input (Self : in out Spec) is
+      use GNAT.Regexp;
+      Boot_Mem_Is_Valid : Boolean := False;
+
+      Hex_Number_At_Least_One : constant String :=
+         "(0x(([1-9]+[0-9]*[0-9]+)|(0*[1-9])))";
+      Number_At_Least_one : constant String :=
+         "(([1-9]+[0-9]*[0-9]+)|([1-9].))";
+
+      Number_And_Unit : constant String :=
+         "(" & Number_At_Least_One & "(k|K|m|M))";
+
+      Hex_Number : constant String := "(0x([0-9]|[A-F]|[a-f])+)";
+
+      Address_Pattern : constant String := Hex_Number;
+
+      Size_Pattern : constant String :=
+         Hex_Number_At_Least_One & "|" & Number_And_Unit;
+
+      Address_Reg : constant Regexp := Compile (Pattern => Address_Pattern);
+      Size_Reg    : constant Regexp := Compile (Pattern => Size_Pattern);
+
+   begin
+      for Memory_Region of Self.Memory loop
+         if Memory_Region.Name = Self.Boot_Memory then
+            --  We found the boot memory.
+            Boot_Mem_Is_Valid := True;
+         end if;
+
+         --  If the size or the memory are not matching, we raise an exception.
+         if not Match (To_String (Memory_Region.Size), Size_Reg) then
+            raise Name_Error
+               with "Invalid memory size expression : " &
+                  To_String (Memory_Region.Size);
+         end if;
+
+         if not Match (To_String (Memory_Region.Address), Address_Reg) then
+            raise Name_Error
+               with "Invalid memory address expression : " &
+                  To_String (Memory_Region.Address);
+         end if;
+      end loop;
+
+      if not Boot_Mem_Is_Valid then
+         raise Name_Error
+               with "Invalid boot memory : " & To_String (Self.Boot_Memory);
+      end if;
+
+   end Validate_Input;
+
+   -----------------------------
+   -- Validate_Memory_Regions --
+   -----------------------------
+
+   procedure Validate_Memory_Regions (Self : in out Spec) is
+   begin
+      for Iter of Self.Memory loop
+         for Memory_Region_To_Check of Self.Memory loop
+            --  We dont check the memory region against itself.
+            if Memory_Region_To_Check.Name /= Iter.Name then
+               if not Check_Memory_Range (Iter,
+                                          Memory_Region_To_Check) then
+                  raise Name_Error with "Invalid memory ranges : " &
+                     ASCII.LF & Get_Info_String (Iter) &
+                     ASCII.LF & Get_Info_String (Memory_Region_To_Check);
+               end if;
+            end if;
+         end loop;
+      end loop;
+   end Validate_Memory_Regions;
+
+   ------------------------
+   -- Check_Memory_Range --
+   ------------------------
+
+   function Check_Memory_Range (Memory_1 : Memory_Region;
+                                Memory_2 : Memory_Region)
+                                return Boolean
+   is
+      Memory_1_Address : constant Long_Integer :=
+         C_Style_Hexa_To_Long_Integer (Memory_1.Address);
+
+      Memory_1_Size : constant Long_Integer :=
+         C_Style_Hexa_To_Long_Integer (Memory_1.Size);
+
+      Memory_2_Address : constant Long_Integer :=
+         C_Style_Hexa_To_Long_Integer (Memory_2.Address);
+
+      Memory_2_Size : constant Long_Integer :=
+         C_Style_Hexa_To_Long_Integer (Memory_2.Size);
+
+   begin
+      if Memory_2_Address > Memory_1_Address then
+         return (Memory_1_Address + Memory_1_Size < Memory_2_Address);
+      elsif Memory_2_Address < Memory_1_Address then
+         return (Memory_2_Address + Memory_2_Size < Memory_1_Address);
+      else --  Memory addresses are the same.
+         return False;
+      end if;
+   end Check_Memory_Range;
+
+   -------------------------
+   -- Validate_Interrupts --
+   -------------------------
+
+   procedure Validate_Interrupts (Self : in out Spec) is
+   begin
+      null;
+   end Validate_Interrupts;
+
+   ----------------------------------
+   -- C_Style_Hexa_To_Long_Integer --
+   ----------------------------------
+
+   function C_Style_Hexa_To_Long_Integer (Number : Unbounded_String)
+      return Long_Integer
+   is
+      Nb_Str : constant String := To_String (Number);
+
+      -- We get rid of the `0x` in front and create an ada based literal.
+      Int_Repr : constant Long_Integer :=
+         Long_Integer'Value ("16#" & Nb_Str (3..Nb_Str'Last) & "#");
+   begin
+      return Int_Repr;
+   end C_Style_Hexa_To_Long_Integer;
+
+   function Get_Info_String (Region : Memory_Region) return String is
+   begin
+      return To_String (Region.Name) & " : Size = " & To_String (Region.Size) &
+               "  and Address = " & To_String (Region.Address);
+   end Get_Info_String;
 
 end Device;

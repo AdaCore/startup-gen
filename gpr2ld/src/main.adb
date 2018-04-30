@@ -1,14 +1,14 @@
 with GNAT.Command_Line;
 with GNAT.Strings;
 
-with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Text_IO;           use Ada.Text_IO;
 
-with GNATCOLL.Projects; use GNATCOLL.Projects;
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
+with GNATCOLL.Projects;     use GNATCOLL.Projects;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 with Setup;
 with Utils;
-with Device; use Device;
+with Device;                use Device;
 
 ----------
 -- Main --
@@ -34,7 +34,7 @@ begin
    declare
       Tree : Project_Tree;
 
-      Spec_File : constant Virtual_File :=
+      Project_File : constant Virtual_File :=
         Create_From_Base (Filesystem_String (Input.Project_File.all));
 
       Linker_Script : constant Virtual_File :=
@@ -54,14 +54,18 @@ begin
 
    begin
       Tree.Load
-        (Root_Project_Path => Spec_File,
+        (Root_Project_Path => Project_File,
          Packages_To_Check => All_Packs);
 
       Spec.Get_Memory_List_From_Project (Tree.Root_Project);
 
       Spec.Get_Boot_Memory_From_Project (Tree.Root_Project);
 
+      --  Spec.Get_Interrupt_Vector_From_Project (Tree.Root_Project);
+
       Spec.Get_CPU_From_Project (Tree.Root_Project);
+
+      Spec.Validate;
 
       Spec.Generate_Sections;
 
