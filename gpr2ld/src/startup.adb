@@ -14,7 +14,6 @@ package body Startup is
       Self.Format_Code_With_Indent (Indent);
    end Format;
 
-
    -----------------
    -- Format_Code --
    -----------------
@@ -41,15 +40,15 @@ package body Startup is
    -- Format_Code_With_Name --
    ---------------------------
 
-  procedure Format_Code_With_Name
+   procedure Format_Code_With_Name
       (Self : in out Algorithm;
        Name : Unbounded_String)
-       is
-       begin
-         Self.Format_Code
-            (Subst => (Name  => new String'("NAME"),
-                       Value => new String'(To_String (Name))));
-       end Format_Code_With_Name;
+   is
+   begin
+      Self.Format_Code
+         (Subst => (Name  => new String'("NAME"),
+                    Value => new String'(To_String (Name))));
+   end Format_Code_With_Name;
 
    -----------------------------
    -- Format_Code_With_Indent --
@@ -58,12 +57,16 @@ package body Startup is
    procedure Format_Code_With_Indent
       (Self : in out Algorithm;
        Indent : Unbounded_String)
-       is
-       begin
-         Self.Format_Code
-            (Subst => (Name  => new String'("INDENT"),
-                       Value => new String'(To_String (Indent))));
-       end Format_Code_With_Indent;
+   is
+   begin
+      Self.Format_Code
+         (Subst => (Name  => new String'("INDENT"),
+                    Value => new String'(To_String (Indent))));
+   end Format_Code_With_Indent;
+
+   ---------------
+   -- Get_Lines --
+   ---------------
 
    function Get_Lines (Self : in out Algorithm)
       return Unbounded_String_Vector.Vector

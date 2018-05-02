@@ -65,7 +65,7 @@ package body File_Writer is
    procedure New_Line (Self : in out Indented_File_Writer)
    is
    begin
-       GNATCOLL.VFS.Write (Self.Handle, "" & ASCII.LF);
+      GNATCOLL.VFS.Write (Self.Handle, "" & ASCII.LF);
    end New_Line;
 
    ----------

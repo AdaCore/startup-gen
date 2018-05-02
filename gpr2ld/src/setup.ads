@@ -11,7 +11,8 @@ package Setup is
       Project_File      : aliased String_Access := null;
       Output_Dir        : aliased String_Access := new String'("./");
       Linker_File       : aliased String_Access := new String'("linker.ld");
-      Memory_Map_File   : aliased String_Access := new String'("memory_map.ld");
+      Memory_Map_File   : aliased String_Access :=
+        new String'("memory_map.ld");
       Startup_Code_File : aliased String_Access := new String'("startup.S");
    end record;
 

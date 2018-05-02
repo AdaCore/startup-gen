@@ -17,7 +17,7 @@ package body Sections is
        Init_Code          : Algorithm := No_Code;
        Force_Init         : Boolean := False;
        Load               : Boolean := True;
-       Additional_Content : Unbounded_String_Vectors.Vector:=
+       Additional_Content : Unbounded_String_Vectors.Vector :=
          Unbounded_String_Vectors.Empty_Vector)
        return Section
    is
@@ -33,7 +33,7 @@ package body Sections is
           Init_Code          => Init_Code,
           Additional_Content => Additional_Content);
    begin
-     return Temp;
+      return Temp;
    end Make_Section;
 
 end Sections;
