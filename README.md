@@ -9,14 +9,21 @@ shared resources such as the interrupt vector.
 For example, for a device with 256 bytes of ROM starting at 0, we would have:
 
 ```Ada
-        for Memories use ("RAM1", "ROM1")
-        for Size("ROM1") use "0x1000";
-        for Start("ROM1") use "0x0";
-```
-Or alternatively
+   package Memory_Map is
 
-```Ada
-        for Attributes("ROM1") use "start=0x0;size=0x1000";
+      --  MEMORY MAP
+      for Memories use ("RAM");
+
+      for Boot_Memory use "RAM";
+
+      for Mem_Kind("RAM") use "RAM";
+
+      -- RAM
+      for Address("RAM") use "16#0#";
+      for Size("RAM")    use "16#1000#";
+
+   end Memory_Map;
+
 ```
 
 This tool would also allow the user to update the used knowledge database to the
