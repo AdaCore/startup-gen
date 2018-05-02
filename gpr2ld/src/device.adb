@@ -70,8 +70,29 @@ package body Device is
            (Package_Name   => "Interrupt_Vector",
             Attribute_Name => "Interrupt");
    begin
+      --  XXX: We should free the list.
       for Interrupt of Spec_Project.Attribute_Indexes (Interrupts) loop
-         Put_Line ("Int : " & Interrupt.all);
+         declare
+            Name : constant String :=
+              Spec_Project.Attribute_Value
+                        (Attribute => Interrupts,
+                         Index     => Interrupt.all);
+
+            Interrupt_Index : constant Integer :=
+              Integer'Value (Interrupt.all);
+         begin
+            Put_Line ("Int nb " & Interrupt.all & " : " & Name);
+            if Self.Interrupts.Is_Index_Used (Interrupt_Index) then
+               --  Key already present, there is a problem in the
+               --  project file describing the interrupt vector.
+               raise Name_Error
+                 with "Interrupt nb " & Interrupt.all &
+                      " is already present in the interrupt vector.";
+            else
+               Self.Interrupts.Add_Interrupt
+                  (Interrupt_Index, To_Unbounded_String (Name));
+            end if;
+         end;
       end loop;
    end Get_Interrupt_Vector_From_Project;
 
@@ -169,9 +190,11 @@ package body Device is
 
    procedure Validate (Self : in out Spec) is
    begin
+      --  NOTE: In the case where we have 2 interrupts with the same
+      --  attribute number, we will see only the last one due to how
+      --  GNATCOLL handles indexed values.
       Self.Validate_Input;
       Self.Validate_Memory_Regions;
-      Self.Validate_Interrupts;
    end Validate;
 
    -------------
@@ -198,7 +221,7 @@ package body Device is
    procedure Dump_Linker_Script (Self : in out Spec; VF : Virtual_File) is
       File : Indented_File_Writer := Make (Handle => Write_File (VF));
    begin
-      Self.Dump_Header(File);
+      Dump_Header(File);
       File.New_Line;
       File.Put_Line ("SEARCH_DIR(.)");
       File.New_Line;
@@ -225,7 +248,7 @@ package body Device is
        File : Indented_File_Writer := Make
             (Handle => Write_File (VF));
    begin
-      Self.Dump_Header(File);
+      Dump_Header(File);
 
       File.Put_Line ("MEMORY");
       File.Put_Line ("{");
@@ -261,7 +284,7 @@ package body Device is
                --  We indent with tab;
                Indentation_Character => ASCII.HT);
    begin
-      Self.Dump_Header(File);
+      Dump_Header(File);
       File.New_Line;
       --  XXX: Hardcoded values for ARM assembly.
       File.Indent;
@@ -276,37 +299,84 @@ package body Device is
       Self.Dump_Interrupt_Vector (File);
 
       File.New_Line;
-      File.Indent;
       File.Put_Indented_Line (".text");
       File.Put_Indented_Line (".thumb_func");
       File.Put_Indented_Line (".globl _start_" & Self.Boot_Memory);
-
-      File.New_Line;
-      File.New_Line;
 
       File.Put_Line ("_start_" & Self.Boot_Memory & ":");
       Self.Dump_Sections_Init_Code (File);
 
       File.Indent;
-
       File.New_Line;
       File.Put_Indented_Line ("bl main");
       File.New_Line;
       File.Put_Indented_Line ("bl _exit");
       File.Put_Line ("hang:");
       File.Put_Indented_Line ("b .");
-
       File.Unindent;
 
    end Dump_Startup_Code;
+
+   -------------------
+   -- Add_Interrupt --
+   -------------------
+
+   procedure Add_Interrupt
+      (Self  : in out Interrupt_Vector;
+       Index : Integer;
+       Name  : Unbounded_String)
+   is
+   begin
+      Interrupt_Hashed_Maps.Include
+         (Container => Self.Interrupts,
+          Key       => Index,
+          New_Item  => Name);
+
+      if Index > Self.Last_Index then
+         Self.Last_Index := Index;
+      end if;
+
+   end Add_Interrupt;
+
+   -------------------
+   -- Is_Index_Used --
+   -------------------
+
+   function Is_Index_Used
+      (Self  : in out Interrupt_Vector;
+       Index : Integer) return Boolean
+   is
+      use Interrupt_Hashed_Maps;
+      Is_Used : constant Boolean :=
+        Find
+           (Container => Self.Interrupts,
+            Key       => Index) /= No_Element;
+   begin
+      return Is_Used;
+   end Is_Index_Used;
+
+   --------------
+   -- Get_Name --
+   --------------
+
+   function Get_Name
+      (Self  : in out Interrupt_Vector;
+       Index : Integer) return String
+   is
+   begin
+      return To_String
+         (Interrupt_Hashed_Maps.Element
+            (Container => Self.Interrupts,
+             Key       => Index));
+   end Get_Name;
+
 
    -----------------
    -- Dump_Header --
    -----------------
 
    procedure Dump_Header
-      (Self : in out Spec;
-       File : in out Indented_File_Writer)
+      (File : in out Indented_File_Writer)
    is
    begin
       File.New_Line;
@@ -460,7 +530,9 @@ package body Device is
       File.Indent;
       --  XXX: Hardcoded for now, we will use Self.Interrupt_Vector when
       --  the handling of the interrupt vector is done.
+      File.Put_Indented_Line (".sections .vectors," & '"' & "a" & '"');
       File.Put_Line ("__vectors:");
+      File.Put_Indented_Line ("/* System defined interrupts */");
       File.Put_Indented_Line (".word __stack_end /* top of the stack */");
       File.Put_Indented_Line (".word _start_" &
                                Self.Boot_Memory & "/* Reset */");
@@ -482,14 +554,40 @@ package body Device is
 
       --  We add the interrupts corresponding
       --  to what is in the interrupt vector.
---      for I in range (0..Last) loop
---         if I is in range (First..Last) then
---            --  We have 
---         else
---         end if;
---      end loop;
+      File.New_Line;
+      File.Put_Indented_Line ("/* External interrupts */");
+      File.New_Line;
+      for I in Integer range 0..Self.Interrupts.Last_Index loop
+         if Self.Interrupts.Is_Index_Used (I) then
+            declare
+               Name : constant String := Self.Interrupts.Get_Name (I);
+               Line : constant String :=
+                  ".word "& Name & "_Handler" & "    /* " & Name & " */";
+            begin
+               File.Put_Indented_Line (Line);
+            end;
+         else
+            File.Put_Indented_Line (".word 0    /* reserved */");
+         end if;
+      end loop;
 
-
+      File.New_Line;
+      --  We then generate weak aliases that the user can
+      --  override by linking again his own implementation.
+      for Cursor in Self.Interrupts.Interrupts.Iterate loop
+            declare
+               Name : constant String :=
+                  To_String (Interrupt_Hashed_Maps.Element (Cursor));
+               Weak_Symbol : constant String :=
+                  ".weak" & ASCII.HT & ASCII.HT & Name & "_Handler";
+               Override_Symbol : constant String :=
+                  ".thumb_set" & ASCII.HT & Name & "_Handler,hang";
+            begin
+               File.Put_Indented_Line (Weak_Symbol);
+               File.Put_Indented_Line (Override_Symbol);
+               File.New_Line;
+            end;
+      end loop;
 
       File.Unindent;
    end Dump_Interrupt_Vector;
@@ -682,15 +780,6 @@ package body Device is
          return False;
       end if;
    end Check_Memory_Range;
-
-   -------------------------
-   -- Validate_Interrupts --
-   -------------------------
-
-   procedure Validate_Interrupts (Self : in out Spec) is
-   begin
-      null;
-   end Validate_Interrupts;
 
    ----------------------------------
    -- C_Style_Hexa_To_Long_Integer --
