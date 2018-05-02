@@ -1,9 +1,13 @@
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Long_Integer_Text_IO; use Ada.Long_Integer_Text_IO;
-
 with Ada.Numerics.Elementary_Functions;
 
+with Ada.Characters.Handling; use Ada.Characters.Handling;
+
 with GNAT.Regexp;
+with GNAT.Strings;
+
+with GNATCOLL.Utils;
 
 with Startup; use Startup;
 
@@ -69,9 +73,11 @@ package body Device is
         Build
            (Package_Name   => "Interrupt_Vector",
             Attribute_Name => "Interrupt");
+
+      Interrupt_List : GNAT.Strings.String_List :=
+        Spec_Project.Attribute_Indexes (Interrupts);
    begin
-      --  XXX: We should free the list.
-      for Interrupt of Spec_Project.Attribute_Indexes (Interrupts) loop
+      for Interrupt of Interrupt_List loop
          declare
             Name : constant String :=
               Spec_Project.Attribute_Value
@@ -94,6 +100,7 @@ package body Device is
             end if;
          end;
       end loop;
+      GNATCOLL.Utils.Free (Interrupt_List);
    end Get_Interrupt_Vector_From_Project;
 
    ----------------------------------
@@ -290,6 +297,9 @@ package body Device is
       File.Indent;
       File.Put_Indented_Line (".syntax unified");
       File.Put_Indented_Line (".cpu " & Self.CPU.Name);
+      File.Put_Indented_Line
+         (".fpu " & To_Lower (Float_Type'Image (Self.CPU.Float_Handling)) &
+           "vfp");
       File.Put_Indented_Line (".thumb");
       File.Unindent;
 
@@ -547,7 +557,7 @@ package body Device is
       File.Put_Indented_Line (".word hang /* DebugMon */");
       File.Put_Indented_Line (".word 0    /* reserved */");
       File.Put_Indented_Line (".word hang /* PendSV */");
-      File.Put_Indented_Line (".word hang /* SysTick */");
+      File.Put_Indented_Line (".word SysTick_Handler /* SysTick */");
 
       --  We add the interrupts corresponding
       --  to what is in the interrupt vector.
@@ -569,8 +579,10 @@ package body Device is
       end loop;
 
       File.New_Line;
-      --  We then generate weak aliases that the user can
+      Self.Interrupts.Add_Interrupt (-1, To_Unbounded_String ("SysTick"));
+      --  We generate weak aliases that the user can
       --  override by linking again his own implementation.
+      --  We dont care about the order in which the symbols are declared.
       for Cursor in Self.Interrupts.Interrupts.Iterate loop
             declare
                Name : constant String :=
