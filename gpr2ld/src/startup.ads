@@ -55,7 +55,7 @@ private
 
    Clear_Memory_Code : constant Algorithm :=
       (Code => SV.Empty_Vector &
-            TUS ("/* Clear ${NAME} */") &
+            TUS ("${INDENT}/* Clear ${NAME} */") &
             TUS ("${INDENT}movw  r0,#:lower16:__${NAME}_start") &
             TUS ("${INDENT}movt  r0,#:upper16:__${NAME}_start") &
             TUS ("${INDENT}movw  r1,#:lower16:__${NAME}_words") &
@@ -70,7 +70,7 @@ private
 
       Copy_Memory_Code : constant Algorithm :=
          (Code => SV.Empty_Vector &
-               TUS ("/* Copy ${NAME} */") &
+               TUS ("${INDENT}/* Copy ${NAME} */") &
                TUS ("${INDENT}movw  r0,#:lower16:__${NAME}_start") &
                TUS ("${INDENT}movt  r0,#:upper16:__${NAME}_start") &
                TUS ("${INDENT}movw  r1,#:lower16:__${NAME}_words") &
