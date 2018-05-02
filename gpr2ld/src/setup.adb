@@ -42,7 +42,7 @@ package body Setup is
       Getopt (Config);
 
       Values.Project_File := new String'(Get_Argument);
-  end Get_Arguments;
+   end Get_Arguments;
 
    -------------
    -- Display --
