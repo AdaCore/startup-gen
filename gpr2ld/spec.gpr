@@ -16,7 +16,6 @@ project Spec is
 
       for Boot_Memory use "ROM";
 
-      --  TODO: the user does not handle the naming of the memory
       for Mem_Kind("ROM") use "ROM";
       for Mem_Kind("RAM") use "RAM";
 
