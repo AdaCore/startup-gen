@@ -2,6 +2,7 @@ pragma Ada_12;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Containers.Vectors;
+with Ada.Containers.Hashed_Maps;
 
 with GNATCOLL.VFS;      use GNATCOLL.VFS;
 with GNATCOLL.Projects; use GNATCOLL.Projects;
@@ -53,10 +54,6 @@ package Device is
    procedure Dump_Startup_Code (Self : in out Spec; VF : Virtual_File);
 
 private
-   type Interrupt is record
-      Name : Unbounded_String;
-   end record;
-
    type Float_Type is (Hard, Soft);
 
    type CPU_Type is record
@@ -73,25 +70,53 @@ private
       Kind    : Memory_Kind;
    end record;
 
-   package Interrupt_Vectors is new Ada.Containers.Vectors
-      (Positive, Interrupt);
-
    package Memory_Region_Vectors is new Ada.Containers.Vectors
       (Positive, Memory_Region);
+
+   use Ada.Containers;
+   function Identity (Key : Integer) return Hash_Type
+      is (Hash_Type (Key));
+
+   package Interrupt_Hashed_Maps is new Ada.Containers.Hashed_Maps
+      (Key_Type        => Integer,
+       Element_Type    => Unbounded_String,
+       Hash            => Identity,
+       Equivalent_Keys => "=");
+
+   type Interrupt_Vector is tagged record
+      Interrupts  : Interrupt_Hashed_Maps.Map;
+      Last_Index  : Integer := 0;
+   end record;
 
    type Spec is tagged record
       Memory           : Memory_Region_Vectors.Vector;
       Boot_Memory      : Unbounded_String;
       CPU              : CPU_Type;
-      Interrupt_Vector : Interrupt_Vectors.Vector;
+      Interrupts       : Interrupt_Vector;
       Section_Vector   : Sections.Section_Vectors.Vector;
    end record;
 
    --  Private procedures  --
 
+   procedure Add_Interrupt
+      (Self  : in out Interrupt_Vector;
+       Index : Integer;
+       Name  : Unbounded_String);
+
+   --  Used to check if an interrupt has been defined for a given Index.
+   function Is_Index_Used
+      (Self  : in out Interrupt_Vector;
+       Index : Integer) return Boolean;
+
+   function Get_Name
+      (Self  : in out Interrupt_Vector;
+       Index : Integer) return String;
+
+   --  Returns the last (bigger) index mapped to an interrupt.
+   --  function Last_Index (Self  : in out Interrupt_Vector) return Integer;
+
    procedure Dump_Header
-      (Self : in out Spec;
-       File : in out Indented_File_Writer);
+      (File : in out Indented_File_Writer);
 
    --  Dump all the current memory sections to the file.
    procedure Dump_Sections
@@ -139,9 +164,6 @@ private
 
    --  Checks that there are no overlapping memory regions.
    procedure Validate_Memory_Regions (Self : in out Spec);
-
-   --  TODO: Checks that there are no overlapping interrupts.
-   procedure Validate_Interrupts (Self : in out Spec);
 
    --  TODO: For now only works with hexadecimal sizes.
    --  Handle the case of the size with a unit for the size.
