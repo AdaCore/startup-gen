@@ -165,7 +165,8 @@ private
    --  Checks that there are no overlapping memory regions.
    procedure Validate_Memory_Regions (Self : in out Spec);
 
-   --  TODO: For now only works with hexadecimal sizes.
+   --  TODO: Make it work with <NUMBER><UNIT> format.
+   --  For now only works with hexadecimal sizes.
    --  Handle the case of the size with a unit for the size.
    --  Verify that two memory regions are not overlapping each other.
    function Check_Memory_Range (Memory_1 : Memory_Region;
