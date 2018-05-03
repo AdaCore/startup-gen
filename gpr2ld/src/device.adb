@@ -635,9 +635,9 @@ package body Device is
       --  We generate weak aliases that the user can
       --  override by linking again his own implementation.
       --  We dont care about the order in which the symbols are declared.
-      File.Put_Indented_Line (".weak" & ASCII.HT & "Systick_Handler");
+      File.Put_Indented_Line (".weak" & ASCII.HT & "SysTick_Handler");
       File.Put_Indented_Line (".thumb_set" & ASCII.HT &
-         "Systick_Handler,hang");
+         "SysTick_Handler,hang");
      for Cursor in Self.Interrupts.Interrupts.Iterate loop
             declare
                Name : constant String :=
