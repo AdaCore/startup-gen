@@ -2,11 +2,8 @@ with "interruptions";
 project Spec is
 
    package CPU is
-      --  This attribute will be written in the startup code.
       for Name use "cortex-m4";
-      --  This attribute will be written in the startup code.
       for Float_Handling use "hard";
-
    end CPU;
 
    package Memory_Map is

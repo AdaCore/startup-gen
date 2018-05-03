@@ -2,6 +2,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Containers.Vectors;
 
 with GNATCOLL.Templates; use GNATCOLL.Templates;
+with GNATCOLL.VFS; use GNATCOLL.VFS;
 
 -------------
 -- Startup --
@@ -11,20 +12,22 @@ package Startup is
 
    type Algorithm is tagged private;
 
-   Clear_Memory_Code : constant Algorithm;
-   Copy_Memory_Code  : constant Algorithm;
    No_Code           : constant Algorithm;
 
-   package Unbounded_String_Vector is new Ada.Containers.Vectors
+   package Unbounded_String_Vectors is new Ada.Containers.Vectors
       (Positive, Unbounded_String);
 
    function Get_Lines (Self : in out Algorithm)
-      return Unbounded_String_Vector.Vector;
+      return Unbounded_String_Vectors.Vector;
 
    procedure Format
       (Self   : in out Algorithm;
        Name   : Unbounded_String;
        Indent : Unbounded_String);
+
+   function Get_File_Content (File : Virtual_File) return Algorithm;
+
+   procedure Display (Self : in out Algorithm);
 
 private
 
@@ -40,51 +43,18 @@ private
       (Self : in out Algorithm;
        Indent : Unbounded_String);
 
-   use Unbounded_String_Vector;
+   use Unbounded_String_Vectors;
 
-   package SV renames Unbounded_String_Vector;
+   package SV renames Unbounded_String_Vectors;
 
    type Algorithm is tagged record
-      Code : Unbounded_String_Vector.Vector;
+      Code : Unbounded_String_Vectors.Vector;
    end record;
 
    function TUS (Str : String) return Unbounded_String
       renames To_Unbounded_String;
 
    --  Private constants  --
-
-   Clear_Memory_Code : constant Algorithm :=
-      (Code => SV.Empty_Vector &
-            TUS ("${INDENT}/* Clear ${NAME} */") &
-            TUS ("${INDENT}movw  r0,#:lower16:__${NAME}_start") &
-            TUS ("${INDENT}movt  r0,#:upper16:__${NAME}_start") &
-            TUS ("${INDENT}movw  r1,#:lower16:__${NAME}_words") &
-            TUS ("${INDENT}movw  r2,#0") &
-            TUS ("${INDENT}cbz  r1,1f") &
-            TUS ("0:${INDENT}str  r2,[r0],#4") &
-            TUS ("${INDENT}subs  r1,r1,#1") &
-            TUS ("${INDENT}bne  0b") &
-            TUS ("") &
-            TUS ("1:")
-         );
-
-      Copy_Memory_Code : constant Algorithm :=
-         (Code => SV.Empty_Vector &
-               TUS ("${INDENT}/* Copy ${NAME} */") &
-               TUS ("${INDENT}movw  r0,#:lower16:__${NAME}_start") &
-               TUS ("${INDENT}movt  r0,#:upper16:__${NAME}_start") &
-               TUS ("${INDENT}movw  r1,#:lower16:__${NAME}_words") &
-               TUS ("${INDENT}movw  r2,#:lower16:__${NAME}_load") &
-               TUS ("${INDENT}movt  r2,#:upper16:__${NAME}_load") &
-               TUS ("${INDENT}cbz  r1,1f") &
-               TUS ("0:${INDENT}ldr  r4,[r2],#4") &
-               TUS ("${INDENT}str  r4,[r0],#4") &
-               TUS ("${INDENT}subs  r1,r1,#1") &
-               TUS ("${INDENT}bne  0b") &
-               TUS ("") &
-               TUS ("1:")
-            );
-
-      No_Code : constant Algorithm := (Code => SV.Empty_Vector);
+   No_Code : constant Algorithm := (Code => SV.Empty_Vector);
 
 end Startup;

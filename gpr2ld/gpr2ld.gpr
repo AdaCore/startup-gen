@@ -16,7 +16,7 @@ project GPR2LD is
 
    package Compiler is
       for Default_Switches("Ada") use
-         ("-g", "-O0", "-gnata", "-gnatwa");
+         ("-g", "-O0", "-gnata", "-gnateE", "-gnatwa");
    end Compiler;
 
 end GPR2LD;
