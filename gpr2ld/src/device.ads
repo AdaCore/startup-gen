@@ -41,9 +41,6 @@ package Device is
       (Self         : in out Spec;
        Spec_Project : Project_Type);
 
-   procedure Set_CPU_Architecture_Sample_Code
-      (Self : in out Spec);
-
    procedure Generate_Sections (Self : in out Spec);
 
    procedure Display (Self : in out Spec);
