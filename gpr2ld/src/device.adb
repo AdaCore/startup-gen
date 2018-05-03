@@ -9,8 +9,6 @@ with GNAT.Strings;
 
 with GNATCOLL.Utils;
 
-with Startup; use Startup;
-
 ------------
 -- Device --
 ------------
@@ -87,7 +85,6 @@ package body Device is
             Interrupt_Index : constant Integer :=
               Integer'Value (Interrupt.all);
          begin
-            Put_Line ("Int nb " & Interrupt.all & " : " & Name);
             if Self.Interrupts.Is_Index_Used (Interrupt_Index) then
                --  Key already present, there is a problem in the
                --  project file describing the interrupt vector.
@@ -132,10 +129,65 @@ package body Device is
         Spec_Project.Attribute_Value (Build ("cpu", "float_handling"));
    begin
       Self.CPU :=
-        (To_Unbounded_String (Name),
-         Float_Type'Value (Float_Handling));
+        (Name           => To_Unbounded_String (Name),
+         Float_Handling => Float_Type'Value (Float_Handling),
+         others => <>);
 
    end Get_CPU_From_Project;
+
+   -------------------------------
+   -- Setup_Known_Architectures --
+   -------------------------------
+
+   procedure Setup_Known_Architectures
+      (Self         : in out Spec;
+       Spec_Project : Project_Type)
+   is
+      Architectures : constant Attribute_Pkg_String :=
+        Build
+           (Package_Name   => "Architectures_Configuration",
+            Attribute_Name => "CPU_Architecture");
+
+      Dir : constant String := Spec_Project.Attribute_Value
+         (Build ("Architectures_Configuration", "Dir"));
+
+      Arch_List : constant GNAT.Strings.String_List :=
+        Spec_Project.Attribute_Indexes (Architectures);
+   begin
+      for Arch of Arch_List loop
+         declare
+            Name : constant String :=
+              Spec_Project.Attribute_Value
+                        (Attribute => Architectures,
+                         Index     => Arch.all);
+
+            CPU : constant String := (Arch.all);
+
+            Arch : constant Arch_Algorithms :=
+               Make_Arch_Algorithms
+                  (Directory => Dir,
+                   Name      => Name);
+
+         begin
+            Architecture_Hashed_Maps.Include
+               (Container => Self.Architectures,
+                Key       => To_Unbounded_String (CPU),
+                New_Item  => Arch);
+         end;
+      end loop;
+   end Setup_Known_Architectures;
+
+
+   procedure Set_CPU_Architecture_Sample_Code (Self : in out Spec) is
+      use Architecture_Hashed_Maps;
+   begin
+      if Find (Self.Architectures, Self.CPU.Name) /= No_Element then
+         Self.CPU.Arch := Element (Self.Architectures, Self.CPU.Name);
+      else
+         raise Name_Error with
+            "Current CPU " & To_String (Self.CPU.Name) & " not supported.";
+      end if;
+   end Set_CPU_Architecture_Sample_Code;
 
    -----------------------
    -- Generate_Sections --
@@ -174,7 +226,7 @@ package body Device is
              Reloc_Memory => TUS ("RAM"),
              Force_Init   => True,
              Load         => False,
-             Init_Code    => Clear_Memory_Code
+             Init_Code    => Self.CPU.Arch.Clear_Code
                        );
 
       DATA : constant Section :=
@@ -182,7 +234,7 @@ package body Device is
             (Boot_Memory  => Self.Boot_Memory,
              Name         => TUS ("data"),
              Reloc_Memory => TUS ("RAM"),
-             Init_Code    => Copy_Memory_Code
+             Init_Code    => Self.CPU.Arch.Copy_Code
                        );
 
       use Sections.Section_Vectors;
@@ -327,7 +379,7 @@ package body Device is
 
    end Dump_Startup_Code;
 
-   -------------------
+  -------------------
    -- Add_Interrupt --
    -------------------
 
@@ -579,11 +631,14 @@ package body Device is
       end loop;
 
       File.New_Line;
-      Self.Interrupts.Add_Interrupt (-1, To_Unbounded_String ("SysTick"));
+
       --  We generate weak aliases that the user can
       --  override by linking again his own implementation.
       --  We dont care about the order in which the symbols are declared.
-      for Cursor in Self.Interrupts.Interrupts.Iterate loop
+      File.Put_Indented_Line (".weak" & ASCII.HT & "Systick_Handler");
+      File.Put_Indented_Line (".thumb_set" & ASCII.HT &
+         "Systick_Handler,hang");
+     for Cursor in Self.Interrupts.Interrupts.Iterate loop
             declare
                Name : constant String :=
                   To_String (Interrupt_Hashed_Maps.Element (Cursor));

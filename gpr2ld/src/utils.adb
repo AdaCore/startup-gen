@@ -43,22 +43,35 @@ package body Utils is
           "Interrupt_Vector",
           Indexed => True);
 
+      Error9 : aliased constant String := Register_New_Attribute
+        ("Dir",
+         "Architectures_Configuration");
+
+      Error10 : aliased constant String := Register_New_Attribute
+        ("CPU_Architecture",
+         "Architectures_Configuration",
+         Indexed => True);
+
+
       type Err_Str_Access is access constant String;
       type Strings is array (Integer range <>) of Err_Str_Access;
       Errors : constant Strings :=
-        (1 => Error1'Access,
-         2 => Error2'Access,
-         3 => Error3'Access,
-         4 => Error4'Access,
-         5 => Error5'Access,
-         6 => Error6'Access,
-         7 => Error7'Access,
-         8 => Error8'Access
+        (1  => Error1'Access,
+         2  => Error2'Access,
+         3  => Error3'Access,
+         4  => Error4'Access,
+         5  => Error5'Access,
+         6  => Error6'Access,
+         7  => Error7'Access,
+         8  => Error8'Access,
+         9  => Error9'Access,
+         10 => Error10'Access
          );
    begin
       for Str of Errors loop
          if Str.all /= "" then
-            raise Program_Error with "Could not register new attribute.";
+            raise Program_Error with "Could not register new attribute " &
+               Str.all;
          end if;
       end loop;
    end Register_Memory_Map_Attributes;

@@ -1,15 +1,17 @@
 pragma Ada_12;
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Hash;
 with Ada.Containers.Vectors;
 with Ada.Containers.Hashed_Maps;
 
-with GNATCOLL.VFS;      use GNATCOLL.VFS;
-with GNATCOLL.Projects; use GNATCOLL.Projects;
+with GNATCOLL.VFS;          use GNATCOLL.VFS;
+with GNATCOLL.Projects;     use GNATCOLL.Projects;
 
-with File_Writer; use File_Writer;
+with File_Writer;           use File_Writer;
 
 with Sections;
+with Architecture;          use Architecture;
 
 ------------
 -- Device --
@@ -35,6 +37,13 @@ package Device is
       (Self         : in out Spec;
        Spec_Project : Project_Type);
 
+   procedure Setup_Known_Architectures
+      (Self         : in out Spec;
+       Spec_Project : Project_Type);
+
+   procedure Set_CPU_Architecture_Sample_Code
+      (Self : in out Spec);
+
    procedure Generate_Sections (Self : in out Spec);
 
    procedure Display (Self : in out Spec);
@@ -59,6 +68,7 @@ private
    type CPU_Type is record
       Name           : Unbounded_String;
       Float_Handling : Float_Type;
+      Arch           : Arch_Algorithms;
    end record;
 
    type Memory_Kind is (RAM, ROM, TCM, CCM);
@@ -74,13 +84,22 @@ private
       (Positive, Memory_Region);
 
    use Ada.Containers;
-   function Identity (Key : Integer) return Hash_Type
+   function Identity_Integer (Key : Integer) return Hash_Type
       is (Hash_Type (Key));
+
+   function Identity_Unbounded_String (Key : Unbounded_String) return Hash_Type
+      is (Ada.Strings.Hash (To_String (Key)));
 
    package Interrupt_Hashed_Maps is new Ada.Containers.Hashed_Maps
       (Key_Type        => Integer,
        Element_Type    => Unbounded_String,
-       Hash            => Identity,
+       Hash            => Identity_Integer,
+       Equivalent_Keys => "=");
+
+   package Architecture_Hashed_Maps is new Ada.Containers.Hashed_Maps
+      (Key_Type        => Unbounded_String,
+       Element_Type    => Arch_Algorithms,
+       Hash            => Identity_Unbounded_String,
        Equivalent_Keys => "=");
 
    type Interrupt_Vector is tagged record
@@ -93,6 +112,7 @@ private
       Boot_Memory      : Unbounded_String;
       CPU              : CPU_Type;
       Interrupts       : Interrupt_Vector;
+      Architectures    : Architecture_Hashed_Maps.Map;
       Section_Vector   : Sections.Section_Vectors.Vector;
    end record;
 

@@ -9,6 +9,8 @@ package Setup is
 
    type Command_Line_Values is tagged record
       Project_File      : aliased String_Access := null;
+      Architecture_File : aliased String_Access :=
+        new String'("configuration.gpr");
       Output_Dir        : aliased String_Access := new String'("./");
       Linker_File       : aliased String_Access := new String'("linker.ld");
       Memory_Map_File   : aliased String_Access :=

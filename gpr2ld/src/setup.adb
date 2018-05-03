@@ -18,25 +18,34 @@ package body Setup is
    begin
 
       Define_Switch
-        (Config,
-         Values.Output_Dir'Access,
-         "-o:",
-         Help => "Directory in which generated files will be put.");
-
-      Define_Switch
-        (Config,
-         Values.Linker_File'Access,
-         "-l:",
-         Help => "Name of the generated linker script.");
+         (Config,
+          Values.Output_Dir'Access,
+          "-o:",
+          Help => "Directory in which generated files will be put.");
 
       Define_Switch
          (Config,
-          Values.Memory_Map_File'Access, "-m:",
+          Values.Architecture_File'Access,
+          "-c:",
+          Help => "Path to the project file containing " &
+                  "the mapping of processors to their architecture.");
+
+      Define_Switch
+         (Config,
+          Values.Linker_File'Access,
+          "-l:",
+          Help => "Name of the generated linker script.");
+
+      Define_Switch
+         (Config,
+          Values.Memory_Map_File'Access,
+          "-m:",
           Help => "Name of the generated memory map.");
 
       Define_Switch
          (Config,
-          Values.Startup_Code_File'Access, "-s:",
+          Values.Startup_Code_File'Access,
+          "-s:",
           Help => "Name of the generated startup code.");
 
       Getopt (Config);

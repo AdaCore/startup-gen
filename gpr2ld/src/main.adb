@@ -32,7 +32,8 @@ begin
    Utils.Register_Memory_Map_Attributes;
 
    declare
-      Tree : Project_Tree;
+      Tree        : Project_Tree;
+      Config_Tree : Project_Tree;
 
       Project_File : constant Virtual_File :=
         Create_From_Base (Filesystem_String (Input.Project_File.all));
@@ -52,9 +53,16 @@ begin
          (Dir       => Create (Filesystem_String (Input.Output_Dir.all)),
           Base_Name => Filesystem_String (Input.Startup_Code_File.all));
 
+      Architecture_File : constant Virtual_File :=
+        Create_From_Base (Filesystem_String (Input.Architecture_File.all));
+
    begin
       Tree.Load
         (Root_Project_Path => Project_File,
+         Packages_To_Check => All_Packs);
+
+      Config_Tree.Load
+        (Root_Project_Path => Architecture_File,
          Packages_To_Check => All_Packs);
 
       --  TODO: Put all that in a function that setup the spec.
@@ -68,6 +76,10 @@ begin
          (Tree.Project_From_Name ("interruptions"));
 
       Spec.Get_CPU_From_Project (Tree.Root_Project);
+
+      Spec.Setup_Known_Architectures (Config_Tree.Root_Project);
+
+      Spec.Set_CPU_Architecture_Sample_Code;
 
       Spec.Validate;
 
