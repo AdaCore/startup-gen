@@ -121,18 +121,26 @@ package body Device is
       (Self         : in out Spec;
        Spec_Project : Project_Type)
    is
-
-      Name : constant String :=
-        Spec_Project.Attribute_Value (Build ("cpu", "name"));
+      use Architecture_Hashed_Maps;
+      Name : constant Unbounded_String :=
+        To_Unbounded_String
+            (Spec_Project.Attribute_Value (Build ("cpu", "name")));
 
       Float_Handling : constant String :=
         Spec_Project.Attribute_Value (Build ("cpu", "float_handling"));
    begin
-      Self.CPU :=
-        (Name           => To_Unbounded_String (Name),
-         Float_Handling => Float_Type'Value (Float_Handling),
-         others => <>);
 
+      if Find (Container => Self.Architectures,
+               Key       => Name) /= No_Element
+      then
+         Self.CPU :=
+           (Name           => Name,
+            Float_Handling => Float_Type'Value (Float_Handling),
+            Arch           => Element (Self.Architectures, Name));
+      else
+         raise Name_Error with
+            "Current CPU " & To_String (Self.CPU.Name) & " not supported.";
+      end if;
    end Get_CPU_From_Project;
 
    -------------------------------
@@ -176,18 +184,6 @@ package body Device is
          end;
       end loop;
    end Setup_Known_Architectures;
-
-
-   procedure Set_CPU_Architecture_Sample_Code (Self : in out Spec) is
-      use Architecture_Hashed_Maps;
-   begin
-      if Find (Self.Architectures, Self.CPU.Name) /= No_Element then
-         Self.CPU.Arch := Element (Self.Architectures, Self.CPU.Name);
-      else
-         raise Name_Error with
-            "Current CPU " & To_String (Self.CPU.Name) & " not supported.";
-      end if;
-   end Set_CPU_Architecture_Sample_Code;
 
    -----------------------
    -- Generate_Sections --
