@@ -160,7 +160,6 @@ private
       (Self : in out Spec;
        File : in out Indented_File_Writer);
 
-   --  XXX: Dump the init code for initializing each section (if needed).
    procedure Dump_Sections_Init_Code
       (Self : in out Spec;
        File : in out Indented_File_Writer);
@@ -185,16 +184,13 @@ private
    --  Checks that there are no overlapping memory regions.
    procedure Validate_Memory_Regions (Self : in out Spec);
 
-   --  TODO: Make it work with <NUMBER><UNIT> format.
-   --  For now only works with hexadecimal sizes.
-   --  Handle the case of the size with a unit for the size.
    --  Verify that two memory regions are not overlapping each other.
-   function Check_Memory_Range (Memory_1 : Memory_Region;
-                                Memory_2 : Memory_Region)
-                                return Boolean;
+   function Memory_Regions_Overlap (Memory_1 : Memory_Region;
+                                    Memory_2 : Memory_Region)
+                                    return Boolean;
 
-   --  Convert a C style hexadecimal string to a Long_Integer.
-   function C_Style_Hexa_To_Long_Integer (Number : Unbounded_String)
+   --  Convert a ld hexadecimal string to a Long_Integer.
+   function LD_Hex_String_To_Long_Integer (Number : Unbounded_String)
       return Long_Integer;
 
    --  Return a string of the following form

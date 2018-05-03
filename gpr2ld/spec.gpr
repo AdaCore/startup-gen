@@ -2,8 +2,8 @@ with "interruptions";
 project Spec is
 
    package CPU is
-      for Name use "cortex-m4";
-      for Float_Handling use "hard";
+      for Name use "cortex-m0plus";
+      for Float_Handling use "soft";
    end CPU;
 
    package Memory_Map is
@@ -17,12 +17,12 @@ project Spec is
       for Mem_Kind("RAM") use "RAM";
 
       --  ROM
-      for Address("ROM") use "0x00400000";
-      for Size("ROM") use "0x100000";
+      for Address("ROM") use "0x0";
+      for Size("ROM") use "256K";
 
       -- RAM
       for Address("RAM") use "16#20000000#";
-      for Size("RAM")    use "16#20000#";
+      for Size("RAM")    use "16#8000#";
 
    end Memory_Map;
 

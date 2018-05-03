@@ -801,65 +801,96 @@ package body Device is
 
    procedure Validate_Memory_Regions (Self : in out Spec) is
    begin
-      for Iter of Self.Memory loop
-         for Memory_Region_To_Check of Self.Memory loop
+      for Region of Self.Memory loop
+         for Memory_Region_To_Check_Against of Self.Memory loop
             --  We dont check the memory region against itself.
-            if Memory_Region_To_Check.Name /= Iter.Name then
-               if not Check_Memory_Range (Iter, Memory_Region_To_Check) then
+            if Memory_Region_To_Check_Against.Name /= Region.Name then
+               if Memory_Regions_Overlap
+                  (Region,
+                   Memory_Region_To_Check_Against)
+               then
                   raise Name_Error with "Invalid memory ranges : " &
-                     ASCII.LF & Get_Info_String (Iter) &
-                     ASCII.LF & Get_Info_String (Memory_Region_To_Check);
+                     ASCII.LF & Get_Info_String (Region) &
+                     ASCII.LF &
+                        Get_Info_String (Memory_Region_To_Check_Against);
                end if;
             end if;
          end loop;
       end loop;
    end Validate_Memory_Regions;
 
-   ------------------------
-   -- Check_Memory_Range --
-   ------------------------
+   ----------------------------
+   -- Memory_Regions_Overlap --
+   ----------------------------
 
-   function Check_Memory_Range (Memory_1 : Memory_Region;
-                                Memory_2 : Memory_Region)
-                                return Boolean
+   function Memory_Regions_Overlap (Memory_1 : Memory_Region;
+                                    Memory_2 : Memory_Region)
+                                    return Boolean
    is
       Memory_1_Address : constant Long_Integer :=
-         C_Style_Hexa_To_Long_Integer (Memory_1.Address);
+         LD_Hex_String_To_Long_Integer (Memory_1.Address);
 
       Memory_1_Size : constant Long_Integer :=
-         C_Style_Hexa_To_Long_Integer (Memory_1.Size);
+         LD_Hex_String_To_Long_Integer (Memory_1.Size);
 
       Memory_2_Address : constant Long_Integer :=
-         C_Style_Hexa_To_Long_Integer (Memory_2.Address);
+         LD_Hex_String_To_Long_Integer (Memory_2.Address);
 
       Memory_2_Size : constant Long_Integer :=
-         C_Style_Hexa_To_Long_Integer (Memory_2.Size);
+         LD_Hex_String_To_Long_Integer (Memory_2.Size);
 
    begin
       if Memory_2_Address > Memory_1_Address then
-         return (Memory_1_Address + Memory_1_Size < Memory_2_Address);
+         return not (Memory_1_Address + Memory_1_Size < Memory_2_Address);
       elsif Memory_2_Address < Memory_1_Address then
-         return (Memory_2_Address + Memory_2_Size < Memory_1_Address);
+         return not (Memory_2_Address + Memory_2_Size < Memory_1_Address);
       else --  Memory addresses are the same.
-         return False;
+         return True;
       end if;
-   end Check_Memory_Range;
+   end Memory_Regions_Overlap;
 
    ----------------------------------
-   -- C_Style_Hexa_To_Long_Integer --
+   -- LD_Hex_String_To_Long_Integer --
    ----------------------------------
 
-   function C_Style_Hexa_To_Long_Integer (Number : Unbounded_String)
+   function LD_Hex_String_To_Long_Integer (Number : Unbounded_String)
       return Long_Integer
    is
       Nb_Str : constant String := To_String (Number);
 
-      --  We get rid of the `0x` in front and create an ada based literal.
-      Int_Repr : constant Long_Integer :=
-         Long_Integer'Value ("16#" & Nb_Str (3 .. Nb_Str'Last) & "#");
+      Last_Char : constant Character :=
+        Element
+            (Source => Number,
+             Index  => Length (Number));
+
+      Last_Index  :  Integer := Nb_Str'Last;
+      First_Index :  Integer := 3;
+
+      Unit_Multiplier :  Long_Integer := 1;
+
+      Int_Repr :  Long_Integer := 0;
    begin
-      return Int_Repr;
-   end C_Style_Hexa_To_Long_Integer;
+
+      -- When we are dealing with an expression, we need to change the
+      -- range of the splice in order to convert the string an Ada
+      -- based literal.
+      case Last_Char is
+         when 'k' | 'K' =>
+            Unit_Multiplier := 1024;
+            Last_Index  := Last_Index - 1;
+            First_Index := 1;
+         when 'm' | 'M' =>
+            Unit_Multiplier := 1024 * 1024;
+            Last_Index  := Last_Index - 1;
+            First_Index := 1;
+         when others => null;
+      end case;
+
+      Int_Repr :=
+         Long_Integer'Value ("16#" & Nb_Str (First_Index .. Last_Index) & "#");
+
+      return Int_Repr * Unit_Multiplier;
+   end LD_Hex_String_To_Long_Integer;
 
    function Get_Info_String (Region : Memory_Region) return String is
    begin
