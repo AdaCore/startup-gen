@@ -9,6 +9,9 @@ the specs.
 
 Options:
         -o ARG : Arg is the directory in which the generated files will be put.
+        -c ARG : Path to the project file mapping supported processors to their
+                 architecture.
+                Default value is configuration.gpr.
         -l ARG : Arg is the name of the generated ldscript.
                 Default value is linker.ld.
         -m ARG : Arg is the name of the generated memory map.
