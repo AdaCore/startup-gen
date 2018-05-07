@@ -287,7 +287,7 @@ package body Device is
       File.Put_Line ("_DEFAULT_STACK_SIZE = 4 * 1024;");
 
       File.New_Line;
-      File.Put_Line ("ENTRY(_start_" & Self.Boot_Memory & ");");
+      File.Put_Line ("ENTRY(Reset_Handler);");
       File.New_Line;
 
       Self.Dump_Sections (File);
@@ -355,8 +355,9 @@ package body Device is
       File.New_Line;
       File.Put_Indented_Line (".text");
       File.Put_Indented_Line (".thumb_func");
-      File.Put_Indented_Line (".globl _start_" & Self.Boot_Memory);
+      File.Put_Indented_Line (".globl Reset_Handler");
 
+      File.Put_Line ("Reset_Handler:");
       File.Put_Line ("_start_" & Self.Boot_Memory & ":");
       Self.Dump_Sections_Init_Code (File);
 
@@ -594,22 +595,21 @@ package body Device is
       File.Put_Line ("__vectors:");
       File.Put_Indented_Line ("/* System defined interrupts */");
       File.Put_Indented_Line (".word __stack_end /* top of the stack */");
-      File.Put_Indented_Line (".word _start_" &
-                               Self.Boot_Memory & "/* Reset */");
-      File.Put_Indented_Line (".word hang /* NMI */");
-      File.Put_Indented_Line (".word hang /* Hard Fault */");
-      File.Put_Indented_Line (".word hang /* MemManage */");
-      File.Put_Indented_Line (".word hang /* Bus Fault */");
-      File.Put_Indented_Line (".word hang /* Usage Fault */");
+      Put_Interrupt (File, "Reset");
+      Put_Interrupt (File, "NMI");
+      Put_Interrupt (File, "Hard_Fault");
+      Put_Interrupt (File, "Mem_Manage");
+      Put_Interrupt (File, "Bus_Fault");
+      Put_Interrupt (File, "Usage_Fault");
       File.Put_Indented_Line (".word 0    /* reserved */");
       File.Put_Indented_Line (".word 0    /* reserved */");
       File.Put_Indented_Line (".word 0    /* reserved */");
       File.Put_Indented_Line (".word 0    /* reserved */");
-      File.Put_Indented_Line (".word hang /* SVC */");
-      File.Put_Indented_Line (".word hang /* DebugMon */");
+      Put_Interrupt (File, "SVC");
+      Put_Interrupt (File, "Debug_Mon");
       File.Put_Indented_Line (".word 0    /* reserved */");
-      File.Put_Indented_Line (".word hang /* PendSV */");
-      File.Put_Indented_Line (".word SysTick_Handler /* SysTick */");
+      Put_Interrupt (File, "Pend_SV");
+      Put_Interrupt (File, "SysTick");
 
       --  We add the interrupts corresponding
       --  to what is in the interrupt vector.
@@ -635,9 +635,15 @@ package body Device is
       --  We generate weak aliases that the user can
       --  override by linking again his own implementation.
       --  We dont care about the order in which the symbols are declared.
-      File.Put_Indented_Line (".weak" & ASCII.HT & "SysTick_Handler");
-      File.Put_Indented_Line (".thumb_set" & ASCII.HT &
-         "SysTick_Handler,hang");
+      Put_Dummy_Handler (File, "SysTick");
+      Put_Dummy_Handler (File, "Debug_Mon");
+      Put_Dummy_Handler (File, "SVC");
+      Put_Dummy_Handler (File, "Pend_SV");
+      Put_Dummy_Handler (File, "Usage_Fault");
+      Put_Dummy_Handler (File, "Bus_Fault");
+      Put_Dummy_Handler (File, "Mem_Manage");
+      Put_Dummy_Handler (File, "Hard_Fault");
+      Put_Dummy_Handler (File, "NMI");
      for Cursor in Self.Interrupts.Interrupts.Iterate loop
             declare
                Name : constant String :=
@@ -897,5 +903,31 @@ package body Device is
       return To_String (Region.Name) & " : Size = " & To_String (Region.Size) &
                "  and Address = " & To_String (Region.Address);
    end Get_Info_String;
+
+   -----------------------
+   -- Put_Dummy_Handler --
+   -----------------------
+
+   procedure Put_Dummy_Handler
+      (File : in out Indented_File_Writer;
+       Name : String)
+   is
+   begin
+      File.Put_Indented_Line (".weak      "  & Name &"_Handler");
+      File.Put_Indented_Line (".thumb_set " & Name & "_Handler,hang");
+   end Put_Dummy_Handler;
+
+   -------------------
+   -- Put_Interrupt --
+   -------------------
+
+   procedure Put_Interrupt
+      (File : in out Indented_File_Writer;
+       Name : String)
+   is
+   begin
+      File.Put_Indented_Line (".word " & Name & "_Handler " &
+         ASCII.HT & "/* "& Name &" */");
+   end Put_Interrupt;
 
 end Device;
