@@ -113,6 +113,14 @@ private
 
    --  Private procedures  --
 
+   procedure Put_Dummy_Handler
+      (File : in out Indented_File_Writer;
+       Name : String);
+
+   procedure Put_Interrupt
+      (File : in out Indented_File_Writer;
+       Name : String);
+
    procedure Dump_Memory_Map
       (Self : in out Spec;
        File : in out Indented_File_Writer);
