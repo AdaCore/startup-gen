@@ -13,8 +13,6 @@ package Setup is
         new String'("configuration.gpr");
       Output_Dir        : aliased String_Access := new String'("./");
       Linker_File       : aliased String_Access := new String'("linker.ld");
-      Memory_Map_File   : aliased String_Access :=
-        new String'("memory_map.ld");
       Startup_Code_File : aliased String_Access := new String'("startup.S");
    end record;
 
@@ -25,4 +23,5 @@ package Setup is
         with "You must pass a file on the command line.";
 
    procedure Display (Values : in out Command_Line_Values);
+
 end Setup;

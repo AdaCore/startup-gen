@@ -55,8 +55,6 @@ package Device is
 
    procedure Dump_Linker_Script (Self : in out Spec; VF : Virtual_File);
 
-   procedure Dump_Memory_Map (Self : in out Spec; VF : Virtual_File);
-
    procedure Dump_Startup_Code (Self : in out Spec; VF : Virtual_File);
 
 private
@@ -114,6 +112,10 @@ private
    end record;
 
    --  Private procedures  --
+
+   procedure Dump_Memory_Map
+      (Self : in out Spec;
+       File : in out Indented_File_Writer);
 
    procedure Add_Interrupt
       (Self  : in out Interrupt_Vector;
