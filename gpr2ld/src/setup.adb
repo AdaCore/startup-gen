@@ -38,12 +38,6 @@ package body Setup is
 
       Define_Switch
          (Config,
-          Values.Memory_Map_File'Access,
-          "-m:",
-          Help => "Name of the generated memory map.");
-
-      Define_Switch
-         (Config,
           Values.Startup_Code_File'Access,
           "-s:",
           Help => "Name of the generated startup code.");
@@ -60,10 +54,10 @@ package body Setup is
    procedure Display (Values : in out Command_Line_Values)
    is
    begin
-      Put_Line ("Config " & Values.Project_File.all);
+      Put_Line ("Spec " & Values.Project_File.all);
       Put_Line ("Out Dir " & Values.Output_Dir.all);
       Put_Line ("Linker Script " & Values.Linker_File.all);
-      Put_Line ("Memory_Map " &  Values.Memory_Map_File.all);
+      Put_Line ("Configuration file " &  Values.Architecture_File.all);
    end Display;
 
 end Setup;

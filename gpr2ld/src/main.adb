@@ -43,11 +43,6 @@ begin
          (Dir       => Create (Filesystem_String (Input.Output_Dir.all)),
           Base_Name => Filesystem_String (Input.Linker_File.all));
 
-      Memory_Map : constant Virtual_File :=
-        Create_From_Dir
-         (Dir       => Create (Filesystem_String (Input.Output_Dir.all)),
-          Base_Name => Filesystem_String (Input.Memory_Map_File.all));
-
       Startup_Code : constant Virtual_File :=
         Create_From_Dir
          (Dir       => Create (Filesystem_String (Input.Output_Dir.all)),
@@ -83,8 +78,6 @@ begin
       Spec.Generate_Sections;
 
       Spec.Dump_Linker_Script (Linker_Script);
-
-      Spec.Dump_Memory_Map (Memory_Map);
 
       Spec.Dump_Startup_Code (Startup_Code);
 

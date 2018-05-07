@@ -2,8 +2,6 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Long_Integer_Text_IO; use Ada.Long_Integer_Text_IO;
 with Ada.Numerics.Elementary_Functions;
 
-with Ada.Characters.Handling; use Ada.Characters.Handling;
-
 with GNAT.Regexp;
 with GNAT.Strings;
 
@@ -277,7 +275,11 @@ package body Device is
       File : Indented_File_Writer := Make (Handle => Write_File (VF));
    begin
       Dump_Header (File);
+
+      Self.Dump_Memory_Map (File);
+
       File.New_Line;
+
       File.Put_Line ("SEARCH_DIR(.)");
       File.New_Line;
       File.Put_Line ("__DYNAMIC = 0;");
@@ -299,11 +301,9 @@ package body Device is
 
    procedure Dump_Memory_Map
       (Self : in out Spec;
-       VF   : Virtual_File)
+       File : in out Indented_File_Writer)
    is
-      File : Indented_File_Writer := Make (Handle => Write_File (VF));
    begin
-      Dump_Header (File);
 
       File.Put_Line ("MEMORY");
       File.Put_Line ("{");
@@ -324,7 +324,6 @@ package body Device is
       File.Unindent;
       File.Put_Line ("}");
 
-      File.Close;
    end Dump_Memory_Map;
 
    -----------------------
@@ -345,9 +344,6 @@ package body Device is
       File.Indent;
       File.Put_Indented_Line (".syntax unified");
       File.Put_Indented_Line (".cpu " & Self.CPU.Name);
-      File.Put_Indented_Line
-         (".fpu " & To_Lower (Float_Type'Image (Self.CPU.Float_Handling)) &
-           "vfp");
       File.Put_Indented_Line (".thumb");
       File.Unindent;
 
@@ -537,15 +533,23 @@ package body Device is
       File.Put_Indented_Line ("__" & Section.Name & "_end = .;");
       File.New_Line;
 
-      --  XXX: Hardcoded stack for the BSS.
+      --  XXX: Hardcoded stack + heap for the BSS.
       if Section.Name = "bss" then
          File.New_Line;
+
 
          File.Put_Indented_Line ("__stack_start = .;");
          File.Put_Indented_Line (". += DEFINED (__stack_size) ?" &
                " __stack_size : _DEFAULT_STACK_SIZE;");
          File.Put_Indented_Line (". = ALIGN(0x8);");
          File.Put_Indented_Line ("__stack_end = .;");
+
+         File.New_Line;
+
+         File.Put_Indented_Line ("__heap_start = .;");
+         File.Put_Indented_Line
+            ("__heap_end = ORIGIN(" & Destination_Memory &
+             ") + LENGTH(" & Destination_Memory & ");");
 
          File.New_Line;
       end if;
