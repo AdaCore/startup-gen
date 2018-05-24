@@ -364,17 +364,22 @@ def add_family_to_database(family, c):
             add_device_info_to_database(device, c, "Dname", first_id)
     else:
         raise "CMSIS-Pack is malformed. We have neither <subFamily> nor <device>."
+    return first_id
 
 """
 Adds the content of the file f to the database pointed by the cursor c.
 """
-def add_pdsc_to_database(f, c):
+def add_pdsc_to_database(f, c, package_name, package_version):
     root = minidom.parse(f)
     devices = root.getElementsByTagName('devices')
-    for dev in devices:
-        familylist = dev.getElementsByTagName('family')
-        for family in familylist:
-           add_family_to_database(family, c)
+    dev = devices[0]
+    familylist = dev.getElementsByTagName('family')
+    family = familylist[0]
+
+    family_id = add_family_to_database(family, c)
+
+    insert = '''INSERT INTO package (name, version, family_id) VALUES (?,?,?)'''
+    c.execute(insert, [package_name, package_version, family_id])
 
     boards_root = root.getElementsByTagName('boards')
     for boards in boards_root:
@@ -391,8 +396,8 @@ def add_pdsc_to_database(f, c):
 
 def _add_package(path, db):
     tmp_dir = ".tmp"
-    #path = ntpath.basename(path)
-    unzip_dir = os.path.join(tmp_dir, path[:-5])
+    package_file_name = path[:-5]
+    unzip_dir = os.path.join(tmp_dir, package_file_name)
     print "Unzip dir", unzip_dir
     # we create the directory in which we will unzip the packs.
     if not (os.path.isdir(tmp_dir)):
@@ -419,10 +424,19 @@ def _add_package(path, db):
         co = sqlite3.connect(db)
         c = co.cursor()
 
+
+        package = ntpath.basename(path)
+        package_name = '.'.join(package.split('.')[0:2])
+        package_version = '.'.join(package.split('.')[2:-1])
+
         # We add the content of all the pdsc files in the database.
         # Usually there is only one file.
-        for f in glob.glob(pdsc_pattern):
-            add_pdsc_to_database(f, c)
+        file_list = glob.glob(pdsc_pattern)
+        if not (len(file_list) >= 1):
+            raise Exception('Pack does not contain a valid pdsc file.')
+        f = file_list[0]
+
+        add_pdsc_to_database(f, c, package_name, package_version)
 
         # We delete the temporary file
         # shutil.rmtree(unzip_dir)
