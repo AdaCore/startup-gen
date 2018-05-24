@@ -200,7 +200,7 @@ class Insertor:
         self.values = {}
 
     def set_values(self,attributes):
-        print "Attributes", attributes.items()
+        #print "Attributes", attributes.items()
         for xml_attrib, sql_attrib in self.attribute_column.items():
             sql_value = attributes[xml_attrib].value\
                 if xml_attrib in attributes.keys() else None
@@ -340,11 +340,9 @@ def add_subfamily_to_database(subfamily, c, name, parent_id):
         add_device_info_to_database(device, c, "Dname", subfamily_id)
 
 def add_family_to_database(family, c):
-    c.execute('''SELECT max(id) FROM tree''')
-
+    c.execute('''SELECT * FROM tree ORDER BY id DESC LIMIT 1''')
 
     # We fetch the first result.
-    c.fetchone()
 
     result = c.fetchone()
     first_id = (result[0] if (result != None) else 0) + 1
