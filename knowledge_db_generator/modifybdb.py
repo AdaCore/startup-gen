@@ -381,14 +381,15 @@ def add_pdsc_to_database(f, c, package_name, package_version):
 
     boards_root = root.getElementsByTagName('boards')
     for boards in boards_root:
-        boardlist = boards.getElementsByTagName('board')
-        for board in boardlist:
-            name = board.getAttribute('name')
+        board_list = boards.getElementsByTagName('board')
+        for board in board_list:
+            board_name = board.getAttribute('name')
+            device_name = board.getElementsByTagName('mountedDevice')[0].getAttribute('Dname')
             try:
-                dev_id = query_attribute_with_condition(c, "tree", "id", {"name" : name})
+                dev_id = query_attribute_with_condition(c, "tree", "id", {"name" : device_name})
                 request_insert_board = '''INSERT INTO board (name, device)
                                          VALUES (?,?)''';
-                c.execute(request_insert_board, (name, dev_id))
+                c.execute(request_insert_board, (board_name, dev_id))
             except Exception as e:
                 pass
 
