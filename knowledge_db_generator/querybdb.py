@@ -40,7 +40,7 @@ def query_names(table, db):
 
     rows = list()
     for row in Table(table, c):
-        rows.append(copy.deepcopy(row))
+        rows.append(row["name"])
 
     co.commit()
     co.close()
