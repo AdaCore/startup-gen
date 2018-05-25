@@ -1,7 +1,10 @@
 TODO immediate:
 - add all the type of queries to the tools.
-- add the handling of the interrupt vector (from the svd file)
+    + ok for now we will see if we need more
 - submit bugs to Keil as encountered
+- `bug` found where the minidom parser crashes
+   if there are spaces at the beginning of the file
+    + currently investigating
 
 TODO next:
 - add documentation
