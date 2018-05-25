@@ -145,6 +145,19 @@ def setup_db(db):
                       node_id      INTEGER REFERENCES tree(id),
                       UNIQUE (interrupt_id, node_id));''')
 
+    # Interrupt <-> SVD file
+    c.execute('''CREATE TABLE IF NOT EXISTS interrupt_to_svd (
+                      id           INTEGER PRIMARY KEY,
+                      interrupt_id INTEGER REFERENCES interrupt(id),
+                      svd_id       INTEGER REFERENCES svd(id),
+                      UNIQUE (interrupt_id, svd_id));''')
+
+    # SVD files from which we have store the interrupts
+    c.execute('''CREATE TABLE IF NOT EXISTS svd (
+                      id   INTEGER PRIMARY KEY,
+                      name TEXT,
+                      UNIQUE (name));''')
+
     co.commit()
     co.close()
 
@@ -284,11 +297,75 @@ def get_list_of_ids_to_connect(elt, cursor):
     return ids
 
 
+def get_svd(elt):
+    svd = None
+    for tag in elt.childNodes:
+        if tag.nodeName == "debug":
+            svd = tag.attributes["svd"].value
+    return svd
+
+def svd_in_database(svd, c):
+    select = build_select_statement("svd", ["id"], ["name"])
+    result = c.execute(select, [svd]).fetchone()
+    if result is not None:
+        result = result[0]
+    return result
+
+
+def insert_svd_in_database(svd, c):
+    insert = '''INSERT INTO svd (name) VALUES (?)'''
+    c.execute(insert, [svd])
+
+    select = build_select_statement("svd",["id"], ["name"])
+    return c.execute(select, [svd]).fetchone()[0]
+
+def insert_into(c, table, columns):
+    insert = '''INSERT OR IGNORE INTO %s (''' + ','.join(columns.keys()) + ''') VALUES ('''\
+             + ','.join(['?' for k in columns.keys()]) + ''')'''
+    insert = insert % table
+    c.execute(insert, columns.values())
+
+    select = build_select_statement(table, ["id"], columns.keys())
+    return c.execute(select, columns.values()).fetchone()[0]
+
+def add_interrupt_vector(device_id, path, svd, c):
+    f = os.path.join(path, svd)
+    svd_id = svd_in_database(svd, c)
+    if svd_id is not None:
+        print "DUPLICATE SVD:", svd
+        select = build_select_statement("interrupt_to_svd",\
+                                        ["interrupt_id"], ["svd_id"])
+        interrupts = c.execute(select, [svd_id]).fetchall()
+
+        for int_id in interrupts:
+            insert_into(c, "interrupt_to_node",\
+                 {"node_id" : device_id, "interrupt_id" : int_id[0]})
+    else:
+        print "NEW SVD:", svd
+        svd_id = insert_svd_in_database(svd, c)
+        root = minidom.parse(f)
+        interrupts = root.getElementsByTagName('interrupt')
+        dict_interrupts = {}
+        for interrupt in interrupts:
+            int_name = interrupt.getElementsByTagName('name')[0].firstChild.nodeValue
+            int_index = interrupt.getElementsByTagName('value')[0].firstChild.nodeValue
+            dict_interrupts[int_index] = int_name
+
+            int_id = insert_into(c, "interrupt",\
+                {"interrupt_index" : int_index, "name" : int_name})
+
+            insert_into(c, "interrupt_to_svd",\
+                {"svd_id" : svd_id, "interrupt_id" : int_id})
+
+            insert_into(c, "interrupt_to_node",\
+                {"node_id" : device_id, "interrupt_id" : int_id})
+
 """
 element_name is a dictionnary of the form
 {name:<tag element that contains the name>}
 """
-def add_device_info_to_database(elt, c, name_attribute, parent_id):
+def add_device_info_to_database(dir_path, elt, c, name_attribute, parent_id,\
+                                parent_svd, insert_int_vect=True):
     name = elt.getAttribute(name_attribute)
     # We add the family to the DB
     # As the family is the top of the hierarchy, we need to get the
@@ -323,6 +400,10 @@ def add_device_info_to_database(elt, c, name_attribute, parent_id):
     c.execute(select_statement, requested_values)
     result_id = c.fetchone()[0]
 
+    if insert_int_vect:
+        svd = get_svd(elt) or parent_svd
+        add_interrupt_vector(result_id, dir_path, svd, c)
+
    # We insert the current infos that we have
     for table, row_ids in external_ids.items():
         for row_id in row_ids:
@@ -333,13 +414,17 @@ def add_device_info_to_database(elt, c, name_attribute, parent_id):
 
     return result_id
 
-def add_subfamily_to_database(subfamily, c, name, parent_id):
-    subfamily_id = add_device_info_to_database(subfamily, c, name, parent_id)
+def add_subfamily_to_database(dir_path, subfamily, c, name, parent_id, parent_svd):
+    svd = get_svd(subfamily) or parent_svd
+    subfamily_id = add_device_info_to_database(dir_path, subfamily, c, name,\
+                                               parent_id, svd,\
+                                               insert_int_vect=False)
+
     device_list = subfamily.getElementsByTagName('device')
     for device in device_list:
-        add_device_info_to_database(device, c, "Dname", subfamily_id)
+        add_device_info_to_database(dir_path, device, c, "Dname", subfamily_id, svd)
 
-def add_family_to_database(family, c):
+def add_family_to_database(dir_path, family, c):
     c.execute('''SELECT * FROM tree ORDER BY id DESC LIMIT 1''')
 
     # We fetch the first result.
@@ -347,7 +432,11 @@ def add_family_to_database(family, c):
     result = c.fetchone()
     first_id = (result[0] if (result != None) else 0) + 1
 
-    add_device_info_to_database(family, c, "Dfamily", first_id)
+
+    svd = get_svd(family)
+
+    add_device_info_to_database(dir_path, family, c, "Dfamily", first_id,\
+                                svd, insert_int_vect=False)
 
     # We get all subfamilies and add them to the tree table
     # if we have no "subFamily" tag we add the "device" tags directly.
@@ -355,11 +444,12 @@ def add_family_to_database(family, c):
     if family.getElementsByTagName('subFamily') != list():
         subfamily_list = family.getElementsByTagName('subFamily')
         for subfamily in subfamily_list:
-            add_subfamily_to_database(subfamily, c, "DsubFamily", first_id)
+            add_subfamily_to_database(dir_path, subfamily, c,\
+                                      "DsubFamily", first_id, svd)
     elif family.getElementsByTagName('device') != list():
         device_list = family.getElementsByTagName('device')
         for device in device_list:
-            add_device_info_to_database(device, c, "Dname", first_id)
+            add_device_info_to_database(dir_path, device, c, "Dname", first_id, svd)
     else:
         raise "CMSIS-Pack is malformed. We have neither <subFamily> nor <device>."
     return first_id
@@ -374,7 +464,9 @@ def add_pdsc_to_database(f, c, package_name, package_version):
     familylist = dev.getElementsByTagName('family')
     family = familylist[0]
 
-    family_id = add_family_to_database(family, c)
+    dir_path = os.path.dirname(os.path.abspath(f))
+
+    family_id = add_family_to_database(dir_path, family, c)
 
     insert = '''INSERT INTO package (name, version, family_id) VALUES (?,?,?)'''
     c.execute(insert, [package_name, package_version, family_id])
@@ -396,8 +488,9 @@ def add_pdsc_to_database(f, c, package_name, package_version):
 def _add_package(path, db):
     tmp_dir = ".tmp"
     package_file_name = path[:-5]
-    unzip_dir = os.path.join(tmp_dir, package_file_name)
-    print "Unzip dir", unzip_dir
+
+    # We handle absolute path by appending tmp_dir.
+    unzip_dir = os.path.join(tmp_dir, os.path.basename(path)[:-5])
     # we create the directory in which we will unzip the packs.
     if not (os.path.isdir(tmp_dir)):
         os.makedirs(tmp_dir)
@@ -409,6 +502,8 @@ def _add_package(path, db):
         sys.exit(-1)
     try:
         if (os.path.exists(unzip_dir) or (not os.access(path, os.R_OK))):
+            print "exists:",os.path.exists(unzip_dir)
+            print "r_ok:", not os.access(path, os.R_OK)
             print "BADDD"
             raise IOError;
         # We unzip the pack in its own temporary directory.
