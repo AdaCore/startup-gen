@@ -332,7 +332,6 @@ def add_interrupt_vector(device_id, path, svd, c):
     f = os.path.join(path, svd)
     svd_id = svd_in_database(svd, c)
     if svd_id is not None:
-        print "DUPLICATE SVD:", svd
         select = build_select_statement("interrupt_to_svd",\
                                         ["interrupt_id"], ["svd_id"])
         interrupts = c.execute(select, [svd_id]).fetchall()
@@ -341,8 +340,12 @@ def add_interrupt_vector(device_id, path, svd, c):
             insert_into(c, "interrupt_to_node",\
                  {"node_id" : device_id, "interrupt_id" : int_id[0]})
     else:
-        print "NEW SVD:", svd
         svd_id = insert_svd_in_database(svd, c)
+
+        print "NEW SVD:", svd
+        with open(f) as first:
+            print "First line:\"%s\"" % first.readline()
+
         root = minidom.parse(f)
         interrupts = root.getElementsByTagName('interrupt')
         dict_interrupts = {}
