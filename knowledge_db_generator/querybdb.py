@@ -8,6 +8,7 @@ import json
 import argparse
 import copy
 import ntpath
+
 from xml.dom import minidom
 
 
@@ -18,7 +19,7 @@ def entry():
     cmd = CommandLine()
 
     cmd.register_command("packages", False,\
-        lambda db: query_names("package", db))
+        lambda db: query_attributes(["name"],"package", db))
 
     cmd.register_command("device", True, query_device)
 
@@ -29,46 +30,23 @@ def entry():
     cmd.register_command("cpu_of_device", True, query_cpu_of_device)
 
     cmd.register_command("devices", False,\
-        lambda db: query_names("tree", db))
+        lambda db: query_attributes(["name"], "tree", db))
 
     return cmd.execute()
 
-def query_names(table, db):
+def query_attributes(attributes, table, db):
     co = sqlite3.connect(db)
     co.row_factory = sqlite3.Row
     c = co.cursor()
 
-    rows = list()
-    for row in Table(table, c):
-        rows.append(row["name"])
+    select = build_select_statement(table, attributes)
+    c.execute(select)
+
+    names = c.fetchall()
 
     co.commit()
     co.close()
-    return rows
-
-def query_devices_of_package(name, db):
-    co = sqlite3.connect(db)
-    co.row_factory = sqlite3.Row
-    c = co.cursor()
-
-    top_node = {}
-
-    for row in TreeClimber(name, c):
-        top_node = row
-
-    select = build_select_statement(table="package",\
-                                    columns_needed=["name"],\
-                                    columns_conditions=["family_id"])
-
-    c.execute(select, [top_node["id"]])
-    result = c.fetchone()
-    if result is None:
-        raise Exception("%s device not found in database." % name)
-    package_name = c.fetchone()[0]
-    print package_name
-
-    co.commit()
-    co.close()
+    return names
 
 def query_cpu_of_device(name, db):
     co = sqlite3.connect(db)
@@ -123,7 +101,7 @@ def get_json_output_for_device(name, db):
 
     memories = _get_mem_json(name, device, c)
     cpu = _get_cpu_json(name, device, c)
-    #interrupts = _get_interrupts_json(name, c)
+    interrupts = _get_interrupts_json(name, device, c)
   
     co.commit()
     co.close()
@@ -135,8 +113,28 @@ def get_json_output_for_device(name, db):
 
     out["cpu"] = cpu_dict
     out["memory"] = memories
-    #out["interrupts"] = interrupts
+    out["interrupts"] = interrupts
     return out
+
+def _get_interrupts_json(name, device, c):
+    dev_id = device["id"]
+
+    select = build_select_statement(table="interrupt_to_node",\
+                                    columns_needed=["interrupt_id"],\
+                                    columns_conditions=["node_id"])
+    c.execute(select, [dev_id])
+    ids = c.fetchall()
+    ids = [device_id[0] for device_id in ids]
+
+    select = '''SELECT interrupt_index,name FROM interrupt WHERE '''+\
+             ' OR '.join(['''id IS ?''' for interrupt_id in ids])
+            
+    c.execute(select, ids)
+    interrupts = dict()
+    for val in c.fetchall():
+        interrupts[val["interrupt_index"]] = val["name"]
+    return interrupts
+
 
 def _get_cpu_json(name, device, c):
     cpu_id = device["cpu_id"]
@@ -204,12 +202,9 @@ def query_device(name, db):
     for row in TreeClimber(name, c):
         device = merge(device, row)
 
-    #device_json = format_info_to_json(device)
-
     co.commit()
     co.close()
 
-    #return device_json
     return device 
 
 class Command:

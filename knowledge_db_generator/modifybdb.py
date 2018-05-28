@@ -8,7 +8,9 @@ import json
 import argparse
 import copy
 import ntpath
+
 from xml.dom import minidom
+from xml.etree import cElementTree
 
 
 # GLOBAL VARIABLES #
@@ -85,9 +87,8 @@ def setup_db(db):
 
     c.execute('''CREATE TABLE IF NOT EXISTS interrupt (
                       id              INTEGER PRIMARY KEY,
-                      interrupt_index INTEGER NOT NULL,
                       name            TEXT NOT NULL,
-                      UNIQUE (interrupt_index, name));''')
+                      UNIQUE (name));''')
 
     # Documentation
     c.execute('''CREATE TABLE IF NOT EXISTS documentation (
@@ -140,9 +141,10 @@ def setup_db(db):
 
     # Interrupt <-> Node
     c.execute('''CREATE TABLE IF NOT EXISTS interrupt_to_node (
-                      id           INTEGER PRIMARY KEY,
-                      interrupt_id INTEGER REFERENCES interrupt(id),
-                      node_id      INTEGER REFERENCES tree(id),
+                      id              INTEGER PRIMARY KEY,
+                      interrupt_id    INTEGER REFERENCES interrupt(id),
+                      node_id         INTEGER REFERENCES tree(id),
+                      interrupt_index INTEGER NOT NULL,
                       UNIQUE (interrupt_id, node_id));''')
 
     # Interrupt <-> SVD file
@@ -156,7 +158,7 @@ def setup_db(db):
     c.execute('''CREATE TABLE IF NOT EXISTS svd (
                       id   INTEGER PRIMARY KEY,
                       name TEXT,
-                      UNIQUE (name));''')
+                      UNIQUE (name, id));''')
 
     co.commit()
     co.close()
@@ -325,11 +327,41 @@ def insert_into(c, table, columns):
     insert = insert % table
     c.execute(insert, columns.values())
 
+def insert_and_get_id(c, table, columns):
+    insert = '''INSERT OR IGNORE INTO %s (''' + ','.join(columns.keys()) + ''') VALUES ('''\
+             + ','.join(['?' for k in columns.keys()]) + ''')'''
+    insert = insert % table
+    c.execute(insert, columns.values())
+
     select = build_select_statement(table, ["id"], columns.keys())
     return c.execute(select, columns.values()).fetchone()[0]
 
+
+
+def etree_get_interrupts_from_svd(handle):
+    name = "interrupt"
+    events = cElementTree.iterparse(handle, events=("start", "end",))
+    _, root = next(events)  # Grab the root element.
+    for event, elem in events:
+        if event == "end" and elem.tag == name:
+            yield elem
+            root.clear()  # Free up memory by clearing the root element.
+
+#def iter_device(handle):
+#    for family in iter_elements_by_name(handle, "family"):
+#        print "FAMILY:", family.attrib["Dfamily"]
+#        for dev in family.findall("device"):
+#            proc = get_attrib(dev, "processor", "Dcore")
+#            mem = get_attrib(dev, "memory", "name")
+#            yield (
+#                dev.attrib["Dname"],
+#                proc,
+#                mem
+#            )
+
 def add_interrupt_vector(device_id, path, svd, c):
     f = os.path.join(path, svd)
+    svd = ntpath.basename(svd)[:-4]
     svd_id = svd_in_database(svd, c)
     if svd_id is not None:
         select = build_select_statement("interrupt_to_svd",\
@@ -337,31 +369,32 @@ def add_interrupt_vector(device_id, path, svd, c):
         interrupts = c.execute(select, [svd_id]).fetchall()
 
         for int_id in interrupts:
+            #TODO
+            # get interrupt name
+            # get its value in the svd file
             insert_into(c, "interrupt_to_node",\
-                 {"node_id" : device_id, "interrupt_id" : int_id[0]})
+                 {"node_id" : device_id,\
+                  "interrupt_id" : int_id[0],
+                  "interrupt_index" : 1})
     else:
-        svd_id = insert_svd_in_database(svd, c)
-
+        svd_id = insert_and_get_id(c, "svd", {"name" : svd})
         print "NEW SVD:", svd
-        with open(f) as first:
-            print "First line:\"%s\"" % first.readline()
-
-        root = minidom.parse(f)
-        interrupts = root.getElementsByTagName('interrupt')
         dict_interrupts = {}
-        for interrupt in interrupts:
-            int_name = interrupt.getElementsByTagName('name')[0].firstChild.nodeValue
-            int_index = interrupt.getElementsByTagName('value')[0].firstChild.nodeValue
-            dict_interrupts[int_index] = int_name
+        for interrupt in etree_get_interrupts_from_svd(f):
+            interrupt_name = interrupt.find("name").text
+            interrupt_index = interrupt.find("value").text
+            dict_interrupts[interrupt_index] = interrupt_name
 
-            int_id = insert_into(c, "interrupt",\
-                {"interrupt_index" : int_index, "name" : int_name})
+            int_id = insert_and_get_id(c, "interrupt",\
+                {"name" : interrupt_name})
 
             insert_into(c, "interrupt_to_svd",\
                 {"svd_id" : svd_id, "interrupt_id" : int_id})
 
             insert_into(c, "interrupt_to_node",\
-                {"node_id" : device_id, "interrupt_id" : int_id})
+                {"node_id" : device_id,
+                 "interrupt_id" : int_id,
+                 "interrupt_index" : interrupt_index})
 
 """
 element_name is a dictionnary of the form
@@ -488,13 +521,45 @@ def add_pdsc_to_database(f, c, package_name, package_version):
             except Exception as e:
                 pass
 
+
+
+def iter_elements_by_name(handle, name):
+    events = cElementTree.iterparse(handle, events=("start", "end",))
+    _, root = next(events)  # Grab the root element.
+    for event, elem in events:
+        if event == "end" and elem.tag == name:
+            yield elem
+            root.clear()  # Free up memory by clearing the root element.
+
+
+
+def get_attrib(elt, child, attrib):
+    try:
+        return elt.find(child).attrib[name]
+    except:
+        print "PARENT:", elt.find("..")
+        return None
+
+def iter_device(handle):
+    for family in iter_elements_by_name(handle, "family"):
+        print "FAMILY:", family.attrib["Dfamily"]
+        for dev in family.findall("device"):
+            proc = get_attrib(dev, "processor", "Dcore")
+            mem = get_attrib(dev, "memory", "name")
+            yield (
+                dev.attrib["Dname"],
+                proc,
+                mem
+            )
+
+
 def _add_package(path, db):
     tmp_dir = ".tmp"
     package_file_name = path[:-5]
 
     # We handle absolute path by appending tmp_dir.
     unzip_dir = os.path.join(tmp_dir, os.path.basename(path)[:-5])
-    # we create the directory in which we will unzip the packs.
+    # We create the directory in which we will unzip the packs.
     if not (os.path.isdir(tmp_dir)):
         os.makedirs(tmp_dir)
 
