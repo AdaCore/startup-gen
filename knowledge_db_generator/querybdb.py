@@ -8,6 +8,7 @@ import json
 import argparse
 import copy
 import ntpath
+import inspect
 
 from xml.dom import minidom
 
@@ -15,45 +16,38 @@ from xml.dom import minidom
 # GLOBAL VARIABLES #
 add_documentation = False
 
-def entry():
+def entry_from_cmdline():
     cmd = CommandLine()
 
     cmd.register_command("packages", False,\
-        lambda db: query_attributes(["name"],"package", db))
+        lambda c: query_attributes(["name"],"package", c))
 
-    cmd.register_command("device", True, query_device)
+    cmd.register_command("device_info", True, get_json_output_of_device)
 
     cmd.register_command("package_of_device", True, query_package_of_device)
 
-    cmd.register_command("devices_of_package", True, query_devices_of_package)
+    #cmd.register_command("devices_of_package", True, query_devices_of_package)
 
     cmd.register_command("cpu_of_device", True, query_cpu_of_device)
 
-    cmd.register_command("devices", False,\
-        lambda db: query_attributes(["name"], "tree", db))
+    cmd.register_command("devices", False, query_devices)
 
-    return cmd.execute()
+    result = cmd.execute()
+    if type(result) is list:
+        for elt in result:
+            print elt
+    else:
+        print result
 
-def query_attributes(attributes, table, db):
-    co = sqlite3.connect(db)
-    co.row_factory = sqlite3.Row
-    c = co.cursor()
-
+def query_attributes(attributes, table, c):
     select = build_select_statement(table, attributes)
     c.execute(select)
 
     names = c.fetchall()
-
-    co.commit()
-    co.close()
     return names
 
-def query_cpu_of_device(name, db):
-    co = sqlite3.connect(db)
-    co.row_factory = sqlite3.Row
-    c = co.cursor()
-
-    device = query_device(name, db)
+def query_cpu_of_device(name, c):
+    device = query_device(name, c)
     cpu_id = device["cpu_id"]
 
     select = build_select_statement(table="cpu",\
@@ -63,16 +57,10 @@ def query_cpu_of_device(name, db):
     c.execute(select, [cpu_id])
     cpu = c.fetchone()
 
-    co.commit()
-    co.close()
     return cpu
 
 
-def query_package_of_device(name, db):
-    co = sqlite3.connect(db)
-    co.row_factory = sqlite3.Row
-    c = co.cursor()
-
+def query_package_of_device(name, c):
     top_node = {}
 
     for row in TreeClimber(name, c):
@@ -88,33 +76,30 @@ def query_package_of_device(name, db):
         raise Exception("%s device not found in database." % name)
     package_name = c.fetchone()[0]
     print package_name
+    return package_name
 
-    co.commit()
-    co.close()
-
-def get_json_output_for_device(name, db):
-    co = sqlite3.connect(db)
-    co.row_factory = sqlite3.Row
-    c = co.cursor()
-
-    device = query_device(name, db)
+def get_json_output_of_device(name, c):
+    device = query_device(name, c)
 
     memories = _get_mem_json(name, device, c)
     cpu = _get_cpu_json(name, device, c)
     interrupts = _get_interrupts_json(name, device, c)
   
-    co.commit()
-    co.close()
-    out = dict()
+    json_output = dict()
     cpu_dict = dict()
 
     for k in cpu.keys():
         cpu_dict[k] = cpu[k]
 
-    out["cpu"] = cpu_dict
-    out["memory"] = memories
-    out["interrupts"] = interrupts
-    return out
+    json_output = {"device" : dict()}
+    json_output["device"]["name"] = device["name"]
+    json_output["device"]["cpu"] = cpu_dict
+    json_output["device"]["memory"] = memories
+
+    if interrupts is not None:
+        json_output["interrupts"] = interrupts
+
+    return json.dumps(json_output)
 
 def _get_interrupts_json(name, device, c):
     dev_id = device["id"]
@@ -124,6 +109,11 @@ def _get_interrupts_json(name, device, c):
                                     columns_conditions=["node_id"])
     c.execute(select, [dev_id])
     ids = c.fetchall()
+
+    # The device has no interrupts defined in the database.
+    if ids == list():
+        return None
+
     ids = [device_id[0] for device_id in ids]
 
     select = '''SELECT interrupt_index,name FROM interrupt WHERE '''+\
@@ -140,7 +130,7 @@ def _get_cpu_json(name, device, c):
     cpu_id = device["cpu_id"]
 
     select = build_select_statement(table="cpu",\
-                                    columns_needed=["name, fpu, mpu, endianness"],\
+                                    columns_needed=["name", "fpu"],\
                                     columns_conditions=["id"])
 
     c.execute(select, [cpu_id])
@@ -166,7 +156,7 @@ def _get_mem_json(name, device, c):
 
     memories = list()
     select = build_select_statement(table="memory",\
-                                    columns_needed=["id", "address", "size"],\
+                                    columns_needed=["address", "size", "name"],\
                                     columns_conditions=["id"])
     for memory_id in memory_ids:
         c.execute(select, [memory_id])
@@ -178,7 +168,9 @@ def _get_mem_json(name, device, c):
         if memory_id == device["startup_memory_id"]:
             temp["startup"] = 1
         else:
-            temp["startup"] = 0
+            # memory_id does not point to the startup memory,
+            # we remove the key from the dictionnary
+            temp.pop("startup", None)
         memories.append(temp)
     return memories
 
@@ -193,19 +185,24 @@ def merge(child, parent):
     return res
     
 
-def query_device(name, db):
-    co = sqlite3.connect(db)
-    c = co.cursor()
-
+def query_device(name, c):
     device = {}
-
     for row in TreeClimber(name, c):
         device = merge(device, row)
-
-    co.commit()
-    co.close()
-
     return device 
+
+def query_devices(c):
+    select =\
+        '''\
+        SELECT id,name FROM tree WHERE id NOT IN (SELECT parent_id FROM tree)\
+        '''
+    c.execute(select)
+
+    devices = [dev["name"] for dev in c.fetchall()]
+
+    return devices
+
+
 
 class Command:
     def __init__(self, argument_needed, callback):
@@ -227,7 +224,7 @@ class CommandLine:
         commands = [command for command in self.commands.keys()]
         self.parser.add_argument('command', choices=commands, help="commands")
 
-        self.parser.add_argument('name', nargs='?',\
+        self.parser.add_argument('argument', nargs='?',\
             help="additional argument for certain commands")
 
         self.parser.add_argument("database",
@@ -237,34 +234,25 @@ class CommandLine:
         self.arguments = self.parser.parse_args()
 
         callback_args = list()
+
         if self.commands[self.arguments.command].argument_needed:
-            callback_args.append(self.arguments.name)
-        callback_args.append(self.arguments.database)
-        self.commands[self.arguments.command].callback(*callback_args)
+            callback_args.append(self.arguments.argument)
 
+        db = self.arguments.database
+        full_path_db = os.path.abspath(db)
 
-# Used to iterate over a table from the python world.
-class Table:
-    def __init__(self, name, cursor):
-        self.cursor = cursor
-        self.dic = {}
-        request = '''SELECT * FROM %s;'''
-        request = request % name
-        self.cursor.execute(request)
-        self.names = [description[0] for description in self.cursor.description]
-        for name in self.names:
-            self.dic[name] = None
+        # Opens the databse.
+        co = sqlite3.connect(full_path_db)
+        co.row_factory = sqlite3.Row
+        c = co.cursor()
+ 
+        callback_args.append(c)
+        result = self.commands[self.arguments.command].callback(*callback_args)
 
-    def __iter__(self):
-        return self
-
-    def next(self):
-        tmp = self.cursor.next()
-        i = 0
-        for name in self.names:
-            self.dic[name] = tmp[i]
-            i += 1
-        return self.dic
+        # Closes the connection.
+        co.commit()
+        co.close()
+        return result
 
 def build_select_statement(table, columns_needed, columns_conditions=list()):
     statement = '''SELECT ''' + ','.join(columns_needed) + ''' FROM ''' + table
@@ -294,25 +282,18 @@ class TreeClimber:
     def __init__(self, name, cursor):
         self.cursor = cursor
         self.start_request = '''
-                SELECT *
-                FROM tree WHERE name IS ?;
+                SELECT * FROM tree WHERE name IS ?;
                 '''
         self.request = '''
-                SELECT *
-                FROM tree WHERE id IS ?;
+                SELECT * FROM tree WHERE id IS ?;
                 '''
         args = [name]
         self.cursor.execute(self.start_request, args)
         result = self.cursor.fetchone()
         self.node = {}
         self.prev_node = {}
-        self.node["id"] = result[0]
-        self.node["parent_id"] = result[1]
-        self.node["kind"] = result[2]
-        self.node["name"] = result[3]
-        #self.node["version"] = result[4]
-        self.node["startup_memory_id"] = result[4]
-        self.node["cpu_id"] = result[5]
+        for row in result.keys():
+            self.node[row] = result[row]
 
     def __iter__(self):
         return self
@@ -326,14 +307,9 @@ class TreeClimber:
         args = (self.node["parent_id"],)
         self.cursor.execute(self.request, args)
         result = self.cursor.fetchone()
+        for row in result.keys():
+            self.node[row] = result[row]
 
-        self.node["id"] = result[0]
-        self.node["parent_id"] = result[1]
-        self.node["kind"] = result[2]
-        self.node["name"] = result[3]
-        #self.node["version"] = result[4]
-        self.node["startup_memory_id"] = result[4]
-        self.node["cpu_id"] = result[5]
         return self.prev_node
 
 
