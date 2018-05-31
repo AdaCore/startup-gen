@@ -68,11 +68,13 @@ def help():
 def setup_db(db):
     co = sqlite3.connect(db)
     c = co.cursor()
-    # We dont want dupplicate info in the memory table.
+
+    # We dont want duplicate info in the memory table.
     c.execute('''CREATE TABLE IF NOT EXISTS memory (
                     id      INTEGER PRIMARY KEY,
                     address INTEGER,
                     size    INTEGER,
+                    name    TEXT,
                     UNIQUE (address, size));''')
     # CPU table
     # We use the restricted integers as booleans.
@@ -87,8 +89,9 @@ def setup_db(db):
 
     c.execute('''CREATE TABLE IF NOT EXISTS interrupt (
                       id              INTEGER PRIMARY KEY,
-                      name            TEXT NOT NULL,
-                      UNIQUE (name));''')
+                      name            TEXT,
+                      interrupt_index INTEGER NOT NULL,
+                      UNIQUE (name, interrupt_index));''')
 
     # Documentation
     c.execute('''CREATE TABLE IF NOT EXISTS documentation (
@@ -144,7 +147,6 @@ def setup_db(db):
                       id              INTEGER PRIMARY KEY,
                       interrupt_id    INTEGER REFERENCES interrupt(id),
                       node_id         INTEGER REFERENCES tree(id),
-                      interrupt_index INTEGER NOT NULL,
                       UNIQUE (interrupt_id, node_id));''')
 
     # Interrupt <-> SVD file
@@ -250,7 +252,8 @@ def insert_directly_linked_elements(elt, cursor):
                     "Dendian" : "endianness"}
 
     mapping_startup_mem = {"start"   : "address",
-                           "size"    : "size"}
+                           "size"    : "size",
+                           "id"      : "name"}
 
     cpu_insertor = Insertor(cursor, "cpu", mapping_proc,
                             pre_insertion=cpu_name_to_lower)
@@ -279,7 +282,8 @@ def get_list_of_ids_to_connect(elt, cursor):
     global add_documentation
 
     mapping_mem = {"start" : "address",
-                   "size"  : "size"}
+                   "size"  : "size",
+                   "id"      : "name"}
 
     mapping_doc = {"name"  : "path",
                    "title" : "name"}
@@ -295,7 +299,6 @@ def get_list_of_ids_to_connect(elt, cursor):
             i = Insertor(cursor, table, mapping)
             i.set_values(tag.attributes)
             ids[table].append(i.insert())
-
     return ids
 
 
@@ -323,7 +326,7 @@ def insert_svd_in_database(svd, c):
 
 def insert_into(c, table, columns):
     insert = '''INSERT OR IGNORE INTO %s (''' + ','.join(columns.keys()) + ''') VALUES ('''\
-             + ','.join(['?' for k in columns.keys()]) + ''')'''
+        + ','.join(['?' for k in columns.keys()]) + ''')'''
     insert = insert % table
     c.execute(insert, columns.values())
 
@@ -337,9 +340,7 @@ def insert_and_get_id(c, table, columns):
     return c.execute(select, columns.values()).fetchone()[0]
 
 
-
-def etree_get_interrupts_from_svd(handle):
-    name = "interrupt"
+def etree_get_nodes(handle, name):
     events = cElementTree.iterparse(handle, events=("start", "end",))
     _, root = next(events)  # Grab the root element.
     for event, elem in events:
@@ -347,54 +348,41 @@ def etree_get_interrupts_from_svd(handle):
             yield elem
             root.clear()  # Free up memory by clearing the root element.
 
-#def iter_device(handle):
-#    for family in iter_elements_by_name(handle, "family"):
-#        print "FAMILY:", family.attrib["Dfamily"]
-#        for dev in family.findall("device"):
-#            proc = get_attrib(dev, "processor", "Dcore")
-#            mem = get_attrib(dev, "memory", "name")
-#            yield (
-#                dev.attrib["Dname"],
-#                proc,
-#                mem
-#            )
 
 def add_interrupt_vector(device_id, path, svd, c):
-    f = os.path.join(path, svd)
-    svd = ntpath.basename(svd)[:-4]
-    svd_id = svd_in_database(svd, c)
+
+    # FIXME For now only works on Linux
+    f = ntpath.join(path, svd).replace('\\', '/')
+    svd_name = ntpath.basename(svd)[:-4]
+    svd_id = svd_in_database(svd_name, c)
     if svd_id is not None:
         select = build_select_statement("interrupt_to_svd",\
                                         ["interrupt_id"], ["svd_id"])
         interrupts = c.execute(select, [svd_id]).fetchall()
 
         for int_id in interrupts:
-            #TODO
-            # get interrupt name
-            # get its value in the svd file
+            int_id = int_id[0]
             insert_into(c, "interrupt_to_node",\
                  {"node_id" : device_id,\
-                  "interrupt_id" : int_id[0],
-                  "interrupt_index" : 1})
+                  "interrupt_id" : int_id})
     else:
-        svd_id = insert_and_get_id(c, "svd", {"name" : svd})
-        print "NEW SVD:", svd
+        svd_id = insert_and_get_id(c, "svd", {"name" : svd_name})
         dict_interrupts = {}
-        for interrupt in etree_get_interrupts_from_svd(f):
+        for interrupt in etree_get_nodes(f, "interrupt"):
             interrupt_name = interrupt.find("name").text
             interrupt_index = interrupt.find("value").text
             dict_interrupts[interrupt_index] = interrupt_name
 
             int_id = insert_and_get_id(c, "interrupt",\
-                {"name" : interrupt_name})
+                {"name" : interrupt_name,
+                 "interrupt_index" : interrupt_index})
 
             insert_into(c, "interrupt_to_svd",\
                 {"svd_id" : svd_id, "interrupt_id" : int_id})
 
             insert_into(c, "interrupt_to_node",\
                 {"node_id" : device_id,
-                 "interrupt_id" : int_id,
-                 "interrupt_index" : interrupt_index})
+                 "interrupt_id" : int_id})
 
 """
 element_name is a dictionnary of the form
@@ -461,13 +449,12 @@ def add_subfamily_to_database(dir_path, subfamily, c, name, parent_id, parent_sv
         add_device_info_to_database(dir_path, device, c, "Dname", subfamily_id, svd)
 
 def add_family_to_database(dir_path, family, c):
-    c.execute('''SELECT * FROM tree ORDER BY id DESC LIMIT 1''')
-
-    # We fetch the first result.
-
+    # We get the next id that will be inserted.
+    c.execute('''SELECT id FROM tree ORDER BY id DESC LIMIT 1''')
+    first_id = 1
     result = c.fetchone()
-    first_id = (result[0] if (result != None) else 0) + 1
-
+    if result != None:
+        first_id = first_id + result[0]
 
     svd = get_svd(family)
 
@@ -494,6 +481,7 @@ def add_family_to_database(dir_path, family, c):
 Adds the content of the file f to the database pointed by the cursor c.
 """
 def add_pdsc_to_database(f, c, package_name, package_version):
+    print "PDSC:", f
     root = minidom.parse(f)
     devices = root.getElementsByTagName('devices')
     dev = devices[0]
@@ -531,8 +519,6 @@ def iter_elements_by_name(handle, name):
             yield elem
             root.clear()  # Free up memory by clearing the root element.
 
-
-
 def get_attrib(elt, child, attrib):
     try:
         return elt.find(child).attrib[name]
@@ -551,7 +537,6 @@ def iter_device(handle):
                 proc,
                 mem
             )
-
 
 def _add_package(path, db):
     tmp_dir = ".tmp"
@@ -572,6 +557,8 @@ def _add_package(path, db):
         if (os.path.exists(unzip_dir) or (not os.access(path, os.R_OK))):
             print "exists:",os.path.exists(unzip_dir)
             print "r_ok:", not os.access(path, os.R_OK)
+            print "UNZIP", unzip_dir
+            print "PDSC FILE", path
             print "BADDD"
             raise IOError;
         # We unzip the pack in its own temporary directory.
@@ -600,10 +587,13 @@ def _add_package(path, db):
 
         add_pdsc_to_database(f, c, package_name, package_version)
 
+        # Vacuum database
+        c.execute('''VACUUM''')
+
         # We delete the temporary file
         # shutil.rmtree(unzip_dir)
         co.commit()
         co.close()
-    except IOError:
-        print "IOError"
+    except IOError as e:
+        print "IOError", e
 
