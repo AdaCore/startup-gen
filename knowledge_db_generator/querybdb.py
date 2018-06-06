@@ -8,9 +8,15 @@ import json
 import argparse
 import copy
 import ntpath
-#import inspect
+import urllib2
+import ssl
+from StringIO import StringIO
+
 from itertools import izip
 from itertools import tee
+from sets import Set
+
+from packaging.version import Version
 
 from string import Template
 from xml.etree import cElementTree
@@ -35,8 +41,11 @@ def entry_from_cmdline():
 
     # Commands that modify the database.
     cmd.register_command("init", False, init_db)
+
     cmd.register_command("add_package", True, add_package)
-    cmd.register_command("update_packages", False, update_packages)
+
+    cmd.register_command("update_all_packages", False, update_all_packages)
+
     cmd.register_command("update_package", True, update_package)
 
     result = cmd.execute()
@@ -81,7 +90,6 @@ def get_devices_of_package(package_name, c):
 def query_attributes(c, attributes, table):
     select = build_select_statement(table, attributes)
     c.execute(select)
-
     names = c.fetchall()
     return [name for tuple in names for name in tuple]
 
@@ -122,8 +130,6 @@ def get_device_infos(device_name, c):
     device["device"]["cpu"] = dict()
     device["interrupt"] = dict()
 
-    #TODO: refactorize requests
-
     cpu_query = '''SELECT cpu.name, cpu.fpu FROM device
                     INNER JOIN cpu ON device.cpu_id IS cpu.id
                     WHERE device.name is ?'''
@@ -155,7 +161,7 @@ def get_device_infos(device_name, c):
     mem_to_add["name"] = startup_memory["name"]
     mem_to_add["startup"] = 1
     device["device"]["memory"].append(mem_to_add)
-        
+
     for interrupt in c.execute(interrupts_query, [device_name]).fetchall():
         device["interrupt"][interrupt[0]] = interrupt[1]
 
@@ -165,164 +171,8 @@ def get_device_infos(device_name, c):
         mem_to_add["address"] = memory["size"]
         mem_to_add["name"] = memory["name"]
         device["device"]["memory"].append(mem_to_add)
+
     return json.dumps(device)
-
-def query_cpu_of_device(name, c):
-    device = query_device(name, c)
-    cpu_id = device["cpu_id"]
-
-    select = build_select_statement(table="cpu",\
-                                    columns_needed=["name, fpu, mpu, endianness"],\
-                                    columns_conditions=["id"])
-
-    c.execute(select, [cpu_id])
-    cpu = c.fetchone()
-
-    return cpu
-
-
-def query_package_of_device(name, c):
-    top_node = {}
-
-    for row in TreeClimber(name, c):
-        top_node = row
-
-    select = build_select_statement(table="package",\
-                                    columns_needed=["name"],\
-                                    columns_conditions=["family_id"])
-
-    c.execute(select, [top_node["id"]])
-    result = c.fetchone()
-    if result is None:
-        raise Exception("%s device not found in database." % name)
-    package_name = c.fetchone()[0]
-    print package_name
-    return package_name
-
-def get_json_output_of_device(name, c):
-    device = query_device(name, c)
-
-    memories = _get_mem_json(name, device, c)
-    cpu = _get_cpu_json(name, device, c)
-    interrupts = _get_interrupts_json(name, device, c)
-
-    json_output = dict()
-    cpu_dict = dict()
-
-    for k in cpu.keys():
-        cpu_dict[k] = cpu[k]
-
-    json_output = {"device" : dict()}
-    json_output["device"]["name"] = device["name"]
-    json_output["device"]["cpu"] = cpu_dict
-    json_output["device"]["memory"] = memories
-
-    if interrupts is not None:
-        json_output["interrupts"] = interrupts
-
-    return json.dumps(json_output)
-
-def _get_interrupts_json(name, device, c):
-    dev_id = device["id"]
-
-    select = build_select_statement(table="interrupt_to_node",\
-                                    columns_needed=["interrupt_id"],\
-                                    columns_conditions=["node_id"])
-    c.execute(select, [dev_id])
-    ids = c.fetchall()
-
-    # The device has no interrupts defined in the database.
-    if ids == list():
-        return None
-
-    ids = [device_id[0] for device_id in ids]
-
-    select = '''SELECT interrupt_index,name FROM interrupt WHERE '''+\
-             ' OR '.join(['''id IS ?''' for interrupt_id in ids])
-    c.execute(select, ids)
-    interrupts = dict()
-    for val in c.fetchall():
-        interrupts[val["interrupt_index"]] = val["name"]
-    return interrupts
-
-
-def _get_cpu_json(name, device, c):
-    cpu_id = device["cpu_id"]
-
-    select = build_select_statement(table="cpu",\
-                                    columns_needed=["name", "fpu"],\
-                                    columns_conditions=["id"])
-
-    c.execute(select, [cpu_id])
-    cpu = c.fetchone()
-    return cpu
-
-def _get_mem_json(name, device, c):
-    ids = list()
-    for node in TreeClimber(name, c):
-        ids.append(node["id"])
-
-    select = build_select_statement(table="memory_to_node",\
-                                    columns_needed=["memory_id"],\
-                                    columns_conditions=["node_id"])
-
-    memory_ids = list()
-    for device_id in ids:
-        c.execute(select, [device_id])
-        memories = c.fetchall()
-        if memories:
-            for memory_id in memories:
-                memory_ids.append(memory_id[0])
-
-    memories = list()
-    select = build_select_statement(table="memory",\
-                                    columns_needed=["address", "size", "name"],\
-                                    columns_conditions=["id"])
-    for memory_id in memory_ids:
-        c.execute(select, [memory_id])
-        result = c.fetchone()
-        temp = dict()
-        for key in result.keys():
-            temp[key] = result[key]
-
-        if memory_id == device["startup_memory_id"]:
-            temp["startup"] = 1
-        else:
-            # memory_id does not point to the startup memory,
-            # we remove the key from the dictionnary
-            temp.pop("startup", None)
-        memories.append(temp)
-    return memories
-
-def merge(child, parent):
-    res = child.copy()
-    for k,v in parent.items():
-        if k not in res.keys():
-            res[k] = v
-        else:
-            if res[k] is None:
-                res[k] = v
-    return res
-
-
-def query_device(name, c):
-    device = {}
-    for row in TreeClimber(name, c):
-        device = merge(device, row)
-    return device
-
-def query_devices(c):
-    select =\
-        '''\
-        SELECT id,name FROM tree WHERE id NOT IN (SELECT parent_id FROM tree)\
-        '''
-    c.execute(select)
-
-    devices = [dev["name"] for dev in c.fetchall()]
-
-    return devices
-
-
 
 class Command:
     def __init__(self, argument_needed, callback):
@@ -397,46 +247,7 @@ def query_attribute_with_condition(cursor, table, attribute, conditions):
     cursor.execute(req, value_list)
     return cursor.fetchone()[0]
 
-# Cursor to a database containing a tree table.
-class TreeClimber:
-    def __init__(self, name, cursor):
-        self.cursor = cursor
-        self.start_request = '''
-                SELECT * FROM tree WHERE name IS ?;
-                '''
-        self.request = '''
-                SELECT * FROM tree WHERE id IS ?;
-                '''
-        args = [name]
-        self.cursor.execute(self.start_request, args)
-        result = self.cursor.fetchone()
-        self.node = {}
-        self.prev_node = {}
-        for row in result.keys():
-            self.node[row] = result[row]
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        if (self.node["id"] == self.node["parent_id"]):
-            if (self.prev_node["id"] == self.prev_node["parent_id"]):
-                raise StopIteration
-        self.prev_node = copy.deepcopy(self.node)
-
-        args = (self.node["parent_id"],)
-        self.cursor.execute(self.request, args)
-        result = self.cursor.fetchone()
-        for row in result.keys():
-            self.node[row] = result[row]
-
-        return self.prev_node
-
 ## Functions to modify the database ##
-
-def update_all_packages(c):
-    #TODO:
-    pass
 
 def init_db(c):
     ## CONTENT TABLES ##
@@ -486,14 +297,14 @@ def init_db(c):
     c.execute('''CREATE TABLE IF NOT EXISTS device (
                     id                INTEGER PRIMARY KEY,
                     name              TEXT,
-                    startup_memory_id INTEGER REFERENCES memory(id),
-                    cpu_id            INTEGER REFERENCES cpu(id),
+                    startup_memory_id INTEGER REFERENCES memory(id) ON DELETE CASCADE,
+                    cpu_id            INTEGER REFERENCES cpu(id) ON DELETE CASCADE,
                     UNIQUE (name, startup_memory_id, cpu_id));''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS board (
                       id         INTEGER PRIMARY KEY,
                       name       TEXT,
-                      device_id  INTEGER NOT NULL REFERENCES device(id),
+                      device_id  INTEGER NOT NULL REFERENCES device(id) ON DELETE CASCADE,
                       UNIQUE (name));''')
 
     # Table to check if a certain package has been dowloaded and its content
@@ -503,7 +314,7 @@ def init_db(c):
                       id        INTEGER PRIMARY KEY,
                       name      TEXT,
                       version   TEXT,
-                      family_id INTEGER REFERENCES family(id),
+                      family_id INTEGER REFERENCES family(id) ON DELETE CASCADE,
                       UNIQUE (name));''')
 
     # SVD files from which we have stored the interrupts
@@ -528,22 +339,22 @@ def init_db(c):
     # Family <-> Subfamily
     c.execute('''CREATE TABLE IF NOT EXISTS package_to_family (
                       id           INTEGER PRIMARY KEY,
-                      family_id    INTEGER NOT NULL REFERENCES family(id),
-                      package_id INTEGER NOT NULL REFERENCES subfamily(id),
+                      family_id    INTEGER NOT NULL REFERENCES family(id) ON DELETE CASCADE,
+                      package_id INTEGER NOT NULL REFERENCES subfamily(id) ON DELETE CASCADE,
                       UNIQUE (family_id, package_id));''')
 
     # Family <-> Subfamily
     c.execute('''CREATE TABLE IF NOT EXISTS family_to_subfamily (
                       id           INTEGER PRIMARY KEY,
-                      family_id    INTEGER NOT NULL REFERENCES family(id),
-                      subfamily_id INTEGER NOT NULL REFERENCES subfamily(id),
+                      family_id    INTEGER NOT NULL REFERENCES family(id) ON DELETE CASCADE,
+                      subfamily_id INTEGER NOT NULL REFERENCES subfamily(id) ON DELETE CASCADE,
                       UNIQUE (family_id, subfamily_id));''')
 
     # Subfamily <-> Device
     c.execute('''CREATE TABLE IF NOT EXISTS subfamily_to_device (
                       id           INTEGER PRIMARY KEY,
-                      subfamily_id INTEGER NOT NULL REFERENCES subfamily(id),
-                      device_id    INTEGER NOT NULL REFERENCES device(id),
+                      subfamily_id INTEGER NOT NULL REFERENCES subfamily(id) ON DELETE CASCADE,
+                      device_id    INTEGER NOT NULL REFERENCES device(id) ON DELETE CASCADE,
                       UNIQUE (subfamily_id, device_id));''')
 
 
@@ -551,36 +362,36 @@ def init_db(c):
     # Family <-> Device
     c.execute('''CREATE TABLE IF NOT EXISTS family_to_device (
                       id        INTEGER PRIMARY KEY,
-                      family_id INTEGER NOT NULL REFERENCES family(id),
-                      device_id INTEGER NOT NULL REFERENCES device(id),
+                      family_id INTEGER NOT NULL REFERENCES family(id) ON DELETE CASCADE,
+                      device_id INTEGER NOT NULL REFERENCES device(id) ON DELETE CASCADE,
                       UNIQUE (family_id, device_id));''')
 
     # Documentation <-> Device
     c.execute('''CREATE TABLE IF NOT EXISTS documentation_to_device (
                       id               INTEGER PRIMARY KEY,
-                      documentation_id INTEGER NOT NULL REFERENCES documentation(id),
-                      device_id        INTEGER NOT NULL REFERENCES device(id),
+                      documentation_id INTEGER NOT NULL REFERENCES documentation(id) ON DELETE CASCADE,
+                      device_id        INTEGER NOT NULL REFERENCES device(id) ON DELETE CASCADE,
                       UNIQUE (documentation_id, device_id));''')
 
     # Memory <-> Device
     c.execute('''CREATE TABLE IF NOT EXISTS memory_to_device (
                       id        INTEGER PRIMARY KEY,
-                      memory_id INTEGER NOT NULL REFERENCES memory(id),
-                      device_id   INTEGER NOT NULL REFERENCES device(id),
+                      memory_id INTEGER NOT NULL REFERENCES memory(id) ON DELETE CASCADE,
+                      device_id INTEGER NOT NULL REFERENCES device(id) ON DELETE CASCADE,
                       UNIQUE (memory_id, device_id));''')
 
     # SVD <-> Device
     c.execute('''CREATE TABLE IF NOT EXISTS svd_to_device (
-                      id              INTEGER PRIMARY KEY,
-                      svd_id    INTEGER REFERENCES svd(id),
-                      device_id         INTEGER REFERENCES device(id),
+                      id        INTEGER PRIMARY KEY,
+                      svd_id    INTEGER REFERENCES svd(id) ON DELETE CASCADE,
+                      device_id INTEGER REFERENCES device(id) ON DELETE CASCADE,
                       UNIQUE (svd_id, device_id));''')
 
     # Interrupt <-> SVD
     c.execute('''CREATE TABLE IF NOT EXISTS interrupt_to_svd (
                       id           INTEGER PRIMARY KEY,
-                      interrupt_id INTEGER REFERENCES interrupt(id),
-                      svd_id       INTEGER REFERENCES svd(id),
+                      interrupt_id INTEGER REFERENCES interrupt(id) ON DELETE CASCADE,
+                      svd_id       INTEGER REFERENCES svd(id) ON DELETE CASCADE,
                       UNIQUE (interrupt_id, svd_id));''')
 
 def build_insert(table, columns):
@@ -690,10 +501,8 @@ def add_svd(c, unzip_dir, svd, device_id):
             {"svd_id"    : svd_id[0],
              "device_id" : device_id})
 
-        print "OLD SVD", svd_name
         return svd_id
     else: # SVD is absent from the database
-        print "NEW SVD", svd_name
         svd_id = insert_and_get_id(c, "svd", {"name" : svd_name})
         insert_into(c, "svd_to_device",\
             {"svd_id"    : svd_id,
@@ -756,7 +565,7 @@ def add_device(c, unzip_dir, device_repr, parent_ids):
          "cpu_id"            : cpu_id,
          "startup_memory_id" : startup_mem_id,
         })
-    print "DEV REPR:",device_repr
+    #print "DEV REPR:",device_repr
     # Connect the memory table with the device table.
     for mem_id in memory_ids:
          insert_into(c, "memory_to_device",\
@@ -830,15 +639,103 @@ def add_pdsc_to_database(c, unzipped_dir, f):
     c.executemany(statement, board_requests)
     return family_id
 
+def update_all_packages(c):
+    packages = get_packages(c)
+    download_necessary_packages(Set(packages), c)
 
-def update_packages(path, c):
-    #TODO
-    pass
+def update_package(name, c):
+    download_necessary_packages(Set([name]), c)
 
-def update_package(path, c):
-    #TODO
-    # Do we update all packages forcefully ?
-    # Dow we keep unzip archives ?
+def selected_packages(handle, packages):
+    events = cElementTree.iterparse(handle, events=("start", "end",))
+    _, root = next(events)  # Grab the root element.
+    for event, elem in events:
+        if event == "end" and elem.tag == "pdsc":
+            pack_name = '.'.join(elem.attrib["name"].split('.')[:-1])
+            if pack_name in packages:
+                yield elem
+            root.clear()  # Free up memory by clearing the root element.
+
+def format_url(package):
+    name = package.attrib["name"]
+    version = package.attrib["version"]
+    url = package.attrib["url"]
+    if not url.endswith('/'):
+        url = url + '/'
+    name = name[:-5]
+    return url + name + '.' + version + '.pack'
+
+
+def download_package(package):
+    url = format_url(package)
+    name = package.attrib["name"][:-5]
+    version = package.attrib["version"]
+
+    dl_url = format_url(package)
+
+    #TODO: fix ssl certificates.
+    #gcontext = ssl.create_default_context()
+    gcontext = ssl._create_unverified_context()
+
+    f = urllib2.urlopen(dl_url, context=gcontext)
+    temp_file = name + "." + version +".pack"
+    print "Downloading %s into %s" %(dl_url, temp_file)
+    with open(temp_file, "wb") as local_file:
+        local_file.write(f.read())
+    return temp_file
+
+def delete_package(name, c):
+    statement = '''
+        DELETE package
+        FROM package 
+        WHERE package.name is ?
+                '''
+#        INNER JOIN family_to_subfamily ON family.id IS family_to_subfamily.family_id
+#        INNER JOIN subfamily ON subfamily.id IS family_to_subfamily.subfamily_id
+#        INNER JOIN subfamily_to_device ON subfamily.id IS subfamily_to_device.subfamily_id
+#        INNER JOIN device ON device.id IS subfamily_to_device.device_id
+#        INNER JOIN cpu ON device.cpu_id IS cpu.id
+
+
+    c.execute(statement, [name])
+
+def download_necessary_packages(packages, c):
+    index = urllib2.urlopen('http://sadevicepacksprodus.blob.core.windows.net/idxfile/index.idx')
+    index_page = index.read()
+    xml = index_page
+    # We format the xml document.
+    xml = xml.split('\n')[0] + '\n'\
+        + '<blah>' + '\n'.join(xml.split('\n')[1:]) + '</blah>'
+
+    f = StringIO(xml)
+
+    for package in selected_packages(f, packages):
+        #version = package.attrib["version"]
+        version = package.attrib["version"]
+        name = '.'.join(package.attrib["name"].split('.')[:-1])
+        print name, version
+        current_version = search_in(c, "package", ["version"],\
+                                    {"name" : name})
+        if current_version:
+            current_version = current_version[0]
+            print "Package %s present" % name
+            print "Version %s" % current_version
+
+            current_version = Version(current_version)
+            version = Version(version)
+            if current_version >= version:
+                print "Keeping old version"
+            else:
+                print "Overriding current version"
+                local_file = download_package(package)
+                delete_package(name, c)
+                add_package(os.path.abspath(local_file), c)
+        else:
+            pass
+
+    # We get the index page from Keil.
+    # We check the version of the package.
+    # if its greater than the current package version we update it.
     pass
 
 def add_package(path, c):
@@ -857,10 +754,12 @@ def add_package(path, c):
         package_name = '.'.join(package.split('.')[0:2])
         package_version = '.'.join(package.split('.')[2:-1])
 
-        print "PATH:", os.path.abspath(unzip_dir)
+        #print "PATH:", os.path.abspath(unzip_dir)
         family_id = add_pdsc_to_database(c, os.path.abspath(unzip_dir), pdsc)
 
         # We mark the package present in the database.
+        print "VERSION:", package_version
+        print "NAME:", package_name
         package_id = insert_and_get_id(c, "package",\
             {"name" : package_name,
              "version" : package_version,
