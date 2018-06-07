@@ -50,6 +50,9 @@ def entry_from_cmdline():
 
     result = cmd.execute()
 
+    if result is None:
+        return
+
     # In case of a list, we display line by line to ease
     # so that from a bash script we can use for on each line easily.
     if type(result) is list:
@@ -205,16 +208,24 @@ class CommandLine:
 
         callback_args = list()
 
+        #print self.arguments
         if self.commands[self.arguments.command].argument_needed:
-            callback_args.append(self.arguments.argument)
+            if self.arguments.argument is not None:
+                callback_args.append(self.arguments.argument)
+            else:
+                print "Missing argument."
+                sys.exit(-1)
 
         db = self.arguments.database
         full_path_db = os.path.abspath(db)
 
-        # Opens the databse.
+        # Opens the database.
         co = sqlite3.connect(full_path_db)
         co.row_factory = sqlite3.Row
+
         c = co.cursor()
+        # We enable foreign key checking.
+        c.execute("PRAGMA foreign_keys = ON")
 
         callback_args.append(c)
         result = self.commands[self.arguments.command].callback(*callback_args)
@@ -297,15 +308,15 @@ def init_db(c):
     c.execute('''CREATE TABLE IF NOT EXISTS device (
                     id                INTEGER PRIMARY KEY,
                     name              TEXT,
-                    startup_memory_id INTEGER REFERENCES memory(id) ON DELETE CASCADE,
-                    cpu_id            INTEGER REFERENCES cpu(id) ON DELETE CASCADE,
+                    startup_memory_id INTEGER REFERENCES memory(id),
+                    cpu_id            INTEGER REFERENCES cpu(id),
                     UNIQUE (name, startup_memory_id, cpu_id));''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS board (
                       id         INTEGER PRIMARY KEY,
                       name       TEXT,
-                      device_id  INTEGER NOT NULL REFERENCES device(id) ON DELETE CASCADE,
-                      UNIQUE (name));''')
+                      device_id  INTEGER REFERENCES device(id) ON DELETE CASCADE,
+                      UNIQUE (name, device_id));''')
 
     # Table to check if a certain package has been dowloaded and its content
     # available in the knowledge database.
@@ -314,7 +325,6 @@ def init_db(c):
                       id        INTEGER PRIMARY KEY,
                       name      TEXT,
                       version   TEXT,
-                      family_id INTEGER REFERENCES family(id) ON DELETE CASCADE,
                       UNIQUE (name));''')
 
     # SVD files from which we have stored the interrupts
@@ -333,28 +343,27 @@ def init_db(c):
                       name TEXT NOT NULL,
                       UNIQUE (name));''')
 
-
     ## INTERMEDIATE TABLES ##
 
-    # Family <-> Subfamily
+    # Package <-> Family
     c.execute('''CREATE TABLE IF NOT EXISTS package_to_family (
-                      id           INTEGER PRIMARY KEY,
-                      family_id    INTEGER NOT NULL REFERENCES family(id) ON DELETE CASCADE,
-                      package_id INTEGER NOT NULL REFERENCES subfamily(id) ON DELETE CASCADE,
+                      id         INTEGER PRIMARY KEY,
+                      family_id  INTEGER NOT NULL REFERENCES family(id),
+                      package_id INTEGER NOT NULL REFERENCES package(id),
                       UNIQUE (family_id, package_id));''')
 
     # Family <-> Subfamily
     c.execute('''CREATE TABLE IF NOT EXISTS family_to_subfamily (
                       id           INTEGER PRIMARY KEY,
-                      family_id    INTEGER NOT NULL REFERENCES family(id) ON DELETE CASCADE,
-                      subfamily_id INTEGER NOT NULL REFERENCES subfamily(id) ON DELETE CASCADE,
+                      family_id    INTEGER NOT NULL REFERENCES family(id),
+                      subfamily_id INTEGER NOT NULL REFERENCES subfamily(id),
                       UNIQUE (family_id, subfamily_id));''')
 
     # Subfamily <-> Device
     c.execute('''CREATE TABLE IF NOT EXISTS subfamily_to_device (
                       id           INTEGER PRIMARY KEY,
-                      subfamily_id INTEGER NOT NULL REFERENCES subfamily(id) ON DELETE CASCADE,
-                      device_id    INTEGER NOT NULL REFERENCES device(id) ON DELETE CASCADE,
+                      subfamily_id INTEGER NOT NULL REFERENCES subfamily(id),
+                      device_id    INTEGER NOT NULL REFERENCES device(id),
                       UNIQUE (subfamily_id, device_id));''')
 
 
@@ -362,37 +371,144 @@ def init_db(c):
     # Family <-> Device
     c.execute('''CREATE TABLE IF NOT EXISTS family_to_device (
                       id        INTEGER PRIMARY KEY,
-                      family_id INTEGER NOT NULL REFERENCES family(id) ON DELETE CASCADE,
-                      device_id INTEGER NOT NULL REFERENCES device(id) ON DELETE CASCADE,
+                      family_id INTEGER NOT NULL REFERENCES family(id),
+                      device_id INTEGER NOT NULL REFERENCES device(id),
                       UNIQUE (family_id, device_id));''')
 
     # Documentation <-> Device
     c.execute('''CREATE TABLE IF NOT EXISTS documentation_to_device (
                       id               INTEGER PRIMARY KEY,
-                      documentation_id INTEGER NOT NULL REFERENCES documentation(id) ON DELETE CASCADE,
-                      device_id        INTEGER NOT NULL REFERENCES device(id) ON DELETE CASCADE,
+                      documentation_id INTEGER NOT NULL REFERENCES documentation(id),
+                      device_id        INTEGER NOT NULL REFERENCES device(id),
                       UNIQUE (documentation_id, device_id));''')
 
     # Memory <-> Device
     c.execute('''CREATE TABLE IF NOT EXISTS memory_to_device (
                       id        INTEGER PRIMARY KEY,
-                      memory_id INTEGER NOT NULL REFERENCES memory(id) ON DELETE CASCADE,
-                      device_id INTEGER NOT NULL REFERENCES device(id) ON DELETE CASCADE,
+                      memory_id INTEGER NOT NULL REFERENCES memory(id),
+                      device_id INTEGER NOT NULL REFERENCES device(id),
                       UNIQUE (memory_id, device_id));''')
 
     # SVD <-> Device
     c.execute('''CREATE TABLE IF NOT EXISTS svd_to_device (
                       id        INTEGER PRIMARY KEY,
-                      svd_id    INTEGER REFERENCES svd(id) ON DELETE CASCADE,
-                      device_id INTEGER REFERENCES device(id) ON DELETE CASCADE,
+                      svd_id    INTEGER REFERENCES svd(id),
+                      device_id INTEGER REFERENCES device(id),
                       UNIQUE (svd_id, device_id));''')
 
     # Interrupt <-> SVD
     c.execute('''CREATE TABLE IF NOT EXISTS interrupt_to_svd (
                       id           INTEGER PRIMARY KEY,
-                      interrupt_id INTEGER REFERENCES interrupt(id) ON DELETE CASCADE,
-                      svd_id       INTEGER REFERENCES svd(id) ON DELETE CASCADE,
+                      interrupt_id INTEGER REFERENCES interrupt(id),
+                      svd_id       INTEGER REFERENCES svd(id),
                       UNIQUE (interrupt_id, svd_id));''')
+
+    # We delete the tree describing a package.
+    # For board deletion, we take care of it with the constraints.
+    c.execute('''
+       CREATE TRIGGER delete_package
+           AFTER DELETE on package
+           BEGIN
+               DELETE FROM package_to_family
+                   WHERE package_to_family.package_id IS OLD.id;
+           END;''')
+
+    c.execute('''
+        CREATE TRIGGER delete_package_to_family
+            AFTER DELETE on package_to_family
+            BEGIN
+                DELETE FROM family
+                    WHERE family.id IS OLD.family_id;
+            END;''')
+
+    c.execute('''
+        CREATE TRIGGER delete_family
+            AFTER DELETE on family
+            BEGIN
+                DELETE FROM family_to_subfamily
+                    WHERE family_to_subfamily.family_id IS OLD.id;
+
+                DELETE FROM family_to_device
+                    WHERE family_to_device.family_id IS OLD.id;
+
+           END;''')
+
+    c.execute('''
+        CREATE TRIGGER delete_family_to_subfamily
+            AFTER DELETE on family_to_subfamily
+            BEGIN
+                DELETE FROM subfamily
+                    WHERE subfamily.id IS OLD.subfamily_id;
+
+                DELETE FROM subfamily_to_device
+                    WHERE subfamily_to_device.subfamily_id IS OLD.subfamily_id;
+            END;''')
+
+    c.execute('''
+        CREATE TRIGGER delete_subfamily_to_device
+            AFTER DELETE on subfamily_to_device
+            BEGIN
+                DELETE FROM device
+                    WHERE device.id IS OLD.device_id;
+            END;''')
+
+
+    c.execute('''
+        CREATE TRIGGER delete_device
+            AFTER DELETE on device
+            BEGIN
+                DELETE FROM memory_to_device
+                    WHERE memory_to_device.device_id IS OLD.id;
+
+                DELETE FROM svd_to_device
+                    WHERE svd_to_device.device_id IS OLD.id;
+
+                DELETE FROM documentation_to_device
+                    WHERE documentation_to_device.device_id IS OLD.id;
+
+                DELETE FROM cpu
+                    WHERE cpu.id IS OLD.cpu_id
+                        AND cpu.id NOT IN (SELECT cpu_id FROM device);
+            END;''')
+
+    c.execute('''
+        CREATE TRIGGER delete_memory_to_device
+            AFTER DELETE on memory_to_device
+            BEGIN
+                DELETE FROM memory
+                    WHERE (memory.id IS OLD.memory_id
+                        AND memory.id NOT IN (SELECT memory_id FROM memory_to_device));
+            END;''')
+
+    c.execute('''
+        CREATE TRIGGER delete_svd_to_device
+            AFTER DELETE on svd_to_device
+            BEGIN
+                DELETE FROM svd
+                    WHERE (svd.id IS OLD.svd_id
+                        AND svd.id NOT IN (SELECT svd_id FROM svd_to_device));
+
+                DELETE FROM interrupt_to_svd
+                    WHERE interrupt_to_svd.svd_id IS OLD.svd_id;
+            END;''')
+
+    c.execute('''
+        CREATE TRIGGER delete_interrupt_to_svd
+            AFTER DELETE ON interrupt_to_svd
+            BEGIN
+                DELETE FROM interrupt
+                    WHERE (interrupt.id IS OLD.interrupt_id
+                        AND interrupt.id NOT IN (SELECT interrupt_id FROM interrupt_to_svd));
+            END;''')
+
+    c.execute('''
+        CREATE TRIGGER delete_doc_to_device
+            AFTER DELETE ON documentation_to_device
+            BEGIN
+                DELETE FROM documentation
+                    WHERE (documentation.id IS OLD.documentation_id
+                        AND documentation.id NOT IN (SELECT documentation_id FROM documentation_to_device));
+            END;''')
 
 def build_insert(table, columns):
     insert = '''INSERT OR IGNORE INTO %s (''' + ','.join(columns)\
@@ -421,18 +537,18 @@ def get_nodes_from_xml(handle, name):
             yield elem
             root.clear()  # Free up memory by clearing the root element.
 
-def search_in(c, table, columns_needed, columns_conditions, nb_items=1):
+def search_in(c, table, columns_needed, columns_conditions=dict(), nb_items=1):
     statement = '''SELECT ''' + ','.join(columns_needed) + ''' FROM ''' + table
     number_of_results = ''' ORDER BY id DESC LIMIT %s''' % nb_items
     conditions = ""
-    if columns_conditions != list():
+    if columns_conditions != dict():
         conditions = ''' WHERE ''' +\
-            ' and '.join([column + " IS ?" for column in columns_conditions])
+            ' and '.join([column + " IS ?" for column in columns_conditions.keys()])
 
     query = statement + conditions + number_of_results
 
-    print "VALUES:", columns_conditions.values()
-    print "QUERY:", query
+#    print "VALUES:", columns_conditions.values()
+#    print "QUERY:", query
 
     result = c.execute(query, columns_conditions.values()).fetchall()
     if nb_items == 1 and result:
@@ -565,7 +681,6 @@ def add_device(c, unzip_dir, device_repr, parent_ids):
          "cpu_id"            : cpu_id,
          "startup_memory_id" : startup_mem_id,
         })
-    #print "DEV REPR:",device_repr
     # Connect the memory table with the device table.
     for mem_id in memory_ids:
          insert_into(c, "memory_to_device",\
@@ -631,12 +746,18 @@ def add_pdsc_to_database(c, unzipped_dir, f):
             board_name = board.attrib["name"]
             # We get the first item of the generator.
             dev_name = board.iter("mountedDevice").next().attrib["Dname"]
-            dev_id = search_in(c, "device", ["id"], {"name" : dev_name})[0]
-            board_requests.append((board_name,  dev_id))
+            dev = search_in(c, "device", ["id"], {"name" : dev_name})
+            board_requests.append((board_name,  dev['id']))
 
     #We insert the boards.
-    statement = build_insert("board", ["device_id", "name"])
-    c.executemany(statement, board_requests)
+    #print "INSERTING BOARDS"
+    statement = build_insert("board", ["name", "device_id"])
+
+    for req in board_requests:
+        #print "INSERT:", statement
+        #print "VALUES:", req
+        c.execute(statement, req)
+
     return family_id
 
 def update_all_packages(c):
@@ -673,30 +794,25 @@ def download_package(package):
 
     dl_url = format_url(package)
 
-    #TODO: fix ssl certificates.
+    #TODO: fix ssl certificate.
     #gcontext = ssl.create_default_context()
     gcontext = ssl._create_unverified_context()
 
     f = urllib2.urlopen(dl_url, context=gcontext)
     temp_file = name + "." + version +".pack"
-    print "Downloading %s into %s" %(dl_url, temp_file)
+    print "Downloading %s" % dl_url
     with open(temp_file, "wb") as local_file:
         local_file.write(f.read())
+    print "Finished downloading %s" % dl_url
     return temp_file
 
 def delete_package(name, c):
+    pack_id = search_in(c, "package", ["id"], {"name" : name})[0]
     statement = '''
-        DELETE package
-        FROM package 
+        DELETE
+        FROM package
         WHERE package.name is ?
                 '''
-#        INNER JOIN family_to_subfamily ON family.id IS family_to_subfamily.family_id
-#        INNER JOIN subfamily ON subfamily.id IS family_to_subfamily.subfamily_id
-#        INNER JOIN subfamily_to_device ON subfamily.id IS subfamily_to_device.subfamily_id
-#        INNER JOIN device ON device.id IS subfamily_to_device.device_id
-#        INNER JOIN cpu ON device.cpu_id IS cpu.id
-
-
     c.execute(statement, [name])
 
 def download_necessary_packages(packages, c):
@@ -729,10 +845,10 @@ def download_necessary_packages(packages, c):
                 print "Overriding current version"
                 local_file = download_package(package)
                 delete_package(name, c)
+                # No need to vacuum the database, add_package does it.
                 add_package(os.path.abspath(local_file), c)
         else:
             pass
-
     # We get the index page from Keil.
     # We check the version of the package.
     # if its greater than the current package version we update it.
@@ -758,12 +874,11 @@ def add_package(path, c):
         family_id = add_pdsc_to_database(c, os.path.abspath(unzip_dir), pdsc)
 
         # We mark the package present in the database.
-        print "VERSION:", package_version
-        print "NAME:", package_name
+        #print "VERSION:", package_version
+        #print "NAME:", package_name
         package_id = insert_and_get_id(c, "package",\
             {"name" : package_name,
-             "version" : package_version,
-             "family_id" : family_id})
+             "version" : package_version})
 
         insert_into(c, "package_to_family",
            {"family_id"  : family_id,
