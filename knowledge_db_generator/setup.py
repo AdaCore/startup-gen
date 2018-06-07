@@ -11,12 +11,11 @@ setup(
     author="Corentin Gay",
     author_email="gay@adacore.com",
     url="https://github.com/AdaCore/Bare_Metal_Project_Generator",
-    py_modules=['modifybdb', 'querybdb'],
+    py_modules=['querytool'],
     license=readfile('README.md'),
     entry_points={
         'console_scripts': [
-            'modifybdb = modifybdb:entry',
-            'querybdb = querybdb:entry'
+            'querytool = querytool:entry_from_cmdline'
         ]
     },
 )
