@@ -155,7 +155,7 @@ def get_device_infos(device_name, c):
 
     cpu = c.execute(cpu_query, [device_name]).fetchone()
     device["device"]["cpu"]["name"] = cpu["name"]
-    device["device"]["cpu"]["fpu"] = cpu["fpu"]
+    device["device"]["cpu"]["fpu"] = 1 if cpu["fpu"] or cpu["fpu"].contains("fpu") else 0
 
     startup_memory = c.execute(startup_memory_query, [device_name]).fetchone()
     mem_to_add = dict()
@@ -519,14 +519,15 @@ def build_insert(table, columns):
 
 def insert_into(c, table, columns):
     insert = build_insert(table, columns.keys())
-    #print "VALUES:", columns.values()
-    #print "INSERT:", insert
+    print "VALUES:", columns.values()
+    print "INSERT:", insert
     c.execute(insert, columns.values())
 
 def insert_and_get_id(c, table, columns):
     insert_into(c, table, columns)
     select = build_select_statement(table, ["id"], columns.keys())
-    #print "SELECT:", select
+    print "VALUES:", columns.values()
+    print "SELECT:", select
     return c.execute(select, columns.values()).fetchone()[0]
 
 def get_nodes_from_xml(handle, name):
@@ -547,8 +548,8 @@ def search_in(c, table, columns_needed, columns_conditions=dict(), nb_items=1):
 
     query = statement + conditions + number_of_results
 
-#    print "VALUES:", columns_conditions.values()
-#    print "QUERY:", query
+    #print "VALUES:", columns_conditions.values()
+    #print "QUERY:", query
 
     result = c.execute(query, columns_conditions.values()).fetchall()
     if nb_items == 1 and result:
@@ -637,8 +638,17 @@ def add_svd(c, unzip_dir, svd, device_id):
                 {"svd_id" : svd_id, "interrupt_id" : int_id})
 
 
-#def get_fpu(cpu):
-#def get_mpu(cpu):
+"""
+Converts a string attribute representing fpu, mpu or the clock
+in an integer form.
+"""
+def get_string_attrib(cpu, name):
+    if name in cpu.keys():
+        if name.replace('D', '') in cpu[name]:
+            return 1
+        else:
+            return cpu[name]
+    return 0
 
 """
 Adds all components of a device to the database and
@@ -650,9 +660,9 @@ def add_device(c, unzip_dir, device_repr, parent_ids):
     #print "CPU ATTRIBUTES:", cpu.keys()
     cpu_id = insert_and_get_id(c, "cpu",
         {"name"       : cpu["Dcore"],
-         "fpu"        : cpu["Dfpu"],
-         "mpu"        : 0 if "Dmpu" not in cpu.keys() else cpu["Dmpu"],
-         "clock"      : cpu["Dclock"],
+         "fpu"        : get_string_attrib(cpu, "Dfpu"),
+         "mpu"        : get_string_attrib(cpu, "Dmpu"),
+         "clock"      : get_string_attrib(cpu, "Dclock"),
          "endianness" : cpu["Dendian"]})
 
     # We add all memories and get the default startup memory.
@@ -746,16 +756,16 @@ def add_pdsc_to_database(c, unzipped_dir, f):
             board_name = board.attrib["name"]
             # We get the first item of the generator.
             dev_name = board.iter("mountedDevice").next().attrib["Dname"]
+            # TODO: In the case of the pack ABOV.CM3, the mounted Device
+            # and not a specific device, we have to handle that case.
             dev = search_in(c, "device", ["id"], {"name" : dev_name})
+            print "DEV:", dev
             board_requests.append((board_name,  dev['id']))
 
     #We insert the boards.
-    #print "INSERTING BOARDS"
     statement = build_insert("board", ["name", "device_id"])
 
     for req in board_requests:
-        #print "INSERT:", statement
-        #print "VALUES:", req
         c.execute(statement, req)
 
     return family_id
@@ -835,7 +845,8 @@ def download_necessary_packages(packages, c):
         if current_version:
             current_version = current_version[0]
             print "Package %s present" % name
-            print "Version %s" % current_version
+            print "Current version %s" % current_version
+            print "Distant version %s" % version
 
             current_version = Version(current_version)
             version = Version(version)
