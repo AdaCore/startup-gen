@@ -754,21 +754,18 @@ package body Device is
       use GNAT.Regexp;
       Boot_Mem_Is_Valid : Boolean := False;
 
-      Hex_Number_At_Least_One : constant String :=
-         "(0x(([1-9]+[0-9]*[0-9]+)|(0*[1-9])))";
+      Dec_Number : constant String :=
+         "([0-9]+)";
 
-      Number_At_Least_One : constant String :=
-         "(([1-9]+[0-9]*[0-9]+)|([1-9].))";
-
-      Number_And_Unit : constant String :=
-         "(" & Number_At_Least_One & "(k|K|m|M))";
+      Dec_Number_And_Unit : constant String :=
+         "(" & Dec_Number & "(k|K|m|M))";
 
       Hex_Number : constant String := "(0x([0-9]|[A-F]|[a-f])+)";
 
       Address_Pattern : constant String := Hex_Number;
 
       Size_Pattern : constant String :=
-         Hex_Number_At_Least_One & "|" & Number_And_Unit;
+         Hex_Number & "|" & Dec_Number_And_Unit;
 
       Address_Reg : constant Regexp := Compile (Pattern => Address_Pattern);
       Size_Reg    : constant Regexp := Compile (Pattern => Size_Pattern);
@@ -846,6 +843,10 @@ package body Device is
          LD_Hex_String_To_Long_Integer (Memory_2.Size);
 
    begin
+      -- Memory size cannot be zero.
+      if Memory_2_Size = 0 or else Memory_1_Size = 0 then
+         return True;
+      end if;
       if Memory_2_Address > Memory_1_Address then
          return not (Memory_1_Address + Memory_1_Size < Memory_2_Address);
       elsif Memory_2_Address < Memory_1_Address then
