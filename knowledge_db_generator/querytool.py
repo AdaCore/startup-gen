@@ -25,7 +25,8 @@ def entry_from_cmdline():
     cmd = CommandLine()
 
     # Commands to query infos from the database.
-    cmd.register_command("packages", False, get_packages)
+    cmd.register_command("packages", False, lambda c:\
+                         query_attributes(c, ["name"], "package"))
 
     cmd.register_command("families_of_package", True, get_families_of_package)
 
@@ -37,7 +38,10 @@ def entry_from_cmdline():
 
     cmd.register_command("devices_of_family", True, get_devices_of_family)
 
-    cmd.register_command("device_infos", True, get_device_infos)
+    cmd.register_command("device_json", True, get_device_json)
+
+    cmd.register_command("devices", False, lambda c:\
+                         query_attributes(c, ["name"], "device"))
 
     # Commands that modify the database.
     cmd.register_command("init", False, init_db)
@@ -62,9 +66,6 @@ def entry_from_cmdline():
         print result
 
 ## Query functions ##
-
-def get_packages(c):
-    return query_attributes(c, ["name"], "package")
 
 def get_families_of_package(package_name, c):
     return query_fields_from_root_table(c,\
@@ -126,12 +127,12 @@ def query_fields_from_root_table(c, tables, fields, start_name):
     return [name for tuple in result for name in tuple]
 
 
-def get_device_infos(device_name, c):
+def get_device_json(device_name, c):
     device = dict()
     device["device"] = dict()
     device["device"]["memory"] = list()
     device["device"]["cpu"] = dict()
-    device["interrupt"] = dict()
+    device["interrupts"] = dict()
 
     cpu_query = '''SELECT cpu.name, cpu.fpu FROM device
                     INNER JOIN cpu ON device.cpu_id IS cpu.id
@@ -155,23 +156,23 @@ def get_device_infos(device_name, c):
 
     cpu = c.execute(cpu_query, [device_name]).fetchone()
     device["device"]["cpu"]["name"] = cpu["name"]
-    device["device"]["cpu"]["fpu"] = 1 if cpu["fpu"] or cpu["fpu"].contains("fpu") else 0
+    device["device"]["cpu"]["fpu"] = cpu["fpu"]
 
     startup_memory = c.execute(startup_memory_query, [device_name]).fetchone()
     mem_to_add = dict()
-    mem_to_add["size"] = startup_memory["address"]
-    mem_to_add["address"] = startup_memory["size"]
+    mem_to_add["size"] = startup_memory["size"]
+    mem_to_add["address"] = startup_memory["address"]
     mem_to_add["name"] = startup_memory["name"]
     mem_to_add["startup"] = 1
     device["device"]["memory"].append(mem_to_add)
 
     for interrupt in c.execute(interrupts_query, [device_name]).fetchall():
-        device["interrupt"][interrupt[0]] = interrupt[1]
+        device["interrupts"][interrupt[0]] = interrupt[1]
 
     for memory in c.execute(memory_query, [device_name]).fetchall():
         mem_to_add = dict()
-        mem_to_add["size"] = memory["address"]
-        mem_to_add["address"] = memory["size"]
+        mem_to_add["size"] = memory["size"]
+        mem_to_add["address"] = memory["address"]
         mem_to_add["name"] = memory["name"]
         device["device"]["memory"].append(mem_to_add)
 
@@ -519,15 +520,15 @@ def build_insert(table, columns):
 
 def insert_into(c, table, columns):
     insert = build_insert(table, columns.keys())
-    print "VALUES:", columns.values()
-    print "INSERT:", insert
+    #print "VALUES:", columns.values()
+    #print "INSERT:", insert
     c.execute(insert, columns.values())
 
 def insert_and_get_id(c, table, columns):
     insert_into(c, table, columns)
     select = build_select_statement(table, ["id"], columns.keys())
-    print "VALUES:", columns.values()
-    print "SELECT:", select
+    #print "VALUES:", columns.values()
+    #print "SELECT:", select
     return c.execute(select, columns.values()).fetchone()[0]
 
 def get_nodes_from_xml(handle, name):
@@ -592,8 +593,8 @@ def get_and_override_attributes(dev_repr, node):
 
     for doc in node.findall("book"):
         dic = {}
-        for k,v in doc.attrib.items():
-            dic[k.replace('name', 'path')] = v.replace('title', 'name')
+        dic["path"] = doc.attrib["name"]
+        dic["title"] = doc.attrib["title"]
         result["documentation"].append(dic)
 
     return result
@@ -659,7 +660,7 @@ def add_device(c, unzip_dir, device_repr, parent_ids):
     cpu = device_repr["cpu"]
     #print "CPU ATTRIBUTES:", cpu.keys()
     cpu_id = insert_and_get_id(c, "cpu",
-        {"name"       : cpu["Dcore"],
+        {"name"       : cpu["Dcore"].replace('+', 'plus'),
          "fpu"        : get_string_attrib(cpu, "Dfpu"),
          "mpu"        : get_string_attrib(cpu, "Dmpu"),
          "clock"      : get_string_attrib(cpu, "Dclock"),
@@ -677,10 +678,18 @@ def add_device(c, unzip_dir, device_repr, parent_ids):
                 "name"     : mem["name"]})
             memory_ids.append(startup_mem_id)
         else:
-            memory_ids.append(insert_and_get_id(c, "memory",
+            mem_id = insert_and_get_id(c, "memory",
                                     {"address" : mem["start"],
                                     "size"     : mem["size"],
-                                    "name"     : mem["name"]}))
+                                    "name"     : mem["name"]})
+
+            memory_ids.append(mem_id)
+
+            # If there is no startup memory, we pick one arbitrarily.
+            if not startup_mem_id\
+                and "default" in mem.keys() and mem["default"]:
+                startup_mem_id = mem_id
+
 
     if not startup_mem_id:
         raise Exception("Malformed device %s has no startup memory." %\
@@ -756,10 +765,11 @@ def add_pdsc_to_database(c, unzipped_dir, f):
             board_name = board.attrib["name"]
             # We get the first item of the generator.
             dev_name = board.iter("mountedDevice").next().attrib["Dname"]
+
             # TODO: In the case of the pack ABOV.CM3, the mounted Device
-            # and not a specific device, we have to handle that case.
+            # is not a specific device, do we have to handle that case?
+
             dev = search_in(c, "device", ["id"], {"name" : dev_name})
-            print "DEV:", dev
             board_requests.append((board_name,  dev['id']))
 
     #We insert the boards.
