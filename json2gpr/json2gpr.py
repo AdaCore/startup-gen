@@ -1,6 +1,7 @@
 import json
 import sys
 import argparse
+
 from string import Template
 
 
@@ -32,14 +33,14 @@ def get_mem_output(json):
 
     for mem in json:
         # We get the attribute common to all memory regions.
-        addr_decl = attribute.substitute(var="Address",
+        addr_decl = attribute.substitute(var="Address(\"%s\")" % mem["name"],
                                     content="\"%s\"" % mem["address"])
 
-        size_decl = attribute.substitute(var="Size",
+        size_decl = attribute.substitute(var="Size(\"%s\")" % mem["name"],
                                     content="\"%s\"" % mem["size"])
 
-        mem_kind = "ROM" if "RAM" not in mem["name"] else "RAM"
-        kind_decl = attribute.substitute(var="Mem_Kind",
+        mem_kind = "ROM" if "RAM" not in mem["name"].upper() else "RAM"
+        kind_decl = attribute.substitute(var="Mem_Kind(\"%s\")" % mem["name"],
                                     content="\"%s\"" % mem_kind)
         content.append(addr_decl)
         content.append(size_decl)
@@ -87,15 +88,17 @@ def get_device_output(json):
 Returns the project declaration describing the interrupt vector.
 """
 def get_interrupt_output(json):
-    package = wrapper.substitute(Type="project",
+    project = wrapper.substitute(Type="project",
                                  name="Interruptions")
+    package = wrapper.substitute(Type="package",
+                                 name="Interrupt_Vector")
     content = list()
     for key, name in sorted(json["interrupts"].items(), key=lambda k:int(k[0])):
         interrupt_decl = attribute.substitute(var=("Interrupt(\"%s\")" % key),
                                               content=("\"%s\"" % name))
         content.append(interrupt_decl)
-
-    return package % ('\n'.join("    " + interrupt for interrupt in content))
+    package = package % ('\n'.join("    " + interrupt for interrupt in content))
+    return project % ('\n'.join("    " + line for line in package.split('\n')))
 
 
 """
@@ -117,20 +120,17 @@ def dump_gpr_files(json_in, dev_file, int_file=""):
             f.write(interrupts)
 
 def entry_from_cmdline():
-
     parser = argparse.ArgumentParser()
 
     parser.add_argument('device_file',
-                        type=str,
                         help='Output file for the device description')
 
     parser.add_argument('interrupt_file',
-                        action="store_true",
-                        type=str,
+                        action="store",
                         help='Output file for the interrupt vector')
 
     args = parser.parse_args()
 
     json_input = sys.stdin.read().strip()
 
-    dump_gpr_files(json_input, args.interrupt_file, args.device_file)
+    dump_gpr_files(json_input, args.device_file, args.interrupt_file)
