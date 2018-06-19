@@ -644,19 +644,19 @@ package body Device is
       Put_Dummy_Handler (File, "Mem_Manage");
       Put_Dummy_Handler (File, "Hard_Fault");
       Put_Dummy_Handler (File, "NMI");
-     for Cursor in Self.Interrupts.Interrupts.Iterate loop
-            declare
-               Name : constant String :=
-                  To_String (Interrupt_Hashed_Maps.Element (Cursor));
-               Weak_Symbol : constant String :=
-                  ".weak" & ASCII.HT & ASCII.HT & Name & "_Handler";
-               Override_Symbol : constant String :=
-                  ".thumb_set" & ASCII.HT & Name & "_Handler,hang";
-            begin
-               File.Put_Indented_Line (Weak_Symbol);
-               File.Put_Indented_Line (Override_Symbol);
-               File.New_Line;
-            end;
+      for Cursor in Self.Interrupts.Interrupts.Iterate loop
+         declare
+            Name : constant String :=
+              To_String (Interrupt_Hashed_Maps.Element (Cursor));
+            Weak_Symbol : constant String :=
+              ".weak" & ASCII.HT & ASCII.HT & Name & "_Handler";
+            Override_Symbol : constant String :=
+              ".thumb_set" & ASCII.HT & Name & "_Handler,hang";
+         begin
+            File.Put_Indented_Line (Weak_Symbol);
+            File.Put_Indented_Line (Override_Symbol);
+            File.New_Line;
+         end;
       end loop;
 
       File.Unindent;
