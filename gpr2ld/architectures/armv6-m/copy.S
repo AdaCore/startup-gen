@@ -1,4 +1,4 @@
-${INDENT}/* Copy ${NAME} */
+${INDENT}/* Copy .${NAME} */
 ${INDENT}ldr	r0,=__${NAME}_start
 ${INDENT}ldr	r1,=__${NAME}_words
 ${INDENT}ldr	r2,=__${NAME}_load

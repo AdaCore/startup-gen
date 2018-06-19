@@ -1,4 +1,4 @@
-${INDENT}/* Copy ${NAME} */
+${INDENT}/* Copy .${NAME} */
 ${INDENT}movw  r0,#:lower16:__${NAME}_start
 ${INDENT}movt  r0,#:upper16:__${NAME}_start
 ${INDENT}movw  r1,#:lower16:__${NAME}_words
