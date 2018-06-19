@@ -126,15 +126,19 @@ package body Device is
 
       Float_Handling : constant String :=
         Spec_Project.Attribute_Value (Build ("cpu", "float_handling"));
+
+      Number_Of_Interrupts : constant String :=
+        Spec_Project.Attribute_Value (Build ("cpu", "number_of_interrupts"));
    begin
 
       if Find (Container => Self.Architectures,
                Key       => Name) /= No_Element
       then
          Self.CPU :=
-           (Name           => Name,
-            Float_Handling => Float_Type'Value (Float_Handling),
-            Arch           => Element (Self.Architectures, Name));
+           (Name                 => Name,
+            Float_Handling       => Float_Type'Value (Float_Handling),
+            Number_Of_Interrupts => Natural'Value (Number_Of_Interrupts),
+            Arch                 => Element (Self.Architectures, Name));
       else
          raise Name_Error with
             "Current CPU " & To_String (Self.CPU.Name) & " not supported.";
@@ -616,7 +620,15 @@ package body Device is
       File.New_Line;
       File.Put_Indented_Line ("/* External interrupts */");
       File.New_Line;
-      for I in Integer range 0 .. Self.Interrupts.Last_Index loop
+
+      --  Adjust the number of interrupts, if there is more explicitly declared
+      --  interrupt than the CPU.Number_Of_Interrupts. This will also happen if
+      --  user doesn't specify Number_Of_Interrupts in the CPU package.
+      if Self.Interrupts.Last_Index > Self.CPU.Number_Of_Interrupts then
+         Self.CPU.Number_Of_Interrupts := Self.Interrupts.Last_Index + 1;
+      end if;
+
+      for I in Integer range 0 .. Self.CPU.Number_Of_Interrupts - 1 loop
          if Self.Interrupts.Is_Index_Used (I) then
             declare
                Name : constant String := Self.Interrupts.Get_Name (I);
