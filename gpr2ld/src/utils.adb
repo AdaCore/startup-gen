@@ -35,6 +35,9 @@ package body Utils is
       Error6 : aliased constant String :=
         Register_New_Attribute ("Float_Handling", "CPU");
 
+      Error11 : aliased constant String :=
+        Register_New_Attribute ("Number_Of_Interrupts", "CPU");
+
       Error7 : aliased constant String :=
         Register_New_Attribute ("Boot_Memory", "Memory_Map");
 
@@ -65,7 +68,8 @@ package body Utils is
          7  => Error7'Access,
          8  => Error8'Access,
          9  => Error9'Access,
-         10 => Error10'Access
+         10 => Error10'Access,
+         11 => Error11'Access
          );
    begin
       for Str of Errors loop

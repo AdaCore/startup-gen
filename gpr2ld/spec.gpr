@@ -4,6 +4,7 @@ project Spec is
    package CPU is
       for Name use "cortex-m0plus";
       for Float_Handling use "soft";
+      for Number_Of_Interrupts use "15";
    end CPU;
 
    package Memory_Map is
