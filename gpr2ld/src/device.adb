@@ -626,7 +626,7 @@ package body Device is
                File.Put_Indented_Line (Line);
             end;
          else
-            File.Put_Indented_Line (".word 0    /*" & I'Img & " reserved */");
+            File.Put_Indented_Line (".word UnnamedInterrupt_Handler    /*" & I'Img & " */");
          end if;
       end loop;
 
@@ -644,6 +644,7 @@ package body Device is
       Put_Dummy_Handler (File, "Mem_Manage");
       Put_Dummy_Handler (File, "Hard_Fault");
       Put_Dummy_Handler (File, "NMI");
+      Put_Dummy_Handler (File, "UnnamedInterrupt");
       for Cursor in Self.Interrupts.Interrupts.Iterate loop
          declare
             Name : constant String :=
