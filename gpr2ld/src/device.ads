@@ -61,9 +61,10 @@ private
    type Float_Type is (Hard, Soft);
 
    type CPU_Type is record
-      Name           : Unbounded_String;
-      Float_Handling : Float_Type;
-      Arch           : Arch_Algorithms;
+      Name                 : Unbounded_String;
+      Float_Handling       : Float_Type;
+      Number_Of_Interrupts : Natural := 0;
+      Arch                 : Arch_Algorithms;
    end record;
 
    type Memory_Kind is (RAM, ROM, TCM, CCM);
