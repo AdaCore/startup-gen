@@ -621,12 +621,12 @@ package body Device is
             declare
                Name : constant String := Self.Interrupts.Get_Name (I);
                Line : constant String :=
-                  ".word " & Name & "_Handler" & "    /* " & Name & " */";
+                 ".word " & Name & "_Handler" & "    /*" & I'Img & " " & Name & " */";
             begin
                File.Put_Indented_Line (Line);
             end;
          else
-            File.Put_Indented_Line (".word 0    /* reserved */");
+            File.Put_Indented_Line (".word 0    /*" & I'Img & " reserved */");
          end if;
       end loop;
 
