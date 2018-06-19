@@ -197,48 +197,61 @@ package body Device is
       function TUS (Str : String) return Unbounded_String
          renames To_Unbounded_String;
 
+      use Sections.Section_Vectors;
+
+      -----------------
+      -- Add_Section --
+      -----------------
+
+      procedure Add_Section (Sec : Section) is
+      begin
+         Self.Section_Vector := Self.Section_Vector & Sec;
+      end Add_Section;
+
+   begin
+
       --  In the long term we want to be able to specify
       --  the sections that corresponds to the target architecture.
       --  For now and for ARM processors, it will do.
 
-      TEXT : constant Section :=
-         Make_Section
-            (Boot_Memory        => Self.Boot_Memory,
-             Name               => TUS ("text"),
-             Reloc_Memory       => Self.Boot_Memory,
-             Additional_Content => Unbounded_String_Vectors.Empty_Vector &
-                                    TUS ("KEEP (*(.vectors))")
-            );
+      for Mem of Self.Memory loop
+         case Mem.Kind is
+            when ROM =>
+               Add_Section (Make_Section
+                            (Boot_Memory        => Self.Boot_Memory,
+                             Name               => TUS ("text_") & Mem.Name,
+                             Reloc_Memory       => Self.Boot_Memory,
+                             Additional_Content =>
+                               (if Mem.Name = Self.Boot_Memory then
+                                   Unbounded_String_Vectors.Empty_Vector &
+                                   TUS ("KEEP (*(.vectors))")
+                                else Unbounded_String_Vectors.Empty_Vector)
+                            ));
+               Add_Section (Make_Section
+                            (Boot_Memory  => Self.Boot_Memory,
+                             Name         => TUS ("rodata_") & Mem.Name,
+                             Reloc_Memory => Self.Boot_Memory
+                            ));
+            when RAM =>
+               Add_Section (Make_Section
+                            (Boot_Memory  => Self.Boot_Memory,
+                             Name         => TUS ("bss_") & Mem.Name,
+                             Reloc_Memory => Mem.Name,
+                             Force_Init   => True,
+                             Load         => False,
+                             Init_Code    => Self.CPU.Arch.Clear_Code
+                            ));
 
-      RODATA : constant Section :=
-         Make_Section
-            (Boot_Memory  => Self.Boot_Memory,
-             Name         => TUS ("rodata"),
-             Reloc_Memory => Self.Boot_Memory
-                       );
-
-      BSS : constant Section :=
-         Make_Section
-            (Boot_Memory  => Self.Boot_Memory,
-             Name         => TUS ("bss"),
-             Reloc_Memory => TUS ("RAM"),
-             Force_Init   => True,
-             Load         => False,
-             Init_Code    => Self.CPU.Arch.Clear_Code
-                       );
-
-      DATA : constant Section :=
-         Make_Section
-            (Boot_Memory  => Self.Boot_Memory,
-             Name         => TUS ("data"),
-             Reloc_Memory => TUS ("RAM"),
-             Init_Code    => Self.CPU.Arch.Copy_Code
-                       );
-
-      use Sections.Section_Vectors;
-   begin
-      Self.Section_Vector := Self.Section_Vector &
-         TEXT & RODATA & DATA & BSS;
+               Add_Section (Make_Section
+                            (Boot_Memory  => Self.Boot_Memory,
+                             Name         => TUS ("data_") & Mem.Name,
+                             Reloc_Memory => Mem.Name,
+                             Init_Code    => Self.CPU.Arch.Copy_Code
+                            ));
+            when others =>
+               null;
+         end case;
+      end loop;
    end Generate_Sections;
 
    --------------
