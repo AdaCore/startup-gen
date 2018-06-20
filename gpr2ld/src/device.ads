@@ -177,7 +177,7 @@ private
    function To_Size_String (Size : String) return String;
 
    --  Translates an Ada based literal string to a C style hexa string.
-   function Ada_Based_Literal_To_C_Style_Hex (Size : String) return String;
+   function Ada_Based_Literal_To_C_Style_Hex (Value : String) return String;
 
    --  Returns True if the String passed
    --  in parameter is an Ada based literal.
