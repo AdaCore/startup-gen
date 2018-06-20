@@ -743,13 +743,11 @@ package body Device is
 
       Temp_String : String (1 .. Size_Of_String_Representation + 4);
    begin
-      Ada.Text_IO.Put_Line ("test1:" & Size_Of_String_Representation'Image);
       Put
          (To   => Temp_String,
           Item => Integer_Form,
           Base => 16);
 
-      Ada.Text_IO.Put_Line ("test2");
       return ("0x" & Temp_String (4 .. Temp_String'Last - 1));
    end Ada_Based_Literal_To_C_Style_Hex;
 
