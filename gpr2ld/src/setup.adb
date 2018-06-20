@@ -57,6 +57,7 @@ package body Setup is
       Put_Line ("Spec " & Values.Project_File.all);
       Put_Line ("Out Dir " & Values.Output_Dir.all);
       Put_Line ("Linker Script " & Values.Linker_File.all);
+      Put_Line ("Startup Code " & Values.Startup_Code_File.all);
       Put_Line ("Configuration file " &  Values.Architecture_File.all);
    end Display;
 
