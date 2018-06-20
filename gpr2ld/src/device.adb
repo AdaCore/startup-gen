@@ -727,22 +727,29 @@ package body Device is
    -- Ada_Based_Literal_To_C_Style_Hex --
    --------------------------------------
 
-   function Ada_Based_Literal_To_C_Style_Hex (Size : String) return String
+   function Ada_Based_Literal_To_C_Style_Hex (Value : String) return String
    is
       use Ada.Numerics.Elementary_Functions;
 
-      Integer_Form : constant Long_Integer := Long_Integer'Value (Size);
+      Integer_Form : constant Long_Integer := Long_Integer'Value (Value);
 
+      --  We need to have at least one characte and we cannot pass
+      --  0 to the log function as it raises an exception.
       Size_Of_String_Representation : constant Integer :=
-         Integer (Float'Ceiling (Log (Float (Integer_Form), 16.0)));
+         (if (Integer_Form < 2) then
+            1
+         else
+            Integer (Float'Ceiling (Log (Float (Integer_Form + 1), 16.0))));
 
       Temp_String : String (1 .. Size_Of_String_Representation + 4);
    begin
+      Ada.Text_IO.Put_Line ("test1:" & Size_Of_String_Representation'Image);
       Put
          (To   => Temp_String,
           Item => Integer_Form,
           Base => 16);
 
+      Ada.Text_IO.Put_Line ("test2");
       return ("0x" & Temp_String (4 .. Temp_String'Last - 1));
    end Ada_Based_Literal_To_C_Style_Hex;
 
