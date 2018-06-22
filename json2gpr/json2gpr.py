@@ -51,7 +51,7 @@ def get_mem_output(json):
 """
 Returns the package declaration containing the infos about the CPU used.
 """
-def get_cpu_output(json):
+def get_cpu_output(json, int_nb):
     # Spaces are here for coding style purposes.
     package = wrapper.substitute(Type="    package", name="CPU")
     cpu_name = json["name"]
@@ -65,16 +65,20 @@ def get_cpu_output(json):
 
     float_decl = attribute.substitute(var="Float_Handling",
                                      content=float_handling)
+
+    nb_int_decl = attribute.substitute(var="Number_Of_Interrupts",
+                                     content=("\"%s\"" % int_nb))
     content.append(name_decl)
     content.append(float_decl)
+    content.append(nb_int_decl)
     return package % ('\n'.join("    " + element for element in content))
 
 
 """
 Returns the project declaration for the device characteristics.
 """
-def get_device_output(json):
-    cpu = get_cpu_output(json["device"]["cpu"])
+def get_device_output(json, int_nb):
+    cpu = get_cpu_output(json["device"]["cpu"], int_nb)
     mem = get_mem_output(json["device"]["memory"])
 
     project = wrapper.substitute(Type="project", name="Spec")
@@ -93,12 +97,15 @@ def get_interrupt_output(json):
     package = wrapper.substitute(Type="package",
                                  name="Interrupt_Vector")
     content = list()
+    int_nb = 0
     for key, name in sorted(json["interrupts"].items(), key=lambda k:int(k[0])):
         interrupt_decl = attribute.substitute(var=("Interrupt(\"%s\")" % key),
                                               content=("\"%s\"" % name))
         content.append(interrupt_decl)
+        ++int_nb
     package = package % ('\n'.join("    " + interrupt for interrupt in content))
-    return project % ('\n'.join("    " + line for line in package.split('\n')))
+    return project %\
+        ('\n'.join("    " + line for line in package.split('\n'))), int_nb
 
 
 """
@@ -110,14 +117,15 @@ we dont generate the `interruptions.gpr` file.
 def dump_gpr_files(json_in, dev_file, int_file=""):
     parsed_json = json.loads(json_in)
 
-    device = get_device_output(parsed_json)
-    with open(dev_file, 'w+') as f:
-        f.write(device)
-
+    int_nb = 0
     if int_file != "" :
-        interrupts = get_interrupt_output(parsed_json)
+        interrupts, int_nb = get_interrupt_output(parsed_json)
         with open(int_file, 'w+') as f:
             f.write(interrupts)
+
+    device = get_device_output(parsed_json, int_nb)
+    with open(dev_file, 'w+') as f:
+        f.write(device)
 
 def entry_from_cmdline():
     parser = argparse.ArgumentParser()

@@ -5,35 +5,32 @@ import cProfile
 import re
 import os
 import glob
+import sqlite3
 
 
+db = "bdb"
 
-def modify_test():
-    db = "bdb"
+def add_all_packages(db):
     for f in glob.glob("cmsis_packs/*.pack"):
+#        try: #XXX: temporary exception handling, while packs are not fixed
         modifybdb.add_package(os.path.abspath(f), db)
+#        except Exception as e:
+#            print "Exception:", e
+#            pass
 
-def query_test():
-    db = "bdb"
-    packages = querybdb.query_names("package", db)
-    for package in packages:
-        print package
 
-#for board_name in querybdb.query_names("board", db):
-#    print board_name
+def print_devices(c):
+    for device in querybdb.query_devices(c):
+        dev_json = querybdb.get_json_output_of_device(device, c)
+        print dev_json
 
-#device_name = "Z32F38412ALS"
-#
-#devices = querybdb.query_devices(db)
-#
-#out = querybdb.get_json_output_for_device(device_name, db)
-#json_output = json.dumps(out)
-#
-#print json_output
-#project_file, interrupts = json2gpr.translate(json_output)
 
-#modify_test()
 
-cProfile.run('modify_test()')
-      
+add_all_packages(db)
 
+#co = sqlite3.connect(db)
+#co.row_factory = sqlite3.Row
+#c = co.cursor()
+ 
+
+#print querybdb.get_json_output_of_device("STM32F429IG", c)
