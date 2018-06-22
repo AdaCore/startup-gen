@@ -239,6 +239,7 @@ package body Device is
                              Reloc_Memory => Mem.Name,
                              Force_Init   => True,
                              Load         => False,
+                             Has_Stack    => True,
                              Init_Code    => Self.CPU.Arch.Clear_Code
                             ));
 
@@ -473,6 +474,7 @@ package body Device is
          File.New_Line;
 
          --  XXX: Hardcoded content specific to ARM target.
+         --  FIXME: bug with section name
          if Section.Name = "text" then
             File.Put_Indented_Line
             (".ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } > " &
@@ -551,10 +553,8 @@ package body Device is
       File.Put_Indented_Line ("__" & Section.Name & "_end = .;");
       File.New_Line;
 
-      --  XXX: Hardcoded stack + heap for the BSS.
-      if Section.Name = "bss" then
+      if Section.Has_Stack then
          File.New_Line;
-
 
          File.Put_Indented_Line ("__stack_start = .;");
          File.Put_Indented_Line (". += DEFINED (__stack_size) ?" &

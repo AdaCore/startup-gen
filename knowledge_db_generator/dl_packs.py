@@ -2,9 +2,10 @@ import wget
 import os
 import re
 from subprocess import call
-import multiprocessing
+import multiprocessing.dummy
 
 from xml.etree import cElementTree
+import urllib2
 
 import requests
 
@@ -55,8 +56,6 @@ def main():
     index=wget.download('http://sadevicepacksprodus.blob.core.windows.net/idxfile/index.idx',
                         out=index, bar=None)
     
-    regex = r'.*pdsc url="(.*)" name"(.*) version="([0-9.]*)/*'
-    
     files_to_download = list()
     
     # We populate the list of files to download.
@@ -74,9 +73,9 @@ def main():
                                                       })
     
     
-    cpu_count = int(multiprocessing.cpu_count() - 1)
+    cpu_count = int(multiprocessing.dummy.cpu_count() - 1)
     print "Setting up pool with %s workers" % cpu_count
-    pool = multiprocessing.Pool(processes = cpu_count)
+    pool = multiprocessing.dummy.Pool(processes = cpu_count)
     pool.map(dl_pack, files_to_download)
     pool.close()
     pool.join()

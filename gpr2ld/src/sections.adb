@@ -17,6 +17,7 @@ package body Sections is
        Init_Code          : Algorithm := No_Code;
        Force_Init         : Boolean := False;
        Load               : Boolean := True;
+       Has_Stack          : Boolean := False;
        Additional_Content : Unbounded_String_Vectors.Vector :=
          Unbounded_String_Vectors.Empty_Vector)
        return Section
@@ -31,6 +32,7 @@ package body Sections is
           To_Init            => To_Init,
           To_Load            => Load,
           Init_Code          => Init_Code,
+          Has_Stack          => Has_Stack,
           Additional_Content => Additional_Content);
    begin
       return Temp;
