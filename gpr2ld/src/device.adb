@@ -219,7 +219,7 @@ package body Device is
             when ROM =>
                Add_Section (Make_Section
                             (Boot_Memory        => Self.Boot_Memory,
-                             Name               => TUS ("text_") & Mem.Name,
+                             Name               => TUS ("text"),
                              Reloc_Memory       => Self.Boot_Memory,
                              Additional_Content =>
                                (if Mem.Name = Self.Boot_Memory then
@@ -229,13 +229,13 @@ package body Device is
                             ));
                Add_Section (Make_Section
                             (Boot_Memory  => Self.Boot_Memory,
-                             Name         => TUS ("rodata_") & Mem.Name,
+                             Name         => TUS ("rodata"),
                              Reloc_Memory => Self.Boot_Memory
                             ));
             when RAM =>
                Add_Section (Make_Section
                             (Boot_Memory  => Self.Boot_Memory,
-                             Name         => TUS ("bss_") & Mem.Name,
+                             Name         => TUS ("bss"),
                              Reloc_Memory => Mem.Name,
                              Force_Init   => True,
                              Load         => False,
@@ -245,7 +245,7 @@ package body Device is
 
                Add_Section (Make_Section
                             (Boot_Memory  => Self.Boot_Memory,
-                             Name         => TUS ("data_") & Mem.Name,
+                             Name         => TUS ("data"),
                              Reloc_Memory => Mem.Name,
                              Init_Code    => Self.CPU.Arch.Copy_Code
                             ));
