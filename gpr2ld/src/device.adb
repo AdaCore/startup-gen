@@ -879,9 +879,9 @@ package body Device is
          return True;
       end if;
       if Memory_2_Address > Memory_1_Address then
-         return not (Memory_1_Address + Memory_1_Size < Memory_2_Address);
+         return not (Memory_1_Address + Memory_1_Size <= Memory_2_Address);
       elsif Memory_2_Address < Memory_1_Address then
-         return not (Memory_2_Address + Memory_2_Size < Memory_1_Address);
+         return not (Memory_2_Address + Memory_2_Size <= Memory_1_Address);
       else --  Memory addresses are the same.
          return True;
       end if;
