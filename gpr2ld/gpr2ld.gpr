@@ -19,4 +19,9 @@ project GPR2LD is
          ("-g", "-O0", "-gnata", "-gnateE", "-gnatwa");
    end Compiler;
 
+   package Install is
+      for Artifacts ("./bin/") use
+         ("./configuration.gpr", "./architectures");
+   end Install;
+
 end GPR2LD;
