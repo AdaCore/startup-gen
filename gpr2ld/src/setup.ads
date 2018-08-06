@@ -1,5 +1,6 @@
 with GNAT.Strings;      use GNAT.Strings;
 with Ada.IO_Exceptions; use Ada.IO_Exceptions;
+with GNATCOLL.VFS;      use GNATCOLL.VFS;
 
 -----------
 -- Setup --
@@ -10,7 +11,9 @@ package Setup is
    type Command_Line_Values is tagged record
       Project_File      : aliased String_Access := null;
       Architecture_File : aliased String_Access :=
-        new String'("configuration.gpr");
+        new String'(Display_Full_Name
+         (Get_Parent (Locate_On_Path
+            (Base_Name => "gpr2ld"))) & "configuration.gpr");
       Output_Dir        : aliased String_Access := new String'("./");
       Linker_File       : aliased String_Access := new String'("linker.ld");
       Startup_Code_File : aliased String_Access := new String'("startup.S");

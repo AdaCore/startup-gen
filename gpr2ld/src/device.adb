@@ -151,14 +151,15 @@ package body Device is
 
    procedure Setup_Known_Architectures
       (Self         : in out Spec;
-       Spec_Project : Project_Type)
+       Spec_Project : Project_Type;
+       Config_Dir   : String)
    is
       Architectures : constant Attribute_Pkg_String :=
         Build
            (Package_Name   => "Architectures_Configuration",
             Attribute_Name => "CPU_Architecture");
 
-      Dir : constant String := Spec_Project.Attribute_Value
+      Dir : constant String := Config_Dir & Spec_Project.Attribute_Value
          (Build ("Architectures_Configuration", "Dir"));
 
       Arch_List : constant GNAT.Strings.String_List :=
