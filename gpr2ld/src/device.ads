@@ -39,7 +39,8 @@ package Device is
 
    procedure Setup_Known_Architectures
       (Self         : in out Spec;
-       Spec_Project : Project_Type);
+       Spec_Project : Project_Type;
+       Config_Dir   : String);
 
    procedure Generate_Sections (Self : in out Spec);
 

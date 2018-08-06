@@ -68,8 +68,12 @@ begin
       Spec.Get_Interrupt_Vector_From_Project
          (Tree.Project_From_Name ("interruptions"));
 
-      Spec.Setup_Known_Architectures (Config_Tree.Root_Project);
-
+      Spec.Setup_Known_Architectures
+         (Spec_Project => Config_Tree.Root_Project,
+          Config_Dir   =>
+            Display_Full_Name
+               (Get_Parent (Locate_On_Path
+                  (Base_Name => "gpr2ld"))));
       Spec.Get_CPU_From_Project (Tree.Root_Project);
 
       Spec.Validate;
