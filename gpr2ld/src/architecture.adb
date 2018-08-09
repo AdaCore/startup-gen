@@ -18,10 +18,10 @@ package body Architecture is
          Filesystem_String (Name);
 
       Copy_Code_File : constant Virtual_File :=
-         Get_Current_Dir / Dir_FS / Name_FS / "copy.S";
+         Create (Dir_FS) / Name_FS / "copy.S";
 
       Clear_Code_File : constant Virtual_File :=
-         Get_Current_Dir / Dir_FS / Name_FS / "clear.S";
+         Create (Dir_FS) / Name_FS / "clear.S";
 
       Temp : Arch_Algorithms;
    begin
