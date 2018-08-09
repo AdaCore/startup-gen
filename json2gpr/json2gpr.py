@@ -114,9 +114,7 @@ It will dump the translated json to the 2 files passed as parameters.
 Sometimes we have no interrupts for the given device, in that case
 we dont generate the `interruptions.gpr` file.
 """
-def dump_gpr_files(json_in, dev_file, int_file=""):
-    parsed_json = json.loads(json_in)
-
+def dump_gpr_files(parsed_json, dev_file, int_file=""):
     int_nb = 0
     if int_file != "" :
         interrupts, int_nb = get_interrupt_output(parsed_json)
@@ -141,4 +139,6 @@ def entry_from_cmdline():
 
     json_input = sys.stdin.read().strip()
 
-    dump_gpr_files(json_input, args.device_file, args.interrupt_file)
+    dump_gpr_files(json.loads(json_input),\
+                   args.device_file,\
+                   args.interrupt_file)
