@@ -20,6 +20,15 @@ from packaging.version import Version
 
 from string import Template
 from xml.etree import cElementTree
+from contextlib import contextmanager
+
+@contextmanager
+def access_database(database_connection):
+    try:
+        database_connection.row_factory = sqlite3.Row
+        yield database_connection.cursor()
+    finally:
+        database_connection.close()
 
 def entry_from_cmdline():
     cmd = CommandLine()
@@ -90,6 +99,30 @@ def get_devices_of_package(package_name, c):
                 ["package", "family", "device"], ["name"], package_name)\
            or query_fields_from_root_table(c,\
                 ["package", "family", "subfamily", "device"], ["name"], package_name)
+
+def get_devices_and_boards_with_cpu(cpu, c):
+    select = "SELECT device.name, board.name FROM device\
+              INNER JOIN cpu ON device.cpu_id IS cpu.id\
+              INNER JOIN board ON board.device_id IS device.id\
+              WHERE cpu.name IS ?"
+    c.execute(select, [cpu])
+    return [name for name in c.fetchall()]
+
+def get_mounted_device(board, c):
+    select = "SELECT device.name FROM board\
+              INNER JOIN device ON board.device_id IS device.id\
+              WHERE board.name IS ?"
+    c.execute(select, [board])
+    return c.fetchone()[0]
+
+def get_svd_relative_path(device, c):
+    select = "SELECT svd.name FROM svd"
+    c.execute(select)
+    return [name for tuple in c.fetchall() for name in tuple]
+
+def get_package_url_of_device(device, c):
+    select = "SELECT package.url FROM package"
+    pass
 
 def query_attributes(c, attributes, table):
     select = build_select_statement(table, attributes)
@@ -242,7 +275,8 @@ def build_select_statement(table, columns_needed, columns_conditions=list()):
     if columns_conditions != list():
         conditions = ''' WHERE ''' +\
             ' and '.join([column + " IS ?" for column in columns_conditions])
-    return statement + conditions
+    group = " GROUP BY " + ','.join(columns_needed)
+    return statement + conditions + group
 
 def query_attribute_with_condition(cursor, table, attribute, conditions):
     string_conditions = ""
@@ -316,7 +350,7 @@ def init_db(c):
     c.execute('''CREATE TABLE IF NOT EXISTS board (
                       id         INTEGER PRIMARY KEY,
                       name       TEXT,
-                      device_id  INTEGER REFERENCES device(id) ON DELETE CASCADE,
+                      device_id  INTEGER REFERENCES device(id),
                       UNIQUE (name, device_id));''')
 
     # Table to check if a certain package has been dowloaded and its content
@@ -520,15 +554,11 @@ def build_insert(table, columns):
 
 def insert_into(c, table, columns):
     insert = build_insert(table, columns.keys())
-    #print "VALUES:", columns.values()
-    #print "INSERT:", insert
     c.execute(insert, columns.values())
 
 def insert_and_get_id(c, table, columns):
     insert_into(c, table, columns)
     select = build_select_statement(table, ["id"], columns.keys())
-    #print "VALUES:", columns.values()
-    #print "SELECT:", select
     return c.execute(select, columns.values()).fetchone()[0]
 
 def get_nodes_from_xml(handle, name):
@@ -549,26 +579,10 @@ def search_in(c, table, columns_needed, columns_conditions=dict(), nb_items=1):
 
     query = statement + conditions + number_of_results
 
-    #print "VALUES:", columns_conditions.values()
-    #print "QUERY:", query
-
     result = c.execute(query, columns_conditions.values()).fetchall()
     if nb_items == 1 and result:
         return result[0]
     return result
-
-"""
-Returns the next available id in the tree table.
-We have to do that because the node has its parent id in its columns,
-so for the insertion of a family we have to know the id that will be inserted.
-"""
-def get_next_id(c):
-    c.execute('''SELECT id FROM tree ORDER BY id DESC LIMIT 1''')
-    next_id = 1
-    result = c.fetchone()
-    if result != None:
-        next_id = next_id + result[0]
-    return next_id
 
 def get_and_override_attributes(dev_repr, node):
     result = copy.deepcopy(dev_repr)
@@ -610,6 +624,9 @@ def add_svd(c, unzip_dir, svd, device_id):
     # FIXME For now only works on Linux
     f = ntpath.join(unzip_dir, svd).replace('\\', '/')
     svd_name = ntpath.basename(svd)[:-4]
+    print "svd_name : %s" % svd_name
+    print "svd : %s" % svd
+    print "f : %s" % f
     svd_id = search_in(c, "svd", ["id"], {"name" : svd_name})
     #print "SVD_ID:", svd_id
     if svd_id:
