@@ -60,7 +60,7 @@ begin
         (Root_Project_Path => Architecture_File,
          Packages_To_Check => All_Packs);
 
-      --  TODO: Put all that in a function that setup the spec.
+      --  TODO: Put all that in a function that prepares the spec.
       Spec.Get_Memory_List_From_Project (Tree.Root_Project);
 
       Spec.Get_Boot_Memory_From_Project (Tree.Root_Project);
@@ -74,6 +74,7 @@ begin
             Display_Full_Name
                (Get_Parent (Locate_On_Path
                   (Base_Name => "gpr2ld"))));
+
       Spec.Get_CPU_From_Project (Tree.Root_Project);
 
       Spec.Validate;
