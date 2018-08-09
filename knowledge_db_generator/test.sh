@@ -1,5 +1,5 @@
 BDB=bdb
-rm -rf .tmp/*
+sudo rm -rf .tmp/*
 
 python setup.py build
 python setup.py install
