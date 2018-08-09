@@ -365,7 +365,7 @@ def init_db(c):
     # SVD files from which we have stored the interrupts
     c.execute('''CREATE TABLE IF NOT EXISTS svd (
                       id   INTEGER PRIMARY KEY,
-                      name TEXT NOT NULL,
+                      path TEXT NOT NULL,
                       UNIQUE (name));''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS family (
@@ -619,15 +619,11 @@ def pairwise(iterable):
     next(b, None)
     return izip(a, b)
 
-def add_svd(c, unzip_dir, svd, device_id):
+def add_svd(c, unzip_dir, svd_rel_path, device_id):
 
     # FIXME For now only works on Linux
-    f = ntpath.join(unzip_dir, svd).replace('\\', '/')
-    svd_name = ntpath.basename(svd)[:-4]
-    print "svd_name : %s" % svd_name
-    print "svd : %s" % svd
-    print "f : %s" % f
-    svd_id = search_in(c, "svd", ["id"], {"name" : svd_name})
+    file_path = ntpath.join(unzip_dir, svd_rel_path).replace('\\', '/')
+    svd_id = search_in(c, "svd", ["id"], {"path" : svd_rel_path})
     #print "SVD_ID:", svd_id
     if svd_id:
         # SVD file is already in database,
@@ -638,13 +634,13 @@ def add_svd(c, unzip_dir, svd, device_id):
 
         return svd_id
     else: # SVD is absent from the database
-        svd_id = insert_and_get_id(c, "svd", {"name" : svd_name})
+        svd_id = insert_and_get_id(c, "svd", {"path" : svd_rel_path})
         insert_into(c, "svd_to_device",\
             {"svd_id"    : svd_id,
              "device_id" : device_id})
 
         dict_interrupts = {}
-        for interrupt in get_nodes_from_xml(f, "interrupt"):
+        for interrupt in get_nodes_from_xml(file_path, "interrupt"):
             interrupt_name = interrupt.find("name").text
             interrupt_index = interrupt.find("value").text
             dict_interrupts[interrupt_index] = interrupt_name
