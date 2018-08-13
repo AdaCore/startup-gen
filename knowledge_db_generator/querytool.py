@@ -16,6 +16,8 @@ from itertools import izip
 from itertools import tee
 from sets import Set
 
+from functools import partial
+
 from packaging.version import Version
 
 from string import Template
@@ -54,6 +56,8 @@ def entry_from_cmdline():
 
     # Commands that modify the database.
     cmd.register_command("init", False, init_db)
+
+    cmd.register_command("setup", False, setup_db)
 
     cmd.register_command("add_package", True, add_package)
 
@@ -116,11 +120,14 @@ def get_mounted_device(board, c):
     return c.fetchone()[0]
 
 def get_svd_relative_path(device, c):
-    select = "SELECT svd.name FROM svd"
-    c.execute(select)
-    return [name for tuple in c.fetchall() for name in tuple]
+    select = "SELECT svd.path FROM svd\
+              INNER JOIN svd_to_device ON svd_to_device.svd_id IS svd.id\
+              INNER JOIN device ON device.id IS svd_to_device.device_id\
+              WHERE device.name IS ?"
+    c.execute(select, [device])
+    return c.fetchone()[0]
 
-def get_package_url_of_device(device, c):
+def get_url_of_device_package(device, c):
     select = "SELECT package.url FROM package"
     pass
 
@@ -242,7 +249,6 @@ class CommandLine:
 
         callback_args = list()
 
-        #print self.arguments
         if self.commands[self.arguments.command].argument_needed:
             if self.arguments.argument is not None:
                 callback_args.append(self.arguments.argument)
@@ -258,8 +264,9 @@ class CommandLine:
         co.row_factory = sqlite3.Row
 
         c = co.cursor()
-        # We enable foreign key checking.
-        c.execute("PRAGMA foreign_keys = ON")
+        # We disable foreign key checking.
+        # TODO: figure out how to use cascade delete with sqlite3
+        c.execute("PRAGMA foreign_keys = OFF")
 
         callback_args.append(c)
         result = self.commands[self.arguments.command].callback(*callback_args)
@@ -366,7 +373,7 @@ def init_db(c):
     c.execute('''CREATE TABLE IF NOT EXISTS svd (
                       id   INTEGER PRIMARY KEY,
                       path TEXT NOT NULL,
-                      UNIQUE (name));''')
+                      UNIQUE (path));''')
 
     c.execute('''CREATE TABLE IF NOT EXISTS family (
                       id   INTEGER PRIMARY KEY,
@@ -442,7 +449,7 @@ def init_db(c):
     # For board deletion, we take care of it with the constraints.
     c.execute('''
        CREATE TRIGGER delete_package
-           AFTER DELETE on package
+           BEFORE DELETE on package
            BEGIN
                DELETE FROM package_to_family
                    WHERE package_to_family.package_id IS OLD.id;
@@ -450,7 +457,7 @@ def init_db(c):
 
     c.execute('''
         CREATE TRIGGER delete_package_to_family
-            AFTER DELETE on package_to_family
+            BEFORE DELETE on package_to_family
             BEGIN
                 DELETE FROM family
                     WHERE family.id IS OLD.family_id;
@@ -458,7 +465,7 @@ def init_db(c):
 
     c.execute('''
         CREATE TRIGGER delete_family
-            AFTER DELETE on family
+            BEFORE DELETE on family
             BEGIN
                 DELETE FROM family_to_subfamily
                     WHERE family_to_subfamily.family_id IS OLD.id;
@@ -470,7 +477,7 @@ def init_db(c):
 
     c.execute('''
         CREATE TRIGGER delete_family_to_subfamily
-            AFTER DELETE on family_to_subfamily
+            BEFORE DELETE on family_to_subfamily
             BEGIN
                 DELETE FROM subfamily
                     WHERE subfamily.id IS OLD.subfamily_id;
@@ -481,7 +488,7 @@ def init_db(c):
 
     c.execute('''
         CREATE TRIGGER delete_subfamily_to_device
-            AFTER DELETE on subfamily_to_device
+            BEFORE DELETE on subfamily_to_device
             BEGIN
                 DELETE FROM device
                     WHERE device.id IS OLD.device_id;
@@ -490,7 +497,7 @@ def init_db(c):
 
     c.execute('''
         CREATE TRIGGER delete_device
-            AFTER DELETE on device
+            BEFORE DELETE on device
             BEGIN
                 DELETE FROM memory_to_device
                     WHERE memory_to_device.device_id IS OLD.id;
@@ -508,7 +515,7 @@ def init_db(c):
 
     c.execute('''
         CREATE TRIGGER delete_memory_to_device
-            AFTER DELETE on memory_to_device
+            BEFORE DELETE on memory_to_device
             BEGIN
                 DELETE FROM memory
                     WHERE (memory.id IS OLD.memory_id
@@ -517,7 +524,7 @@ def init_db(c):
 
     c.execute('''
         CREATE TRIGGER delete_svd_to_device
-            AFTER DELETE on svd_to_device
+            BEFORE DELETE on svd_to_device
             BEGIN
                 DELETE FROM svd
                     WHERE (svd.id IS OLD.svd_id
@@ -529,7 +536,7 @@ def init_db(c):
 
     c.execute('''
         CREATE TRIGGER delete_interrupt_to_svd
-            AFTER DELETE ON interrupt_to_svd
+            BEFORE DELETE ON interrupt_to_svd
             BEGIN
                 DELETE FROM interrupt
                     WHERE (interrupt.id IS OLD.interrupt_id
@@ -538,13 +545,12 @@ def init_db(c):
 
     c.execute('''
         CREATE TRIGGER delete_doc_to_device
-            AFTER DELETE ON documentation_to_device
+            BEFORE DELETE ON documentation_to_device
             BEGIN
                 DELETE FROM documentation
                     WHERE (documentation.id IS OLD.documentation_id
                         AND documentation.id NOT IN (SELECT documentation_id FROM documentation_to_device));
             END;''')
-
 def build_insert(table, columns):
     insert = '''INSERT OR IGNORE INTO %s (''' + ','.join(columns)\
         + ''') VALUES ('''\
@@ -793,20 +799,58 @@ def add_pdsc_to_database(c, unzipped_dir, f):
 
     return family_id
 
+
+# Return a list of all the packages name and their version
+def get_packages_info(c):
+    select = "SELECT package.name, package.version FROM package"
+    c.execute(select)
+    return c.fetchall()
+
 def update_all_packages(c):
-    packages = get_packages(c)
-    download_necessary_packages(Set(packages), c)
+    packages = get_packages_info(c)
+    update_package_list(packages, c)
 
 def update_package(name, c):
-    download_necessary_packages(Set([name]), c)
+    infos = search_in(c, "package", ["name", "version"])
+    if name not in [n for n in infos]:
+        raise Exception('Package is absent,\
+                         we cannot update the selected package.')
+    current_name = infos[0]
+    current_version = infos[1]
+    print "Updating : %s" % name
+    package = {}
+    package[current_name] = current_version
+    nb_packages = update_package_list(package, c)
+    print "nb_packages : %s" % nb_packages
+    if nb_packages is not 1 and nb_packages is not 0:
+        raise Exception('Expected one or zero updated_package,\
+                         got %s' % nb_packages)
+    return nb_packages
 
-def selected_packages(handle, packages):
+def is_package_to_update(packages, package_name, package_version):
+    if package_name not in packages:
+        return False
+    current_version = Version(packages[package_name])
+    dist_version = Version(package_version)
+    if current_version >= dist_version:
+        print "Not updating"
+        return False
+    print "Updating"
+    return True
+
+def update_package_list(packages, c):
+    criterion = partial(is_package_to_update, packages)
+    return download_and_add_matching_packages(criterion, c)
+
+def selected_packages(handle, criterion):
     events = cElementTree.iterparse(handle, events=("start", "end",))
     _, root = next(events)  # Grab the root element.
     for event, elem in events:
         if event == "end" and elem.tag == "pdsc":
             pack_name = '.'.join(elem.attrib["name"].split('.')[:-1])
-            if pack_name in packages:
+            pack_version = elem.attrib["version"]
+            print "Test %s" % pack_name, pack_version
+            if criterion(pack_name, pack_version):
                 yield elem
             root.clear()  # Free up memory by clearing the root element.
 
@@ -819,74 +863,77 @@ def format_url(package):
     name = name[:-5]
     return url + name + '.' + version + '.pack'
 
-
-def download_package(package):
-    url = format_url(package)
+def download_package(package, url):
     name = package.attrib["name"][:-5]
     version = package.attrib["version"]
 
-    dl_url = format_url(package)
-
     #TODO: fix ssl certificate.
-    #gcontext = ssl.create_default_context()
     gcontext = ssl._create_unverified_context()
 
-    f = urllib2.urlopen(dl_url, context=gcontext)
+    f = urllib2.urlopen(url, context=gcontext)
     temp_file = name + "." + version +".pack"
-    print "Downloading %s" % dl_url
+    print "Downloading %s" % url
     with open(temp_file, "wb") as local_file:
         local_file.write(f.read())
-    print "Finished downloading %s" % dl_url
+    print "Finished downloading %s" % url
     return temp_file
 
 def delete_package(name, c):
+    print "Package name : %s" % name
     pack_id = search_in(c, "package", ["id"], {"name" : name})[0]
-    statement = '''
-        DELETE
-        FROM package
-        WHERE package.name is ?
-                '''
-    c.execute(statement, [name])
+    print "Package ID : %s" % pack_id
+    statement = '''DELETE
+                   FROM package
+                   WHERE package.id is ?'''
+    c.execute(statement, [pack_id])
 
-def download_necessary_packages(packages, c):
+def get_download_xml():
     index = urllib2.urlopen('http://sadevicepacksprodus.blob.core.windows.net/idxfile/index.idx')
     index_page = index.read()
     xml = index_page
     # We format the xml document.
     xml = xml.split('\n')[0] + '\n'\
         + '<blah>' + '\n'.join(xml.split('\n')[1:]) + '</blah>'
+    return xml
 
+def setup_db(c):
+#TODO: multiprocess the download
+#      add the packages one by one
+   criterion = lambda package: True
+   download_and_add_matching_packages(criterion, c)
+
+# Returns the number of downloaded/installed projects
+def download_and_add_matching_packages(criterion, c):
+    xml = get_download_xml()
     f = StringIO(xml)
 
-    for package in selected_packages(f, packages):
-        #version = package.attrib["version"]
-        version = package.attrib["version"]
+    packages_downloaded = 0
+    for package in selected_packages(f, criterion):
+        url = format_url(package)
         name = '.'.join(package.attrib["name"].split('.')[:-1])
-        print name, version
-        current_version = search_in(c, "package", ["version"],\
-                                    {"name" : name})
-        if current_version:
-            current_version = current_version[0]
-            print "Package %s present" % name
-            print "Current version %s" % current_version
-            print "Distant version %s" % version
+        local_file = download_package(package, url)
+        delete_package(name, c)
+        add_package(os.path.abspath(local_file), c)
+        packages_downloaded += 1
+    return packages_downloaded
 
-            current_version = Version(current_version)
-            version = Version(version)
-            if current_version >= version:
-                print "Keeping old version"
-            else:
-                print "Overriding current version"
-                local_file = download_package(package)
-                delete_package(name, c)
-                # No need to vacuum the database, add_package does it.
-                add_package(os.path.abspath(local_file), c)
-        else:
-            pass
-    # We get the index page from Keil.
-    # We check the version of the package.
-    # if its greater than the current package version we update it.
-    pass
+#        version = package.attrib["version"]
+#        name = '.'.join(package.attrib["name"].split('.')[:-1])
+#        print name, version
+#        current_version = search_in(c, "package", ["version"],\
+#                                    {"name" : name})
+#        if current_version:
+#            current_version = current_version[0]
+#            print "Package %s present" % name
+#            print "Current version %s" % current_version
+#            print "Distant version %s" % version
+#
+#            current_version = Version(current_version)
+#            version = Version(version)
+#            if current_version >= version:
+#                print "Keeping old version"
+#            else:
+#                print "Overriding current version"
 
 def add_package(path, c):
     #TODO: if there is an already present package dont add it
@@ -908,8 +955,8 @@ def add_package(path, c):
         family_id = add_pdsc_to_database(c, os.path.abspath(unzip_dir), pdsc)
 
         # We mark the package present in the database.
-        #print "VERSION:", package_version
-        #print "NAME:", package_name
+        print "VERSION:", package_version
+        print "NAME:", package_name
         package_id = insert_and_get_id(c, "package",\
             {"name" : package_name,
              "version" : package_version})
