@@ -567,8 +567,8 @@ def insert_and_get_id(c, table, columns):
     select = build_select_statement(table, ["id"], columns.keys())
     return c.execute(select, columns.values()).fetchone()[0]
 
-def get_nodes_from_xml(handle, name):
-    events = cElementTree.iterparse(handle, events=("start", "end",))
+def get_nodes_from_xml(file_path, name):
+    events = cElementTree.iterparse(file_path, events=("start", "end",))
     _, root = next(events)  # Grab the root element.
     for event, elem in events:
         if event == "end" and elem.tag == name:
@@ -625,10 +625,29 @@ def pairwise(iterable):
     next(b, None)
     return izip(a, b)
 
-def add_svd(c, unzip_dir, svd_rel_path, device_id):
 
-    # FIXME For now only works on Linux
-    file_path = ntpath.join(unzip_dir, svd_rel_path).replace('\\', '/')
+def traverse_insensitive_path(root_dir, path):
+    print "Path : %s" % path
+    successive_files = path.split('/')
+    print "successive files : %s" % successive_files
+    current = root_dir
+    for f in successive_files:
+        dirs = os.listdir(current)
+        old_current = current
+        for dir in dirs:
+            if dir.lower() == f.lower():
+                current = os.path.join(current, dir)
+                break # Break out of the for loop on the current dirs
+        if old_current == current:
+            raise Exception('Could not find %s in directory %s' % (f,current))
+    return current
+        # If we did not advance, raise File not found
+
+def add_svd(c, unzip_dir, svd_rel_path, device_id):
+    # XXX : We should loop through the directories one by one insensitively.
+    svd_relative_path = svd_rel_path.replace('\\', '/')
+    file_path = traverse_insensitive_path(unzip_dir, svd_relative_path)
+    print "File path %s" % file_path
     svd_id = search_in(c, "svd", ["id"], {"path" : svd_rel_path})
     #print "SVD_ID:", svd_id
     if svd_id:
@@ -725,8 +744,9 @@ def add_device(c, unzip_dir, device_repr, parent_ids):
             {"memory_id" : mem_id,
              "device_id"  : device_id})
 
-    # Add the SVD to the SVD device table.
-    svd_id = add_svd(c, unzip_dir, device_repr["svd"], device_id)
+    # Add the SVD to the SVD device table if present.
+    if "svd" in device_repr:
+        svd_id = add_svd(c, unzip_dir, device_repr["svd"], device_id)
 
     # Add the documentation to the intermediate table.
     for book in device_repr["documentation"]:
@@ -849,8 +869,8 @@ def selected_packages(handle, criterion):
         if event == "end" and elem.tag == "pdsc":
             pack_name = '.'.join(elem.attrib["name"].split('.')[:-1])
             pack_version = elem.attrib["version"]
-            print "Test %s" % pack_name, pack_version
-            if criterion(pack_name, pack_version):
+            # We select only the packs containing code.
+            if criterion(pack_name, pack_version) and "DFP" in pack_name:
                 yield elem
             root.clear()  # Free up memory by clearing the root element.
 
@@ -880,7 +900,11 @@ def download_package(package, url):
 
 def delete_package(name, c):
     print "Package name : %s" % name
-    pack_id = search_in(c, "package", ["id"], {"name" : name})[0]
+    pack_id = search_in(c, "package", ["id"], {"name" : name})
+    print "Pack Id %s" % pack_id
+    if len(pack_id) is 0:
+        return
+    pack_id = pack_id[0]
     print "Package ID : %s" % pack_id
     statement = '''DELETE
                    FROM package
@@ -899,7 +923,7 @@ def get_download_xml():
 def setup_db(c):
 #TODO: multiprocess the download
 #      add the packages one by one
-   criterion = lambda package: True
+   criterion = lambda package_name, package_version: True
    download_and_add_matching_packages(criterion, c)
 
 # Returns the number of downloaded/installed projects
