@@ -14,9 +14,10 @@ package Setup is
         new String'(Display_Full_Name
          (Get_Parent (Locate_On_Path
             (Base_Name => "gpr2ld"))) & "configuration.gpr");
-      Output_Dir        : aliased String_Access := new String'("./");
-      Linker_File       : aliased String_Access := new String'("linker.ld");
-      Startup_Code_File : aliased String_Access := new String'("startup.S");
+      Linker_File       : aliased String_Access :=
+         new String'(Display_Full_Name (Get_Current_Dir / "linker.ld"));
+      Startup_Code_File : aliased String_Access :=
+         new String'(Display_Full_Name (Get_Current_Dir / "startup.s"));
    end record;
 
    --  We verify that the mandatory arguments are correct.

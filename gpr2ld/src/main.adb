@@ -39,14 +39,12 @@ begin
         Create_From_Base (Filesystem_String (Input.Project_File.all));
 
       Linker_Script : constant Virtual_File :=
-        Create_From_Dir
-         (Dir       => Create (Filesystem_String (Input.Output_Dir.all)),
-          Base_Name => Filesystem_String (Input.Linker_File.all));
+        Create
+         (Full_Filename => Filesystem_String (Input.Linker_File.all));
 
       Startup_Code : constant Virtual_File :=
-        Create_From_Dir
-         (Dir       => Create (Filesystem_String (Input.Output_Dir.all)),
-          Base_Name => Filesystem_String (Input.Startup_Code_File.all));
+        Create
+         (Full_Filename => Filesystem_String (Input.Startup_Code_File.all));
 
       Architecture_File : constant Virtual_File :=
         Create_From_Base (Filesystem_String (Input.Architecture_File.all));
