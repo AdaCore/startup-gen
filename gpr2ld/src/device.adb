@@ -389,6 +389,7 @@ package body Device is
       File.Put_Indented_Line ("b .");
       File.Unindent;
 
+      File.Close;
    end Dump_Startup_Code;
 
   -------------------

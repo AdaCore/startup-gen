@@ -19,12 +19,6 @@ package body Setup is
 
       Define_Switch
          (Config,
-          Values.Output_Dir'Access,
-          "-o:",
-          Help => "Directory in which generated files will be put.");
-
-      Define_Switch
-         (Config,
           Values.Architecture_File'Access,
           "-c:",
           Help => "Path to the project file containing " &
@@ -55,7 +49,6 @@ package body Setup is
    is
    begin
       Put_Line ("Spec " & Values.Project_File.all);
-      Put_Line ("Out Dir " & Values.Output_Dir.all);
       Put_Line ("Linker Script " & Values.Linker_File.all);
       Put_Line ("Startup Code " & Values.Startup_Code_File.all);
       Put_Line ("Configuration file " &  Values.Architecture_File.all);
