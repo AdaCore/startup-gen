@@ -18,5 +18,5 @@ Options:
         Default value is startup.S
 
 Known limitations:
-+ When the booting from RAM, the tool does not generate the code necessary
-  to tell the CPU to reloc the interrupt vector (on ARM cortex m).
++ When booting from RAM, the tool does not generate the code necessary
+  to reloc the interrupt vector (on ARM cortex m).
