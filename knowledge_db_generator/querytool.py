@@ -22,10 +22,12 @@ from packaging.version import Version
 
 from string import Template
 from xml.etree import cElementTree
+
 from contextlib import contextmanager
 
 @contextmanager
-def access_database(database_connection):
+def access_database(database_path):
+    database_connection = sqlite3.connect(database_path)
     try:
         database_connection.row_factory = sqlite3.Row
         yield database_connection.cursor()
@@ -59,7 +61,7 @@ def entry_from_cmdline():
 
     cmd.register_command("setup", False, setup_db)
 
-    cmd.register_command("add_package", True, add_package)
+    cmd.register_command("add_package", True, partial(add_package, ""))
 
     cmd.register_command("update_all_packages", False, update_all_packages)
 
@@ -127,9 +129,17 @@ def get_svd_relative_path(device, c):
     c.execute(select, [device])
     return c.fetchone()[0]
 
-def get_url_of_device_package(device, c):
-    select = "SELECT package.url FROM package"
-    pass
+def get_infos_of_device_package(device_name, c):
+    conditions = {"device" : {"name" : device_name}}
+    return query_fields(c,\
+                "package" , ["name", "version", "url"],\
+                ["package", "family", "subfamily", "device"],\
+                conditions)\
+        or query_fields(c,\
+                "package" , ["name", "version", "url"],\
+                ["package", "family", "device"],\
+                conditions)
+
 
 def query_attributes(c, attributes, table):
     select = build_select_statement(table, attributes)
@@ -141,28 +151,69 @@ def query_attributes(c, attributes, table):
 Will query all `fields` from the final table in `tables`, traversing the list
 of tables `tables` to get all possible values. It builds a statement joining
 the multiple tables, then executing it.
+If ordering == 1, intermediate tables are <left>_to_<right>
+                      otherwise they are <right>_to_<left>
+It allows us to query info, starting from the top or the bottom of the `schema`
 """
-def query_fields_from_root_table(c, tables, fields, start_name):
+
+def query_fields(c, table, fields, traversal=list(), conditions_dict=dict()):
+    select = '''SELECT '''\
+                + ','.join([table + '.' + field for field in fields])\
+                + ''' FROM ''' + table
+
+    # We build an inner join for the intermediate table
+    # and the next table to join.
+    join = Template("\n INNER JOIN ${src}_to_${dest}\n\
+                    ON ${src}_to_${dest}.${src}_id IS ${src}.id\n\
+                    INNER JOIN ${dest}\n\
+                    ON ${src}_to_${dest}.${dest}_id IS ${dest}.id\n")
+
+    intermediate_tables = ""
+    for left_table,right_table in pairwise(traversal):
+        intermediate_tables = intermediate_tables\
+            + join.substitute(src=left_table, dest=right_table)
+
+    condition_list = list()
+    attribute_values = list()
+    for table_name, attribute_conditions in conditions_dict.iteritems():
+        for attribute_name, attribute_value in attribute_conditions.iteritems():
+            condition_list.append\
+                (''' WHERE %s.%s IS ?''' % (table_name, attribute_name))
+            attribute_values.append(attribute_value)
+
+    conditions ='''AND'''.join(condition_list)
+
+    statement = select + intermediate_tables + conditions
+
+    result = c.execute(statement, attribute_values).fetchall()
+
+    return [name for tuple in result for name in tuple]
+
+def query_fields_from_root_table(c, tables, fields, start_name, name_order=1):
     statement = '''SELECT '''\
                 + ','.join([tables[-1] +'.'+ field for field in fields])\
                 + ''' FROM ''' + tables[0]
 
     # We build an inner join for the intermediate table
     # and the next table to join.
-    join = Template(" INNER JOIN ${join_table}\
-                    on ${join_table}.${src}_id IS ${src}.id\
-                    INNER JOIN ${dest}\
-                    on ${join_table}.${dest}_id IS ${dest}.id")
+    join = Template(" INNER JOIN ${src}_to_${dest}\n\
+                    ON ${src}_to_${dest}.${src}_id IS ${src}.id\n\
+                    INNER JOIN ${dest}\n\
+                    ON ${dest}.${dest}_id IS ${dest}.id\n")
 
     for left_table,right_table in pairwise(tables):
+        if ordering != 1: # We switch the ordering of intermediate table.
+            temp = left_table
+            left_table = right_table
+            right_table = temp
+
         statement = statement\
-            + join.substitute(join_table=left_table + '_to_' + right_table,\
-                              src=left_table, dest=right_table)
+            + join.substitute(src=left_table, dest=right_table)
 
     statement = statement + ''' WHERE %s.%s IS ?''' % (tables[0], "name")
-    #print "CURSOR", c
-    #print "STATEMENT:", statement
-    #print "NAME:", start_name
+    print "CURSOR : %s" % c
+    print "STATEMENT: %s" % statement
+    print "NAME: %s " % start_name
     result = c.execute(statement, [start_name]).fetchall()
     return [name for tuple in result for name in tuple]
 
@@ -367,6 +418,7 @@ def init_db(c):
                       id        INTEGER PRIMARY KEY,
                       name      TEXT,
                       version   TEXT,
+                      url       TEXT,
                       UNIQUE (name));''')
 
     # SVD files from which we have stored the interrupts
@@ -694,9 +746,10 @@ Adds all components of a device to the database and
 connects them to the device table.
 """
 def add_device(c, unzip_dir, device_repr, parent_ids):
-    #print "DEV REPR:", device_repr
+    print "DEV REPR:", device_repr
     cpu = device_repr["cpu"]
-    #print "CPU ATTRIBUTES:", cpu.keys()
+    print "CPU : %s", cpu
+    print "CPU ATTRIBUTES : %s", cpu.keys()
     cpu_id = insert_and_get_id(c, "cpu",
         {"name"       : cpu["Dcore"].replace('+', 'plus'),
          "fpu"        : get_string_attrib(cpu, "Dfpu"),
@@ -881,7 +934,7 @@ def format_url(package):
     if not url.endswith('/'):
         url = url + '/'
     name = name[:-5]
-    return url + name + '.' + version + '.pack'
+    return url, url + name + '.' + version + '.pack'
 
 def download_package(package, url):
     name = package.attrib["name"][:-5]
@@ -933,11 +986,11 @@ def download_and_add_matching_packages(criterion, c):
 
     packages_downloaded = 0
     for package in selected_packages(f, criterion):
-        url = format_url(package)
+        partial_url, full_url = format_url(package)
         name = '.'.join(package.attrib["name"].split('.')[:-1])
-        local_file = download_package(package, url)
+        local_file = download_package(package, full_url)
         delete_package(name, c)
-        add_package(os.path.abspath(local_file), c)
+        add_package(partial_url, os.path.abspath(local_file), c)
         packages_downloaded += 1
     return packages_downloaded
 
@@ -959,13 +1012,7 @@ def download_and_add_matching_packages(criterion, c):
 #            else:
 #                print "Overriding current version"
 
-def add_package(path, c):
-    #TODO: if there is an already present package dont add it
-    #TODO: handle collisions.
-    # instead we print on the command line the version of the current package.
-    # unzip add pdsc
-    # Do we keep unzip archives ?
-
+def add_package(url, path, c):
     unzip_dirs = get_unzipped_paths([path])
     for unzip_dir in unzip_dirs:
         pdsc_pattern = os.path.join(unzip_dir, "*.pdsc")
@@ -983,6 +1030,7 @@ def add_package(path, c):
         print "NAME:", package_name
         package_id = insert_and_get_id(c, "package",\
             {"name" : package_name,
+             "url"  : url,
              "version" : package_version})
 
         insert_into(c, "package_to_family",
