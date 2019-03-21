@@ -48,6 +48,12 @@ package body Utils is
          new String'(Register_New_Attribute
                       ("Number_Of_Interrupts",
                        "CPU")),
+         new String'(Register_New_Attribute
+                      ("Linker_Template",
+                       "CPU")),
+         new String'(Register_New_Attribute
+                      ("Startup_Template",
+                       "CPU")),
 
          -- Interrupt_Vector --
          new String'(Register_New_Attribute
