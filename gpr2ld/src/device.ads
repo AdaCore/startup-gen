@@ -1,21 +1,11 @@
-pragma Ada_12;
-
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Strings.Hash;
 with Ada.Containers.Vectors;
 with Ada.Containers.Hashed_Maps;
 
-with GNATCOLL.VFS;          use GNATCOLL.VFS;
 with GNATCOLL.Projects;     use GNATCOLL.Projects;
 
-with File_Writer;           use File_Writer;
-
-with Sections;
-with Architecture;          use Architecture;
-
-------------
--- Device --
-------------
+with Templates_Parser;
 
 package Device is
 
@@ -37,13 +27,6 @@ package Device is
       (Self         : in out Spec;
        Spec_Project : Project_Type);
 
-   procedure Setup_Known_Architectures
-      (Self         : in out Spec;
-       Spec_Project : Project_Type;
-       Config_Dir   : String);
-
-   procedure Generate_Sections (Self : in out Spec);
-
    procedure Display (Self : in out Spec);
 
    --  Checks that the specs are valid, IE:
@@ -54,9 +37,13 @@ package Device is
    --  Throws if there is an error
    procedure Validate (Self : in out Spec);
 
-   procedure Dump_Linker_Script (Self : in out Spec; VF : Virtual_File);
+   procedure Dump_Linker_Script (Self : in out Spec; Filename : String);
 
-   procedure Dump_Startup_Code (Self : in out Spec; VF : Virtual_File);
+   procedure Dump_Startup_Code (Self : in out Spec; Filename : String);
+
+   function To_Translate_Table
+     (Self : Spec)
+      return Templates_Parser.Translate_Table;
 
 private
    type Float_Type is (Hard, Soft);
@@ -65,10 +52,10 @@ private
       Name                 : Unbounded_String;
       Float_Handling       : Float_Type;
       Number_Of_Interrupts : Natural := 0;
-      Arch                 : Arch_Algorithms;
+      Arch                 : Unbounded_String;
    end record;
 
-   type Memory_Kind is (RAM, ROM, TCM, CCM);
+   type Memory_Kind is (RAM, ROM);
 
    type Memory_Region is record
       Name    : Unbounded_String;
@@ -93,12 +80,6 @@ private
        Hash            => Identity_Integer,
        Equivalent_Keys => "=");
 
-   package Architecture_Hashed_Maps is new Ada.Containers.Hashed_Maps
-      (Key_Type        => Unbounded_String,
-       Element_Type    => Arch_Algorithms,
-       Hash            => Identity_Unbounded_String,
-       Equivalent_Keys => "=");
-
    type Interrupt_Vector is tagged record
       Interrupts  : Interrupt_Hashed_Maps.Map;
       Last_Index  : Integer := 0;
@@ -109,23 +90,11 @@ private
       Boot_Memory      : Unbounded_String;
       CPU              : CPU_Type;
       Interrupts       : Interrupt_Vector;
-      Architectures    : Architecture_Hashed_Maps.Map;
-      Section_Vector   : Sections.Section_Vectors.Vector;
+      Linker_Template  : Unbounded_String;
+      Startup_Template : Unbounded_String;
    end record;
 
    --  Private procedures  --
-
-   procedure Put_Dummy_Handler
-      (File : in out Indented_File_Writer;
-       Name : String);
-
-   procedure Put_Interrupt
-      (File : in out Indented_File_Writer;
-       Name : String);
-
-   procedure Dump_Memory_Map
-      (Self : in out Spec;
-       File : in out Indented_File_Writer);
 
    procedure Add_Interrupt
       (Self  : in out Interrupt_Vector;
@@ -134,44 +103,12 @@ private
 
    --  Used to check if an interrupt has been defined for a given Index.
    function Is_Index_Used
-      (Self  : in out Interrupt_Vector;
+      (Self  : Interrupt_Vector;
        Index : Integer) return Boolean;
 
    function Get_Name
-      (Self  : in out Interrupt_Vector;
+      (Self  : Interrupt_Vector;
        Index : Integer) return String;
-
-   --  Returns the last (bigger) index mapped to an interrupt.
-   --  function Last_Index (Self  : in out Interrupt_Vector) return Integer;
-
-   procedure Dump_Header
-      (File : in out Indented_File_Writer);
-
-   --  Dump all the current memory sections to the file.
-   procedure Dump_Sections
-      (Self : in out Spec;
-       File : in out Indented_File_Writer);
-
-   --  Dump a single section to the file.
-   procedure Dump_Section
-      (Self    : in out Spec;
-       File    : in out Indented_File_Writer;
-       Section : in out Sections.Section);
-
-   --  Dump a single line representing a memory region to the file.
-   procedure Dump_Memory
-       (File        : in out Indented_File_Writer;
-        Memory      : Memory_Region;
-        Permissions : Unbounded_String);
-
-   --  XXX: Dump a typical ARM interrupt vector used for ZFP.
-   procedure Dump_Interrupt_Vector
-      (Self : in out Spec;
-       File : in out Indented_File_Writer);
-
-   procedure Dump_Sections_Init_Code
-      (Self : in out Spec;
-       File : in out Indented_File_Writer);
 
    --  Translate the size string into a C style hexa notation if needed.
    --  If it is already C style or if it is of the form `192K` we dont
@@ -205,5 +142,11 @@ private
    --  Return a string of the following form
    --  <region.name> with Size = <region.size> and Address = <region.address>;
    function Get_Info_String (Region : Memory_Region) return String;
+
+   --  Return the default linker template based on the device information
+   function Default_Linker_Template (Self : Spec) return String;
+
+   --  Return the default startup template based on the device information
+   function Default_Startup_Template (Self : Spec) return String;
 
 end Device;

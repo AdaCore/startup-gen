@@ -16,14 +16,6 @@ package body Setup is
    is
       Config : Command_Line_Configuration;
    begin
-
-      Define_Switch
-         (Config,
-          Values.Architecture_File'Access,
-          "-c:",
-          Help => "Path to the project file containing " &
-                  "the mapping of processors to their architecture.");
-
       Define_Switch
          (Config,
           Values.Linker_File'Access,
@@ -51,7 +43,6 @@ package body Setup is
       Put_Line ("Spec " & Values.Project_File.all);
       Put_Line ("Linker Script " & Values.Linker_File.all);
       Put_Line ("Startup Code " & Values.Startup_Code_File.all);
-      Put_Line ("Configuration file " &  Values.Architecture_File.all);
    end Display;
 
 end Setup;
