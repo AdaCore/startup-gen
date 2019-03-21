@@ -1,3 +1,4 @@
+with "templates_parser.gpr";
 with "gnatcoll";
 with "gpr";
 

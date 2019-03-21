@@ -1,0 +1,152 @@
+	.syntax unified
+	.cpu cortex-m4
+	.thumb
+
+	.text
+	.globl __vectors
+	.p2align 9
+	.section .vectors,"a"
+__vectors:
+	/* Cortex-M core interrupts */
+	.word   __stack_end          /* stack top address */
+	.word   _start_rom           /* 1 Reset */
+	.word   fault                /* 2 NMI. */
+	.word   fault                /* 3 Hard fault. */
+	.word   fault                /* 4 Mem manage. */
+	.word   fault                /* 5 Bus fault. */
+	.word   fault                /* 6 Usage fault. */
+	.word   fault                /* 7 reserved. */
+	.word   fault                /* 8 reserved. */
+	.word   fault                /* 9 reserved. */
+	.word   fault                /* 10 reserved. */
+	.word   __gnat_sv_call_trap  /* 11 SVCall. */
+	.word   __gnat_bkpt_trap     /* 12 Breakpoint. */
+	.word   fault                /* 13 reserved. */
+	.word   __gnat_pend_sv_trap  /* 14 PendSV. */
+	.word   __gnat_sys_tick_trap /* 15 Systick. */
+	/* MCU interrupts */
+@@TABLE@@
+        .word __@_INTERRUPT_NAME_@_handler /* @_INTERRUPT_ID_@ */
+@@END_TABLE@@
+
+@@TABLE@@
+@@IF@@ @_INTERRUPT_NAME_@ /= unknown_interrupt
+   .weak      __@_INTERRUPT_NAME_@_handler
+   .thumb_set __@_INTERRUPT_NAME_@_handler,__gnat_irq_trap
+@@END_IF@@
+@@END_TABLE@@
+
+	.text
+
+   .weak      __unknown_interrupt_handler
+   .thumb_set __unknown_interrupt_handler,__gnat_irq_trap
+
+	.thumb_func
+.weak __gnat_irq_trap
+.type __gnat_irq_trap, %function
+__gnat_irq_trap:
+0:	b 0b
+	.size __gnat_irq_trap, . - __gnat_irq_trap
+
+	.thumb_func
+.weak __gnat_sv_call_trap
+.type __gnat_sv_call_trap, %function
+__gnat_sv_call_trap:
+0:	b 0b
+	.size __gnat_sv_call_trap, . - __gnat_sv_call_trap
+
+	.thumb_func
+.weak __gnat_pend_sv_trap
+.type __gnat_pend_sv_trap, %function
+__gnat_pend_sv_trap:
+0:	b 0b
+	.size __gnat_pend_sv_trap, . - __gnat_pend_sv_trap
+
+	.thumb_func
+.weak __gnat_sys_tick_trap
+.type __gnat_sys_tick_trap, %function
+__gnat_sys_tick_trap:
+0:	b 0b
+	.size __gnat_sys_tick_trap, . - __gnat_sys_tick_trap
+
+	.thumb_func
+fault:	b fault
+
+
+	.text
+	.thumb_func
+	.globl _start_rom
+
+_start_rom:
+
+	/* Copy .data */
+	.thumb_func
+_startup_copy_data:
+	movw	r0,#:lower16:__data_start
+	movt	r0,#:upper16:__data_start
+	movw	r1,#:lower16:__data_words
+	movw	r2,#:lower16:__data_load
+	movt	r2,#:upper16:__data_load
+	cbz	r1,1f
+0:	ldr	r4,[r2],#4
+	str	r4,[r0],#4
+	subs	r1,r1,#1
+	bne	0b
+1:
+        .size _startup_copy_data, . - _startup_copy_data
+@@TABLE@@
+
+	/* Copy .@_RAM_REGION_@_data */
+	.thumb_func
+_startup_copy_@_RAM_REGION_@_data:
+	movw	r0,#:lower16:__@_RAM_REGION_@_data_start
+	movt	r0,#:upper16:__@_RAM_REGION_@_data_start
+	movw	r1,#:lower16:__@_RAM_REGION_@_data_words
+	movw	r2,#:lower16:__@_RAM_REGION_@_data_load
+	movt	r2,#:upper16:__@_RAM_REGION_@_data_load
+	cbz	r1,1f
+0:	ldr	r4,[r2],#4
+	str	r4,[r0],#4
+	subs	r1,r1,#1
+	bne	0b
+1:
+        .size _startup_copy_@_RAM_REGION_@_data, . - _startup_copy_@_RAM_REGION_@_data
+@@END_TABLE@@
+
+	/* Clear .bss */
+	.thumb_func
+_startup_clear_bss:
+	movw	r0,#:lower16:__bss_start
+	movt	r0,#:upper16:__bss_start
+	movw	r1,#:lower16:__bss_words
+	mov	r2,#0
+	cbz	r1,1f
+0:	str	r2,[r0],#4
+	subs	r1,r1,#1
+	bne	0b
+1:
+        .size _startup_clear_bss, . - _startup_clear_bss
+@@TABLE@@
+
+	/* Clear .@_RAM_REGION_@_bss */
+	.thumb_func
+_startup_clear_@_RAM_REGION_@_bss:
+	movw	r0,#:lower16:__@_RAM_REGION_@_bss_start
+	movt	r0,#:upper16:__@_RAM_REGION_@_bss_start
+	movw	r1,#:lower16:__@_RAM_REGION_@_bss_words
+	mov	r2,#0
+	cbz	r1,1f
+0:	str	r2,[r0],#4
+	subs	r1,r1,#1
+	bne	0b
+1:
+        .size _startup_clear_@_RAM_REGION_@_bss, . - _startup_clear_@_RAM_REGION_@_bss
+
+@@END_TABLE@@
+
+	bl	main
+
+	bl	_exit
+
+hang:   b .
+

@@ -10,11 +10,8 @@ with Setup;
 with Utils;
 with Device;                use Device;
 
-----------
--- Main --
-----------
-
 procedure Main is
+
    use GNAT.Strings;
 
    --  Spec representing the target device
@@ -24,7 +21,6 @@ procedure Main is
    Input : aliased Command_Line_Values;
 
 begin
-
    Input.Get_Arguments;
 
    Input.Display;
@@ -33,29 +29,13 @@ begin
 
    declare
       Tree        : Project_Tree;
-      Config_Tree : Project_Tree;
 
       Project_File : constant Virtual_File :=
         Create_From_Base (Filesystem_String (Input.Project_File.all));
 
-      Linker_Script : constant Virtual_File :=
-        Create
-         (Full_Filename => Filesystem_String (Input.Linker_File.all));
-
-      Startup_Code : constant Virtual_File :=
-        Create
-         (Full_Filename => Filesystem_String (Input.Startup_Code_File.all));
-
-      Architecture_File : constant Virtual_File :=
-        Create_From_Base (Filesystem_String (Input.Architecture_File.all));
-
    begin
       Tree.Load
         (Root_Project_Path => Project_File,
-         Packages_To_Check => All_Packs);
-
-      Config_Tree.Load
-        (Root_Project_Path => Architecture_File,
          Packages_To_Check => All_Packs);
 
       --  TODO: Put all that in a function that prepares the spec.
@@ -66,23 +46,18 @@ begin
       Spec.Get_Interrupt_Vector_From_Project
          (Tree.Project_From_Name ("interruptions"));
 
-      Spec.Setup_Known_Architectures
-         (Spec_Project => Config_Tree.Root_Project,
-          Config_Dir   =>
-            Display_Full_Name
-               (Get_Parent (Locate_On_Path
-                  (Base_Name => "gpr2ld"))));
-
       Spec.Get_CPU_From_Project (Tree.Root_Project);
 
       Spec.Validate;
       --  TODO End of setup.
 
-      Spec.Generate_Sections;
+      if Input.Linker_File /= null then
+         Spec.Dump_Linker_Script (Input.Linker_File.all);
+      end if;
 
-      Spec.Dump_Linker_Script (Linker_Script);
-
-      Spec.Dump_Startup_Code (Startup_Code);
+      if Input.Startup_Code_File /= null then
+         Spec.Dump_Startup_Code (Input.Startup_Code_File.all);
+      end if;
 
       Spec.Display;
    end;

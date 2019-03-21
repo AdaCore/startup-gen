@@ -1,17 +1,26 @@
-with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Text_IO;              use Ada.Text_IO;
 with Ada.Long_Integer_Text_IO; use Ada.Long_Integer_Text_IO;
-with Ada.Numerics.Elementary_Functions;
 
 with GNAT.Regexp;
 with GNAT.Strings;
 
 with GNATCOLL.Utils;
-
-------------
--- Device --
-------------
+with GNATCOLL.VFS;   use GNATCOLL.VFS;
 
 package body Device is
+
+   package Tmplt renames Templates_Parser;
+
+   function Arch_From_CPU (CPU_Name : String) return String;
+
+   -------------------
+   -- Arch_From_CPU --
+   -------------------
+
+   function Arch_From_CPU (CPU_Name : String) return String is
+   begin
+      return "FIXME " & CPU_Name;
+   end Arch_From_CPU;
 
    ----------------------------------
    -- Get_Memory_List_From_Project --
@@ -115,146 +124,50 @@ package body Device is
    --------------------------
    -- Get_CPU_From_Project --
    --------------------------
+
    procedure Get_CPU_From_Project
       (Self         : in out Spec;
        Spec_Project : Project_Type)
    is
-      use Architecture_Hashed_Maps;
       Name : constant Unbounded_String :=
         To_Unbounded_String
             (Spec_Project.Attribute_Value (Build ("cpu", "name")));
+
+      Arch : constant String := Arch_From_CPU (To_String (Name));
 
       Float_Handling : constant String :=
         Spec_Project.Attribute_Value (Build ("cpu", "float_handling"));
 
       Number_Of_Interrupts : constant String :=
         Spec_Project.Attribute_Value (Build ("cpu", "number_of_interrupts"));
+
+      Linker_Template : constant String :=
+        Spec_Project.Attribute_Value (Build ("cpu", "linker_template"));
+      Startup_Template : constant String :=
+        Spec_Project.Attribute_Value (Build ("cpu", "startup_template"));
    begin
 
-      if Find (Container => Self.Architectures,
-               Key       => Name) /= No_Element
-      then
-         Self.CPU :=
-           (Name                 => Name,
-            Float_Handling       => Float_Type'Value (Float_Handling),
-            Number_Of_Interrupts => Natural'Value (Number_Of_Interrupts),
-            Arch                 => Element (Self.Architectures, Name));
+      Self.CPU :=
+        (Name                 => Name,
+         Float_Handling       => Float_Type'Value (Float_Handling),
+         Number_Of_Interrupts => Natural'Value (Number_Of_Interrupts),
+         Arch                 => To_Unbounded_String (Arch));
+
+      if Linker_Template /= "" then
+         Self.Linker_Template := To_Unbounded_String (Linker_Template);
       else
-         raise Name_Error with
-            "Current CPU " & To_String (Self.CPU.Name) & " not supported.";
+         Self.Linker_Template :=
+           To_Unbounded_String (Self.Default_Linker_Template);
       end if;
+
+      if Startup_Template /= "" then
+         Self.Startup_Template := To_Unbounded_String (Startup_Template);
+      else
+         Self.Startup_Template
+           := To_Unbounded_String (Self.Default_Startup_Template);
+      end if;
+
    end Get_CPU_From_Project;
-
-   -------------------------------
-   -- Setup_Known_Architectures --
-   -------------------------------
-
-   procedure Setup_Known_Architectures
-      (Self         : in out Spec;
-       Spec_Project : Project_Type;
-       Config_Dir   : String)
-   is
-      Architectures : constant Attribute_Pkg_String :=
-        Build
-           (Package_Name   => "Architectures_Configuration",
-            Attribute_Name => "CPU_Architecture");
-
-      Dir : constant String := Config_Dir & Spec_Project.Attribute_Value
-         (Build ("Architectures_Configuration", "Dir"));
-
-      Arch_List : constant GNAT.Strings.String_List :=
-        Spec_Project.Attribute_Indexes (Architectures);
-   begin
-      for Arch of Arch_List loop
-         declare
-            Name : constant String :=
-              Spec_Project.Attribute_Value
-                        (Attribute => Architectures,
-                         Index     => Arch.all);
-
-            CPU : constant String := (Arch.all);
-
-            Arch : constant Arch_Algorithms :=
-               Make_Arch_Algorithms
-                  (Directory => Dir,
-                   Name      => Name);
-
-         begin
-            Architecture_Hashed_Maps.Include
-               (Container => Self.Architectures,
-                Key       => To_Unbounded_String (CPU),
-                New_Item  => Arch);
-         end;
-      end loop;
-   end Setup_Known_Architectures;
-
-   -----------------------
-   -- Generate_Sections --
-   -----------------------
-
-   procedure Generate_Sections (Self : in out Spec) is
-      use Sections;
-      use Unbounded_String_Vectors;
-      function TUS (Str : String) return Unbounded_String
-         renames To_Unbounded_String;
-
-      use Sections.Section_Vectors;
-
-      -----------------
-      -- Add_Section --
-      -----------------
-
-      procedure Add_Section (Sec : Section) is
-      begin
-         Self.Section_Vector := Self.Section_Vector & Sec;
-      end Add_Section;
-
-   begin
-
-      --  In the long term we want to be able to specify
-      --  the sections that corresponds to the target architecture.
-      --  For now and for ARM processors, it will do.
-
-      for Mem of Self.Memory loop
-         case Mem.Kind is
-            when ROM =>
-               Add_Section (Make_Section
-                            (Boot_Memory        => Self.Boot_Memory,
-                             Name               => TUS ("text"),
-                             Reloc_Memory       => Self.Boot_Memory,
-                             Additional_Content =>
-                               (if Mem.Name = Self.Boot_Memory then
-                                   Unbounded_String_Vectors.Empty_Vector &
-                                   TUS ("KEEP (*(.vectors))")
-                                else Unbounded_String_Vectors.Empty_Vector)
-                            ));
-               Add_Section (Make_Section
-                            (Boot_Memory  => Self.Boot_Memory,
-                             Name         => TUS ("rodata"),
-                             Reloc_Memory => Self.Boot_Memory
-                            ));
-            when RAM =>
-               Add_Section (Make_Section
-                            (Boot_Memory  => Self.Boot_Memory,
-                             Name         => TUS ("bss"),
-                             Reloc_Memory => Mem.Name,
-                             Force_Init   => True,
-                             Load         => False,
-                             Has_Stack    => True,
-                             Init_Code    => Self.CPU.Arch.Clear_Code
-                            ));
-
-               Add_Section (Make_Section
-                            (Boot_Memory  => Self.Boot_Memory,
-                             Name         => TUS ("data"),
-                             Reloc_Memory => Mem.Name,
-                             Init_Code    => Self.CPU.Arch.Copy_Code
-                            ));
-            when others =>
-               null;
-         end case;
-      end loop;
-   end Generate_Sections;
 
    --------------
    -- Validate --
@@ -290,107 +203,118 @@ package body Device is
    -- Dump_Linker_Script --
    ------------------------
 
-   procedure Dump_Linker_Script (Self : in out Spec; VF : Virtual_File) is
-      File : Indented_File_Writer := Make (Handle => Write_File (VF));
-   begin
-      Dump_Header (File);
-
-      Self.Dump_Memory_Map (File);
-
-      File.New_Line;
-
-      File.Put_Line ("SEARCH_DIR(.)");
-      File.New_Line;
-      File.Put_Line ("__DYNAMIC = 0;");
-      File.New_Line;
-      File.Put_Line ("_DEFAULT_STACK_SIZE = 4 * 1024;");
-
-      File.New_Line;
-      File.Put_Line ("ENTRY(Reset_Handler);");
-      File.New_Line;
-
-      Self.Dump_Sections (File);
-
-      File.Close;
-   end Dump_Linker_Script;
-
-   ---------------------
-   -- Dump_Memory_Map --
-   ---------------------
-
-   procedure Dump_Memory_Map
-      (Self : in out Spec;
-       File : in out Indented_File_Writer)
+   procedure Dump_Linker_Script (Self : in out Spec; Filename : String)
    is
+      Translations : constant Tmplt.Translate_Table := Self.To_Translate_Table;
+      Template     : constant String := To_String (Self.Linker_Template);
+      Output       : constant String := Tmplt.Parse (Template, Translations);
+      File         : Writable_File :=
+        Write_File (Create (Filesystem_String (Filename)));
    begin
-
-      File.Put_Line ("MEMORY");
-      File.Put_Line ("{");
-      File.Indent;
-
-      for Memory of Self.Memory loop
-         declare
-            --  XXX: Hardcoded permissions for now
-            Permissions : constant Unbounded_String :=
-                     To_Unbounded_String (if Memory.Kind = ROM
-                                             then "(rx)"
-                                             else "(rwx)");
-         begin
-            Dump_Memory (File, Memory, Permissions);
-         end;
-      end loop;
-
-      File.Unindent;
-      File.Put_Line ("}");
-
-   end Dump_Memory_Map;
+      GNATCOLL.VFS.Write (File, Output);
+      GNATCOLL.VFS.Close (File);
+   end Dump_Linker_Script;
 
    -----------------------
    -- Dump_Startup_Code --
    -----------------------
 
-   procedure Dump_Startup_Code (Self : in out Spec; VF : Virtual_File)
+   procedure Dump_Startup_Code (Self : in out Spec; Filename : String)
    is
-      File : Indented_File_Writer :=
-         Make (Handle                => Write_File (VF),
-               Indentation_Size      => 1,
-               --  We indent with tab;
-               Indentation_Character => ASCII.HT);
+      Translations : constant Tmplt.Translate_Table := Self.To_Translate_Table;
+      Template     : constant String := To_String (Self.Startup_Template);
+      Output       : constant String := Tmplt.Parse (Template, Translations);
+      File         : Writable_File :=
+        Write_File (Create (Filesystem_String (Filename)));
    begin
-      Dump_Header (File);
-      File.New_Line;
-      --  XXX: Hardcoded values for ARM assembly.
-      File.Indent;
-      File.Put_Indented_Line (".syntax unified");
-      File.Put_Indented_Line (".cpu " & Self.CPU.Name);
-      File.Put_Indented_Line (".thumb");
-      File.Unindent;
-
-      File.New_Line;
-      File.New_Line;
-
-      Self.Dump_Interrupt_Vector (File);
-
-      File.New_Line;
-      File.Put_Indented_Line (".text");
-      File.Put_Indented_Line (".thumb_func");
-      File.Put_Indented_Line (".globl Reset_Handler");
-
-      File.Put_Line ("Reset_Handler:");
-      File.Put_Line ("_start_" & Self.Boot_Memory & ":");
-      Self.Dump_Sections_Init_Code (File);
-
-      File.Indent;
-      File.New_Line;
-      File.Put_Indented_Line ("bl main");
-      File.New_Line;
-      File.Put_Indented_Line ("bl _exit");
-      File.Put_Line ("hang:");
-      File.Put_Indented_Line ("b .");
-      File.Unindent;
-
-      File.Close;
+      GNATCOLL.VFS.Write (File, Output);
+      GNATCOLL.VFS.Close (File);
    end Dump_Startup_Code;
+
+   ------------------------
+   -- To_Translate_Table --
+   ------------------------
+
+   function To_Translate_Table
+     (Self : Spec)
+      return Tmplt.Translate_Table
+   is
+      use type Tmplt.Vector_Tag;
+
+      Main_RAM      : Tmplt.Tag;
+      Main_RAM_Addr : Tmplt.Tag;
+      Main_RAM_Size : Tmplt.Tag;
+
+      Main_ROM      : Tmplt.Tag;
+      Main_ROM_Addr : Tmplt.Tag;
+      Main_ROM_Size : Tmplt.Tag;
+
+      RAM_Regions : Tmplt.Vector_Tag;
+      RAM_Addr    : Tmplt.Vector_Tag;
+      RAM_Size    : Tmplt.Vector_Tag;
+
+      ROM_Regions : Tmplt.Vector_Tag;
+      ROM_Addr    : Tmplt.Vector_Tag;
+      ROM_Size    : Tmplt.Vector_Tag;
+
+      Default_Stack_Size : constant Tmplt.Tag := +(2 * 1024);
+
+      Interrupt_Names : Tmplt.Vector_Tag;
+      Interrupt_Ids   : Tmplt.Vector_Tag;
+   begin
+      for Mem of Self.Memory loop
+         case Mem.Kind is
+            when RAM =>
+               if Templates_Parser.Size (Main_RAM) = 0 then
+                  --  FIXME: hack to set the main RAM as the first in the list
+                  Main_RAM      := +Mem.Name;
+                  Main_RAM_Addr := +Mem.Address;
+                  Main_RAM_Size := +Mem.Size;
+               else
+                  RAM_Regions := RAM_Regions & Mem.Name;
+                  RAM_Addr    := RAM_Addr & Mem.Address;
+                  RAM_Size    := RAM_Size & Mem.Size;
+               end if;
+            when ROM =>
+               if Mem.name = Self.Boot_Memory then
+                  Main_ROM      := +Mem.Name;
+                  Main_ROM_Addr := +Mem.Address;
+                  Main_ROM_Size := +Mem.Size;
+               else
+                  ROM_Regions := ROM_Regions & Mem.Name;
+                  ROM_Addr    := ROM_Addr & Mem.Address;
+                  ROM_Size    := ROM_Size & Mem.Size;
+               end if;
+         end case;
+      end loop;
+
+      for Int_Id in 0 .. Self.Interrupts.Last_Index loop
+         Interrupt_Ids := Interrupt_Ids & Int_Id;
+         if Self.Interrupts.Is_Index_Used (Int_Id) then
+            Interrupt_Names := Interrupt_Names & Self.Interrupts.Get_Name (Int_Id);
+            Ada.Text_IO.Put_Line (Self.Interrupts.Get_Name (Int_Id));
+         else
+            Interrupt_Names := Interrupt_Names & "unknown_interrupt";
+            Ada.Text_IO.Put_Line ("unknown_interrupt");
+         end if;
+      end loop;
+
+      return (Templates_Parser.Assoc ("MAIN_RAM", Main_RAM),
+              Templates_Parser.Assoc ("MAIN_RAM_ADDR", Main_RAM_Addr),
+              Templates_Parser.Assoc ("MAIN_RAM_SIZE", Main_RAM_Size),
+              Templates_Parser.Assoc ("MAIN_ROM", Main_ROM),
+              Templates_Parser.Assoc ("MAIN_ROM_ADDR", Main_ROM_Addr),
+              Templates_Parser.Assoc ("MAIN_ROM_SIZE", Main_ROM_Size),
+              Templates_Parser.Assoc ("RAM_REGION", RAM_Regions),
+              Templates_Parser.Assoc ("RAM_ADDR", RAM_Addr),
+              Templates_Parser.Assoc ("RAM_SIZE", RAM_Size),
+              Templates_Parser.Assoc ("ROM_REGION", ROM_Regions),
+              Templates_Parser.Assoc ("ROM_ADDR", ROM_Addr),
+              Templates_Parser.Assoc ("ROM_SIZE", ROM_Size),
+              Templates_Parser.Assoc ("DEFAULT_STACK_SIZE", Default_Stack_Size),
+              Templates_Parser.Assoc ("INTERRUPT_NAME", Interrupt_Names),
+              Templates_Parser.Assoc ("INTERRUPT_ID", Interrupt_Ids));
+   end To_Translate_Table;
 
   -------------------
    -- Add_Interrupt --
@@ -418,7 +342,7 @@ package body Device is
    -------------------
 
    function Is_Index_Used
-      (Self  : in out Interrupt_Vector;
+      (Self  : Interrupt_Vector;
        Index : Integer) return Boolean
    is
       use Interrupt_Hashed_Maps;
@@ -435,7 +359,7 @@ package body Device is
    --------------
 
    function Get_Name
-      (Self  : in out Interrupt_Vector;
+      (Self  : Interrupt_Vector;
        Index : Integer) return String
    is
    begin
@@ -444,275 +368,6 @@ package body Device is
             (Container => Self.Interrupts,
              Key       => Index));
    end Get_Name;
-
-   -----------------
-   -- Dump_Header --
-   -----------------
-
-   procedure Dump_Header
-      (File : in out Indented_File_Writer)
-   is
-   begin
-      File.New_Line;
-      File.Put_Line ("/* This file has been generated by gpr2ld. */");
-      File.New_Line;
-   end Dump_Header;
-
-   -------------------
-   -- Dump_Sections --
-   -------------------
-
-   procedure Dump_Sections
-      (Self : in out Spec;
-       File : in out Indented_File_Writer)
-   is
-   begin
-      File.Put_Line ("SECTIONS");
-      File.Put_Line ("{");
-      File.Indent;
-
-      for Section of Self.Section_Vector loop
-         Self.Dump_Section (File, Section);
-         File.New_Line;
-
-         --  XXX: Hardcoded content specific to ARM target.
-         --  FIXME: bug with section name
-         if Section.Name = "text" then
-            File.Put_Indented_Line
-            (".ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } > " &
-              Self.Boot_Memory);
-            File.New_Line;
-            File.Put_Indented_Line (".ARM.exidx :");
-            File.Put_Indented_Line ("{");
-            File.Indent;
-
-            File.Put_Indented_Line ("PROVIDE_HIDDEN (__exidx_start = .);");
-            File.Put_Indented_Line ("*(.ARM.exidx* .gnu.linkonce.armexidx.*)");
-            File.Put_Indented_Line ("PROVIDE_HIDDEN (__exidx_end = .);");
-
-            File.Unindent;
-            File.Put_Indented_Line ("} > " & Self.Boot_Memory);
-            File.New_Line;
-         end if;
-      end loop;
-
-      File.Unindent;
-      File.Put_Line ("}");
-   end Dump_Sections;
-
-   ------------------
-   -- Dump_Section --
-   ------------------
-
-   procedure Dump_Section
-      (Self    : in out Spec;
-       File    : in out Indented_File_Writer;
-       Section : in out Sections.Section)
-   is
-      Load_String : constant Unbounded_String :=
-         To_Unbounded_String
-            (if not Section.To_Load
-             then " (NOLOAD)"
-             else "");
-      Dot_Name : constant Unbounded_String :=
-         To_Unbounded_String (".") & Section.Name;
-
-      Destination_Memory : constant String :=
-         (if Self.Boot_Memory /= Section.Reloc_Memory
-               and then Section.To_Load
-          then (To_String (Section.Reloc_Memory) & (" AT> ") &
-                To_String (Self.Boot_Memory))
-          else To_String (Section.Reloc_Memory));
-   begin
-
-      --  If the section has initalization code, we dump the
-      --  symbols required by the startup code.
-
-      File.Put_Indented_Line ("__" & Section.Name & "_load = .;");
-
-      File.Put_Indented_Line (Dot_Name & Load_String & " :");
-      File.Put_Indented_Line ("{");
-      File.Indent;
-
-      File.Put_Indented_Line ("__" & Section.Name & "_start = .;");
-
-      for Content of Section.Additional_Content loop
-         File.Put_Indented_Line (Content);
-      end loop;
-
-      File.Put_Indented_Line
-         ("*(" & Dot_Name & " " & Dot_Name & ".*)");
-
-      --  XXX: Hardcoded content for the BSS.
-      --  Note that we can put the alignement in the section record.
-      if Section.Name = "bss" then
-         File.Put_Indented_Line ("*(COMMON)");
-         File.Put_Indented_Line (". = ALIGN(0x8);");
-      else
-         File.Put_Indented_Line (". = ALIGN(0x4);");
-      end if;
-
-      File.Put_Indented_Line ("__" & Section.Name & "_end = .;");
-      File.New_Line;
-
-      if Section.Has_Stack then
-         File.New_Line;
-
-         File.Put_Indented_Line ("__stack_start = .;");
-         File.Put_Indented_Line (". += DEFINED (__stack_size) ?" &
-               " __stack_size : _DEFAULT_STACK_SIZE;");
-         File.Put_Indented_Line (". = ALIGN(0x8);");
-         File.Put_Indented_Line ("__stack_end = .;");
-
-         File.New_Line;
-
-         File.Put_Indented_Line ("__heap_start = .;");
-         File.Put_Indented_Line
-            ("__heap_end = ORIGIN(" & Destination_Memory &
-             ") + LENGTH(" & Destination_Memory & ");");
-
-         File.New_Line;
-      end if;
-
-      File.Unindent;
-      File.Put_Indented_Line ("} > " & Destination_Memory);
-      File.Put_Indented_Line
-         ("__" & Section.Name & "_words = (__" & Section.Name
-         & "_end - __" & Section.Name & "_start) >> 2;");
-   end Dump_Section;
-
-   -----------------
-   -- Dump_Memory --
-   -----------------
-
-   procedure Dump_Memory
-        (File        : in out Indented_File_Writer;
-         Memory      : Memory_Region;
-         Permissions : Unbounded_String)
-   is
-      Name         : constant Unbounded_String  := Memory.Name;
-      Address      : constant Unbounded_String  := Memory.Address;
-      Size         : constant Unbounded_String  := Memory.Size;
-   begin
-      File.Put_Indented_Line (Name & " " & Permissions & " : ORIGIN = " &
-                              Address & ", LENGTH = " & Size);
-   end Dump_Memory;
-
-   ---------------------------
-   -- Dump_Interrupt_Vector --
-   ---------------------------
-
-   procedure Dump_Interrupt_Vector
-      (Self : in out Spec;
-       File : in out Indented_File_Writer)
-   is
-   begin
-      File.Indent;
-      --  XXX: Hardcoded for now, we will use Self.Interrupt_Vector when
-      --  the handling of the interrupt vector is done.
-      File.Put_Indented_Line (".section .vectors," & '"' & "a" & '"');
-      File.Put_Line ("__vectors:");
-      File.Put_Indented_Line ("/* System defined interrupts */");
-      File.Put_Indented_Line (".word __stack_end /* top of the stack */");
-      Put_Interrupt (File, "Reset");
-      Put_Interrupt (File, "NMI");
-      Put_Interrupt (File, "Hard_Fault");
-      Put_Interrupt (File, "Mem_Manage");
-      Put_Interrupt (File, "Bus_Fault");
-      Put_Interrupt (File, "Usage_Fault");
-      File.Put_Indented_Line (".word 0    /* reserved */");
-      File.Put_Indented_Line (".word 0    /* reserved */");
-      File.Put_Indented_Line (".word 0    /* reserved */");
-      File.Put_Indented_Line (".word 0    /* reserved */");
-      Put_Interrupt (File, "SVC");
-      Put_Interrupt (File, "Debug_Mon");
-      File.Put_Indented_Line (".word 0    /* reserved */");
-      Put_Interrupt (File, "Pend_SV");
-      Put_Interrupt (File, "SysTick");
-
-      --  We add the interrupts corresponding
-      --  to what is in the interrupt vector.
-      File.New_Line;
-      File.Put_Indented_Line ("/* External interrupts */");
-      File.New_Line;
-
-      --  Adjust the number of interrupts, if there is more explicitly declared
-      --  interrupt than the CPU.Number_Of_Interrupts. This will also happen if
-      --  user doesn't specify Number_Of_Interrupts in the CPU package.
-      if Self.Interrupts.Last_Index > Self.CPU.Number_Of_Interrupts then
-         Self.CPU.Number_Of_Interrupts := Self.Interrupts.Last_Index + 1;
-      end if;
-
-      for I in Integer range 0 .. Self.CPU.Number_Of_Interrupts - 1 loop
-         if Self.Interrupts.Is_Index_Used (I) then
-            declare
-               Name : constant String := Self.Interrupts.Get_Name (I);
-               Line : constant String :=
-                 ".word " & Name & "_Handler" & "    /*" & I'Img & " " & Name & " */";
-            begin
-               File.Put_Indented_Line (Line);
-            end;
-         else
-            File.Put_Indented_Line (".word UnnamedInterrupt_Handler    /*" & I'Img & " */");
-         end if;
-      end loop;
-
-      File.New_Line;
-
-      --  We generate weak aliases that the user can
-      --  override by linking again his own implementation.
-      --  We dont care about the order in which the symbols are declared.
-      Put_Dummy_Handler (File, "SysTick");
-      Put_Dummy_Handler (File, "Debug_Mon");
-      Put_Dummy_Handler (File, "SVC");
-      Put_Dummy_Handler (File, "Pend_SV");
-      Put_Dummy_Handler (File, "Usage_Fault");
-      Put_Dummy_Handler (File, "Bus_Fault");
-      Put_Dummy_Handler (File, "Mem_Manage");
-      Put_Dummy_Handler (File, "Hard_Fault");
-      Put_Dummy_Handler (File, "NMI");
-      Put_Dummy_Handler (File, "UnnamedInterrupt");
-      for Cursor in Self.Interrupts.Interrupts.Iterate loop
-         declare
-            Name : constant String :=
-              To_String (Interrupt_Hashed_Maps.Element (Cursor));
-            Weak_Symbol : constant String :=
-              ".weak" & ASCII.HT & ASCII.HT & Name & "_Handler";
-            Override_Symbol : constant String :=
-              ".thumb_set" & ASCII.HT & Name & "_Handler,hang";
-         begin
-            File.Put_Indented_Line (Weak_Symbol);
-            File.Put_Indented_Line (Override_Symbol);
-            File.New_Line;
-         end;
-      end loop;
-
-      File.Unindent;
-   end Dump_Interrupt_Vector;
-
-   ---------------------------
-   -- Dump_Interrupt_Vector --
-   ---------------------------
-
-   procedure Dump_Sections_Init_Code
-      (Self : in out Spec;
-       File : in out Indented_File_Writer)
-   is
-   begin
-      for Section of Self.Section_Vector loop
-         if Section.To_Init then
-
-            Section.Init_Code.Format
-               (Name   => Section.Name,
-                Indent => To_Unbounded_String ("" & ASCII.HT));
-
-            for Line of Section.Init_Code.Get_Lines loop
-               File.Put_Line (Line);
-            end loop;
-            File.New_Line;
-         end if;
-      end loop;
-   end Dump_Sections_Init_Code;
 
    -----------------------
    -- Is_Based_Litteral --
@@ -757,26 +412,20 @@ package body Device is
 
    function Ada_Based_Literal_To_C_Style_Hex (Value : String) return String
    is
-      use Ada.Numerics.Elementary_Functions;
-
       Integer_Form : constant Long_Integer := Long_Integer'Value (Value);
 
-      --  We need to have at least one characte and we cannot pass
-      --  0 to the log function as it raises an exception.
-      Size_Of_String_Representation : constant Integer :=
-         (if (Integer_Form < 2) then
-            1
-         else
-            Integer (Float'Ceiling (Log (Float (Integer_Form + 1), 16.0))));
-
-      Temp_String : String (1 .. Size_Of_String_Representation + 4);
+      Temp_String : String (1 .. 256);
+      Result      : Unbounded_String;
    begin
       Put
          (To   => Temp_String,
           Item => Integer_Form,
           Base => 16);
 
-      return ("0x" & Temp_String (4 .. Temp_String'Last - 1));
+      Result := To_Unbounded_String (Temp_String);
+      Trim (Result, Ada.Strings.Left);
+
+      return ("0x" & Slice (Result, 4, Length (Result) - 1));
    end Ada_Based_Literal_To_C_Style_Hex;
 
    --------------------
@@ -845,7 +494,7 @@ package body Device is
                   (Region,
                    Memory_Region_To_Check_Against)
                then
-                  raise Name_Error with "Invalid memory ranges : " &
+                  raise Name_Error with "Memory overlap : " &
                      ASCII.LF & Get_Info_String (Region) &
                      ASCII.LF &
                         Get_Info_String (Memory_Region_To_Check_Against);
@@ -938,30 +587,26 @@ package body Device is
                "  and Address = " & To_String (Region.Address);
    end Get_Info_String;
 
-   -----------------------
-   -- Put_Dummy_Handler --
-   -----------------------
+   -----------------------------
+   -- Default_Linker_Template --
+   -----------------------------
 
-   procedure Put_Dummy_Handler
-      (File : in out Indented_File_Writer;
-       Name : String)
-   is
+   function Default_Linker_Template (Self : Spec) return String is
+      pragma Unreferenced (Self);
    begin
-      File.Put_Indented_Line (".weak      "  & Name &"_Handler");
-      File.Put_Indented_Line (".thumb_set " & Name & "_Handler,hang");
-   end Put_Dummy_Handler;
+      --  FIXME: Select template based on CPU info
+      return "default_linker_template.tmplt";
+   end Default_Linker_Template;
 
-   -------------------
-   -- Put_Interrupt --
-   -------------------
+   ------------------------------
+   -- Default_Startup_Template --
+   ------------------------------
 
-   procedure Put_Interrupt
-      (File : in out Indented_File_Writer;
-       Name : String)
-   is
+   function Default_Startup_Template (Self : Spec) return String is
+      pragma Unreferenced (Self);
    begin
-      File.Put_Indented_Line (".word " & Name & "_Handler " &
-         ASCII.HT & "/* "& Name &" */");
-   end Put_Interrupt;
+      --  FIXME: Select template based on CPU info
+      return "default_startup_template.tmplt";
+   end Default_Startup_Template;
 
 end Device;

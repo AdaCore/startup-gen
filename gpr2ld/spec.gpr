@@ -1,31 +1,40 @@
 with "interruptions";
+
 project Spec is
 
    package CPU is
       for Name use "cortex-m0plus";
       for Float_Handling use "soft";
-      for Number_Of_Interrupts use "15";
+      for Number_Of_Interrupts use "25";
+
+      for Linker_Template use "linker.tmplt";
+      for Startup_Template use "startup.tmplt";
    end CPU;
 
    package Memory_Map is
 
       --  MEMORY MAP
-      for Memories use ("ROM", "RAM");
+      for Memories use ("flash", "sram", "ccm");
 
-      for Boot_Memory use "ROM";
+      for Boot_Memory use "flash";
 
-      for Mem_Kind("ROM") use "ROM";
-      for Mem_Kind("RAM") use "RAM";
+      --  flash
+      for Mem_Kind("flash") use "ROM";
+      for Address("flash")  use "16#08000000#";
+      for Size("flash")     use "1024K";
 
-      --  ROM
-      for Address("ROM") use "0x0";
-      for Size("ROM") use "256K";
+      --  sram
+      for Mem_Kind("sram") use "RAM";
+      for Address("sram")  use "16#20000000#";
+      for Size("sram")     use "128K";
 
-      -- RAM
-      for Address("RAM") use "16#20000000#";
-      for Size("RAM")    use "16#8000#";
-
+      --  ccm
+      for Mem_Kind("ccm") use "RAM";
+      for Address("ccm")  use "16#10000000#";
+      for Size("ccm")     use "64K";
    end Memory_Map;
+
+   package Interrupt_Vector renames Interruptions.Interrupt_Vector;
 
    for Target use "arm-eabi";
 
