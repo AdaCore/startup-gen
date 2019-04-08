@@ -5,6 +5,7 @@ with GNAT.Regexp;
 with GNAT.Strings;
 
 with GNATCOLL.Utils;
+with GNATCOLL.Strings;
 with GNATCOLL.VFS;   use GNATCOLL.VFS;
 with Utils;          use Utils;
 
@@ -14,15 +15,43 @@ package body Device is
 
    package Tmplt renames Templates_Parser;
 
+   function Resources_Base_Directory return String;
    function Arch_From_CPU (CPU_Name : String) return String;
+
+   ------------------------------
+   -- Resources_Base_Directory --
+   ------------------------------
+
+   function Resources_Base_Directory return String is
+      Exec_Loc : constant String := GNATCOLL.Utils.Executable_Location;
+   begin
+      return GNATCOLL.Utils.Join_Path
+        (Exec_Loc, "share", "gpr2ld", "resources");
+   end Resources_Base_Directory;
 
    -------------------
    -- Arch_From_CPU --
    -------------------
 
    function Arch_From_CPU (CPU_Name : String) return String is
+
+      function Match (Pattern : String) return Boolean
+      is (GNAT.Regexp.Match (CPU_Name,
+                             GNAT.Regexp.Compile (Pattern,
+                                                 Case_Sensitive => False)));
+
    begin
-      return "FIXME " & CPU_Name;
+
+      if Match ("cortex-m(0(\+|plus)?|1)") then
+         return "armv6-m";
+      elsif Match ("cortex-m3") then
+         return "armv7-m";
+      elsif Match ("cortex-m(4|7)(f|d)?") then
+         return "armv7e-m";
+      elsif Match ("cortex-m(23|33)(f|d)?") then
+         return "armv8-m";
+      end if;
+      raise Program_Error with "Unknown CPU name: '" & CPU_Name & "'";
    end Arch_From_CPU;
 
    ----------------------------------
@@ -606,10 +635,19 @@ package body Device is
    -----------------------------
 
    function Default_Linker_Template (Self : Spec) return String is
-      pragma Unreferenced (Self);
+      use GNATCOLL.Utils;
+
+      Arch : constant String := Arch_From_CPU (To_String (Self.CPU.Name));
    begin
-      --  FIXME: Select template based on CPU info
-      return "default_linker_template.tmplt";
+      if Arch = "armv6-m" or else Arch = "armv7-m" or else
+         Arch = "armv7e-m" or else Arch = "armv8-m"
+      then
+         return Join_Path (Resources_Base_Directory, "armvX-m.ld.tmplt");
+      end if;
+
+      raise Program_Error with
+        "No default linker template for this configuration, " &
+        "please specify a custom template";
    end Default_Linker_Template;
 
    ------------------------------
@@ -617,10 +655,19 @@ package body Device is
    ------------------------------
 
    function Default_Startup_Template (Self : Spec) return String is
-      pragma Unreferenced (Self);
+      use GNATCOLL.Utils;
+
+      Arch : constant String := Arch_From_CPU (To_String (Self.CPU.Name));
    begin
-      --  FIXME: Select template based on CPU info
-      return "default_startup_template.tmplt";
+      if Arch = "armv6-m" or else Arch = "armv7-m" or else
+         Arch = "armv7e-m" or else Arch = "armv8-m"
+      then
+         return Join_Path (Resources_Base_Directory, "armvX-m.S.tmplt");
+      end if;
+
+      raise Program_Error with
+        "No default startup template for this configuration, " &
+        "please specify a custom template";
    end Default_Startup_Template;
 
 end Device;
