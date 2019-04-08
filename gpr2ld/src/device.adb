@@ -300,7 +300,9 @@ package body Device is
          end case;
       end loop;
 
-      for Int_Id in 0 .. Self.Interrupts.Last_Index loop
+      for Int_Id in 0 .. Integer'Max (Self.Interrupts.Last_Index,
+                                      Self.CPU.Number_Of_Interrupts - 1)
+      loop
          Interrupt_Ids := Interrupt_Ids & Int_Id;
          if Self.Interrupts.Is_Index_Used (Int_Id) then
             Interrupt_Names := Interrupt_Names & Self.Interrupts.Get_Name (Int_Id);
