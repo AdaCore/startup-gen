@@ -4,12 +4,12 @@ project Spec is
 
    package Device_Configuration is
 
-      for Name use "cortex-m0plus";
+      for Name use "cortex-m4f";
       for Float_Handling use "soft";
       for Number_Of_Interrupts use "25";
 
-      for Linker_Template use "linker.tmplt";
-      for Startup_Template use "startup.tmplt";
+      --  for Linker_Template use "linker.tmplt";
+      --  for Startup_Template use "startup.tmplt";
 
       --  MEMORY MAP
       for Memories use ("flash", "sram", "ccm");
