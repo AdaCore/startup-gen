@@ -6,8 +6,11 @@ with GNAT.Strings;
 
 with GNATCOLL.Utils;
 with GNATCOLL.VFS;   use GNATCOLL.VFS;
+with Utils;          use Utils;
 
 package body Device is
+
+   use type GNAT.Strings.String_List_Access;
 
    package Tmplt renames Templates_Parser;
 
@@ -33,37 +36,42 @@ package body Device is
       use Memory_Region_Vectors;
 
       Memory_List : constant Attribute_Pkg_List :=
-        Build ("Memory_map", "memories");
+        Build (Prj_Package_Name, "memories");
       Size_Table : constant Attribute_Pkg_String :=
-        Build ("Memory_map", "Size");
+        Build (Prj_Package_Name, "Size");
       Address_Table : constant Attribute_Pkg_String :=
-        Build ("Memory_map", "Address");
+        Build (Prj_Package_Name, "Address");
       Kind_Table : constant Attribute_Pkg_String :=
-        Build ("Memory_map", "mem_kind");
+        Build (Prj_Package_Name, "mem_kind");
 
+      Memories : constant GNAT.Strings.String_List_Access :=
+        Spec_Project.Attribute_Value (Memory_List);
    begin
-      for Memory of Spec_Project.Attribute_Value (Memory_List).all loop
-         declare
-            Size : constant String :=
-              Spec_Project.Attribute_Value (Size_Table, Index => Memory.all);
+      if Memories = null then
+         Put_Line ("No memory delcared");
+      else
+         for Memory of Memories.all loop
+            declare
+               Size : constant String :=
+                 Spec_Project.Attribute_Value (Size_Table, Index => Memory.all);
 
-            Address : constant String :=
-              Spec_Project.Attribute_Value
-                (Address_Table, Index => Memory.all);
+               Address : constant String :=
+                 Spec_Project.Attribute_Value
+                   (Address_Table, Index => Memory.all);
 
-            Kind : constant String :=
-              Spec_Project.Attribute_Value (Kind_Table, Index => Memory.all);
+               Kind : constant String :=
+                 Spec_Project.Attribute_Value (Kind_Table, Index => Memory.all);
 
-            Memory_Unit : constant Memory_Region :=
-              (Name    => To_Unbounded_String (Memory.all),
-               Address => To_Unbounded_String (To_Size_String (Address)),
-               Size    => To_Unbounded_String (To_Size_String (Size)),
-               Kind    => Memory_Kind'Value (Kind));
-         begin
-            Self.Memory := Self.Memory & Memory_Unit;
-         end;
-      end loop;
-
+               Memory_Unit : constant Memory_Region :=
+                 (Name    => To_Unbounded_String (Memory.all),
+                  Address => To_Unbounded_String (To_Size_String (Address)),
+                  Size    => To_Unbounded_String (To_Size_String (Size)),
+                  Kind    => Memory_Kind'Value (Kind));
+            begin
+               Self.Memory := Self.Memory & Memory_Unit;
+            end;
+         end loop;
+      end if;
    end Get_Memory_List_From_Project;
 
    ---------------------------------------
@@ -76,7 +84,7 @@ package body Device is
    is
       Interrupts : constant Attribute_Pkg_String :=
         Build
-           (Package_Name   => "Interrupt_Vector",
+           (Package_Name   => Prj_Package_Name,
             Attribute_Name => "Interrupt");
 
       Interrupt_List : GNAT.Strings.String_List :=
@@ -116,7 +124,7 @@ package body Device is
        Spec_Project : Project_Type)
    is
       Boot_Mem : constant String := Spec_Project.Attribute_Value
-         (Build ("Memory_map", "Boot_Memory"));
+         (Build (Prj_Package_Name, "Boot_Memory"));
    begin
       Self.Boot_Memory := To_Unbounded_String (Boot_Mem);
    end Get_Boot_Memory_From_Project;
@@ -131,20 +139,24 @@ package body Device is
    is
       Name : constant Unbounded_String :=
         To_Unbounded_String
-            (Spec_Project.Attribute_Value (Build ("cpu", "name")));
+            (Spec_Project.Attribute_Value (Build (Prj_Package_Name, "name")));
 
       Arch : constant String := Arch_From_CPU (To_String (Name));
 
       Float_Handling : constant String :=
-        Spec_Project.Attribute_Value (Build ("cpu", "float_handling"));
+        Spec_Project.Attribute_Value (Build (Prj_Package_Name,
+                                      "float_handling"));
 
       Number_Of_Interrupts : constant String :=
-        Spec_Project.Attribute_Value (Build ("cpu", "number_of_interrupts"));
+        Spec_Project.Attribute_Value (Build (Prj_Package_Name,
+                                      "number_of_interrupts"));
 
       Linker_Template : constant String :=
-        Spec_Project.Attribute_Value (Build ("cpu", "linker_template"));
+        Spec_Project.Attribute_Value (Build (Prj_Package_Name,
+                                      "linker_template"));
       Startup_Template : constant String :=
-        Spec_Project.Attribute_Value (Build ("cpu", "startup_template"));
+        Spec_Project.Attribute_Value (Build (Prj_Package_Name,
+                                      "startup_template"));
    begin
 
       Self.CPU :=

@@ -20,54 +20,45 @@ package body Utils is
          -- Memory_Map --
          new String'(Register_New_Attribute
                       ("Mem_Kind",
-                       "Memory_Map",
+                       Prj_Package_Name,
                         Indexed => True)),
          new String'(Register_New_Attribute
                       ("Size",
-                       "Memory_Map",
+                       Prj_Package_Name,
                        Indexed => True)),
          new String'(Register_New_Attribute
                       ("Address",
-                       "Memory_Map",
+                       Prj_Package_Name,
                        Indexed => True)),
          new String'(Register_New_Attribute
                       ("Memories",
-                       "Memory_Map",
+                       Prj_Package_Name,
                        Is_List => True)),
          new String'(Register_New_Attribute
                       ("Boot_Memory",
-                       "Memory_Map")),
+                       Prj_Package_Name)),
 
          -- CPU --
          new String'(Register_New_Attribute
                       ("Name",
-                       "CPU")),
+                       Prj_Package_Name)),
          new String'(Register_New_Attribute
                       ("Float_Handling",
-                       "CPU")),
+                       Prj_Package_Name)),
          new String'(Register_New_Attribute
                       ("Number_Of_Interrupts",
-                       "CPU")),
+                       Prj_Package_Name)),
          new String'(Register_New_Attribute
                       ("Linker_Template",
-                       "CPU")),
+                       Prj_Package_Name)),
          new String'(Register_New_Attribute
                       ("Startup_Template",
-                       "CPU")),
+                       Prj_Package_Name)),
 
          -- Interrupt_Vector --
          new String'(Register_New_Attribute
                       ("Interrupt",
-                       "Interrupt_Vector",
-                       Indexed => True)),
-
-         -- Architectures_Configuration --
-         new String'(Register_New_Attribute
-                      ("Dir",
-                       "Architectures_Configuration")),
-         new String'(Register_New_Attribute
-                      ("CPU_Architecture",
-                       "Architectures_Configuration",
+                       Prj_Package_Name,
                        Indexed => True))
         );
    begin
