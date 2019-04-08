@@ -43,8 +43,7 @@ begin
 
       Spec.Get_Boot_Memory_From_Project (Tree.Root_Project);
 
-      Spec.Get_Interrupt_Vector_From_Project
-         (Tree.Project_From_Name ("interruptions"));
+      Spec.Get_Interrupt_Vector_From_Project (Tree.Root_Project);
 
       Spec.Get_CPU_From_Project (Tree.Root_Project);
 

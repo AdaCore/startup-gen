@@ -3,10 +3,10 @@ project Interruptions is
    --  Sample of the first 3 interruptions of the atsam4e16c.
    --  We consider that if we dont have an interrupt, its reserved.
    --  For the interrupt table, the index starts at 0;
-   package Interrupt_Vector is
+   package Device_Configuration is
       for Interrupt("5") use "PMC";
       for Interrupt("6") use "EFC";
       for Interrupt("7") use "UART0";
-   end Interrupt_Vector;
+   end Device_Configuration;
 
 end Interruptions;
