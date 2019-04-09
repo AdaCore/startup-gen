@@ -15,9 +15,31 @@ package body Device is
 
    package Tmplt renames Templates_Parser;
 
+   function To_Number_Of_Interrupt (Str : String) return Natural;
    function Resources_Base_Directory return String;
    function Arch_From_CPU (CPU_Name : String) return String;
 
+   -------------
+   -- Convert --
+   -------------
+
+   function Convert (Str : String) return Float_Type is
+   begin
+      return Float_Type'Value (Str);
+   exception
+         when Constraint_Error => return Soft;
+   end Convert;
+
+   ----------------------------
+   -- To_Number_Of_Interrupt --
+   ----------------------------
+
+   function To_Number_Of_Interrupt (Str : String) return Natural is
+   begin
+      return Natural'Value (Str);
+   exception
+         when Constraint_Error => return 0;
+   end To_Number_Of_Interrupt;
    ------------------------------
    -- Resources_Base_Directory --
    ------------------------------
@@ -190,8 +212,8 @@ package body Device is
 
       Self.CPU :=
         (Name                 => Name,
-         Float_Handling       => Float_Type'Value (Float_Handling),
-         Number_Of_Interrupts => Natural'Value (Number_Of_Interrupts),
+         Float_Handling       => Convert (Float_Handling),
+         Number_Of_Interrupts => To_Number_Of_Interrupt (Number_Of_Interrupts),
          Arch                 => To_Unbounded_String (Arch));
 
       if Linker_Template /= "" then
