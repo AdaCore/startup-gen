@@ -50,11 +50,17 @@ begin
       Spec.Validate;
       --  TODO End of setup.
 
-      if Input.Linker_File /= null then
+      if Input.Linker_File /= null
+        and then
+         Input.Linker_File.all /= ""
+      then
          Spec.Dump_Linker_Script (Input.Linker_File.all);
       end if;
 
-      if Input.Startup_Code_File /= null then
+      if Input.Startup_Code_File /= null
+        and then
+         Input.Startup_Code_File.all /= ""
+      then
          Spec.Dump_Startup_Code (Input.Startup_Code_File.all);
       end if;
 
