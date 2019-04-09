@@ -46,7 +46,10 @@ package Device is
       return Templates_Parser.Translate_Table;
 
 private
+
    type Float_Type is (Hard, Soft);
+
+   function Convert (Str : String) return Float_Type;
 
    type CPU_Type is record
       Name                 : Unbounded_String;
