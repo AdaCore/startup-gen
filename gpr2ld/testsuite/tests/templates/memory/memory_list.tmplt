@@ -1,0 +1,11 @@
+Main ROM: @_MAIN_ROM_@ Addr: @_MAIN_ROM_ADDR_@ Size: @_MAIN_ROM_SIZE_@
+Other ROMs:
+@@TABLE@@
+ - @_ROM_REGION_@ Addr: @_ROM_ADDR_@ Size: @_ROM_SIZE_@
+@@END_TABLE@@
+
+Main RAM: @_MAIN_RAM_@ Addr: @_MAIN_RAM_ADDR_@ Size: @_MAIN_RAM_SIZE_@
+Other RAMs:
+@@TABLE@@
+ - @_RAM_REGION_@ Addr: @_RAM_ADDR_@ Size: @_RAM_SIZE_@
+@@END_TABLE@@

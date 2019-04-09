@@ -1,0 +1,31 @@
+project Spec is
+
+   package Device_Configuration is
+
+      for Name use "cortex-m4f";
+
+      for Memories use ("rom1", "ram1", "rom2", "ram2");
+      
+      for Boot_Memory use "rom2";
+
+      for Mem_Kind ("rom1") use "ROM";
+      for Address  ("rom1") use "0x10";
+      for Size     ("rom1") use "0x1";
+
+      for Mem_Kind ("rom2") use "ROM";
+      for Address  ("rom2") use "0x20";
+      for Size     ("rom2") use "0x2";
+      
+      for Mem_Kind ("ram1") use "RAM";
+      for Address  ("ram1") use "0x30";
+      for Size     ("ram1") use "0x3";
+
+      for Mem_Kind ("ram2") use "RAM";
+      for Address  ("ram2") use "0x40";
+      for Size     ("ram2") use "0x3";
+
+      for Startup_Template use "./memory_list.tmplt";
+
+   end Device_Configuration;
+
+end Spec;
