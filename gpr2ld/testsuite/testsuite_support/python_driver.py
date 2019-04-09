@@ -6,6 +6,7 @@ import sys
 from gnatpython.ex import PIPE, Run, STDOUT
 from gnatpython import fileutils
 from gnatpython.testsuite.driver import TestDriver
+from gnatpython.env import Env
 
 
 class PythonDriver(TestDriver):
@@ -30,7 +31,7 @@ class PythonDriver(TestDriver):
     Name of the file for output redirection.
     """
 
-    expected_file = 'test.out'
+    expected_file = 'test.ref'
     """
     Name of the file that contains the expected output.
     """
@@ -39,6 +40,10 @@ class PythonDriver(TestDriver):
     """
     Timeout (in seconds) to run the Python script.
     """
+
+    # Add current directory in PYTHONPATH (to find test_utils.py)
+    env = Env()
+    env.add_search_path('PYTHONPATH', os.getcwd())
 
     @property
     def python_interpreter(self):
