@@ -1,0 +1,29 @@
+project Spec is
+
+   package Device_Configuration is
+
+      for Name use "cortex-m4f";
+
+      for Memories use ("rom1", "rom2", "rom3", "rom4");
+      
+      for Boot_Memory use "rom1";
+
+      for Mem_Kind ("rom1") use "ROM";
+      for Size     ("rom1") use "-1";
+      for Address  ("rom1") use "0x100";
+
+      for Mem_Kind ("rom2") use "ROM";
+      for Size     ("rom2") use "0x0bad!";
+      for Address  ("rom2") use "0x100";
+
+      for Mem_Kind ("rom3") use "ROM";
+      for Size     ("rom3") use "19bad!87";
+      for Address  ("rom3") use "0x100";
+
+      for Mem_Kind ("rom4") use "ROM";
+      for Size     ("rom4") use "bad!0";
+      for Address  ("rom4") use "0x100";
+
+   end Device_Configuration;
+
+end Spec;

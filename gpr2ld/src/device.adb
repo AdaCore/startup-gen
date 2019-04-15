@@ -178,6 +178,10 @@ package body Device is
          (Build (Prj_Package_Name, "Boot_Memory"));
    begin
       Self.Boot_Memory := To_Unbounded_String (Boot_Mem);
+
+      if Self.Boot_Memory = "" then
+         Fatal_Error ("No boot memory specified");
+      end if;
    end Get_Boot_Memory_From_Project;
 
    --------------------------
@@ -232,18 +236,17 @@ package body Device is
 
    end Get_CPU_From_Project;
 
-   --------------
-   -- Validate --
-   --------------
+   -----------
+   -- Valid --
+   -----------
 
-   procedure Validate (Self : in out Spec) is
+   function  Valid (Self : in out Spec) return Boolean is
    begin
       --  NOTE: In the case where we have 2 interrupts with the same
       --  attribute number, we will see only the last one due to how
       --  GNATCOLL handles indexed values.
-      Self.Validate_Input;
-      Self.Validate_Memory_Regions;
-   end Validate;
+      return Self.Valid_Input and then  Self.Valid_Memory_Regions;
+   end Valid;
 
    -------------
    -- Display --
@@ -493,11 +496,11 @@ package body Device is
       return ("0x" & Slice (Result, 4, Length (Result) - 1));
    end Ada_Based_Literal_To_C_Style_Hex;
 
-   --------------------
-   -- Validate_Input --
-   --------------------
+   -----------------
+   -- Valid_Input --
+   -----------------
 
-   procedure Validate_Input (Self : in out Spec) is
+   function Valid_Input (Self : in out Spec) return Boolean is
       use GNAT.Regexp;
       Boot_Mem_Is_Valid : Boolean := False;
 
@@ -517,6 +520,7 @@ package body Device is
       Address_Reg : constant Regexp := Compile (Pattern => Address_Pattern);
       Size_Reg    : constant Regexp := Compile (Pattern => Size_Pattern);
 
+      Result : Boolean := True;
    begin
       for Memory_Region of Self.Memory loop
          if Memory_Region.Name = Self.Boot_Memory then
@@ -526,30 +530,34 @@ package body Device is
 
          --  If the size or the memory are not matching, we raise an exception.
          if not Match (To_String (Memory_Region.Size), Size_Reg) then
-            raise Name_Error
-               with "Invalid memory size expression : " &
-                  To_String (Memory_Region.Size);
+            Error ("Invalid memory size expression for '" &
+                     To_String (Memory_Region.Name) & "' : " &
+                     To_String (Memory_Region.Size));
+            Result := False;
          end if;
 
          if not Match (To_String (Memory_Region.Address), Address_Reg) then
-            raise Name_Error
-               with "Invalid memory address expression : " &
-                  To_String (Memory_Region.Address);
+            Error ("Invalid memory address expression for '" &
+                     To_String (Memory_Region.Name) & "' : " &
+                     To_String (Memory_Region.Address));
+            Result := False;
          end if;
       end loop;
 
       if not Boot_Mem_Is_Valid then
-         raise Name_Error
-               with "Invalid boot memory : " & To_String (Self.Boot_Memory);
+         Error ("Invalid boot memory : " & To_String (Self.Boot_Memory));
+         Result := False;
       end if;
 
-   end Validate_Input;
+      return Result;
+   end Valid_Input;
 
-   -----------------------------
-   -- Validate_Memory_Regions --
-   -----------------------------
+   --------------------------
+   -- Valid_Memory_Regions --
+   --------------------------
 
-   procedure Validate_Memory_Regions (Self : in out Spec) is
+   function Valid_Memory_Regions (Self : in out Spec) return Boolean is
+      Result : Boolean := True;
    begin
       for Region of Self.Memory loop
          for Memory_Region_To_Check_Against of Self.Memory loop
@@ -559,15 +567,18 @@ package body Device is
                   (Region,
                    Memory_Region_To_Check_Against)
                then
-                  raise Name_Error with "Memory overlap : " &
-                     ASCII.LF & Get_Info_String (Region) &
-                     ASCII.LF &
-                        Get_Info_String (Memory_Region_To_Check_Against);
+                  Error
+                    ("Memory overlap : " &
+                       ASCII.LF & Get_Info_String (Region) &
+                       ASCII.LF &
+                       Get_Info_String (Memory_Region_To_Check_Against));
+                  Result := False;
                end if;
             end if;
          end loop;
       end loop;
-   end Validate_Memory_Regions;
+      return Result;
+   end Valid_Memory_Regions;
 
    ----------------------------
    -- Memory_Regions_Overlap --
@@ -646,6 +657,10 @@ package body Device is
       return Int_Repr * Unit_Multiplier;
    end LD_Hex_String_To_Long_Integer;
 
+   ---------------------
+   -- Get_Info_String --
+   ---------------------
+
    function Get_Info_String (Region : Memory_Region) return String is
    begin
       return To_String (Region.Name) & " : Size = " & To_String (Region.Size) &
@@ -667,9 +682,8 @@ package body Device is
          return Join_Path (Resources_Base_Directory, "armvX-m.ld.tmplt");
       end if;
 
-      raise Program_Error with
-        "No default linker template for this configuration, " &
-        "please specify a custom template";
+      Fatal_Error ("No default linker template for this configuration, " &
+                     "please specify a custom template.");
    end Default_Linker_Template;
 
    ------------------------------
@@ -687,9 +701,8 @@ package body Device is
          return Join_Path (Resources_Base_Directory, "armvX-m.S.tmplt");
       end if;
 
-      raise Program_Error with
-        "No default startup template for this configuration, " &
-        "please specify a custom template";
+      Fatal_Error ("No default startup template for this configuration, " &
+                     "please specify a custom template.");
    end Default_Startup_Template;
 
 end Device;

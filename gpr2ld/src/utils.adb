@@ -1,6 +1,6 @@
------------
--- Utils --
------------
+with Ada.Text_IO;       use Ada.Text_IO;
+with Ada.Command_Line;  use Ada.Command_Line;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
 
 package body Utils is
 
@@ -69,5 +69,35 @@ package body Utils is
          end if;
       end loop;
    end Register_Memory_Map_Attributes;
+
+
+   -------------
+   -- Warning --
+   -------------
+
+   procedure Warning (Msg : String) is
+   begin
+      Put_Line (Standard_Error, "Warning: " & Msg);
+   end Warning;
+
+   -----------
+   -- Error --
+   -----------
+
+   procedure Error (Msg : String) is
+   begin
+      Put_Line (Standard_Error, "Error: " & Msg);
+      Set_Exit_Status (Failure);
+   end Error;
+
+   -----------------
+   -- Fatal_Error --
+   -----------------
+
+   procedure Fatal_Error (Msg : String) is
+   begin
+      Error (Msg);
+      raise Exit_Exc;
+   end Fatal_Error;
 
 end Utils;

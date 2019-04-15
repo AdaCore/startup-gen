@@ -23,8 +23,6 @@ procedure Main is
 begin
    Input.Get_Arguments;
 
-   Input.Display;
-
    Utils.Register_Memory_Map_Attributes;
 
    declare
@@ -47,8 +45,10 @@ begin
 
       Spec.Get_CPU_From_Project (Tree.Root_Project);
 
-      Spec.Validate;
-      --  TODO End of setup.
+      if not Spec.Valid then
+         --  At least one error message should have been displayed.
+         return;
+      end if;
 
       if Input.Linker_File /= null
         and then
@@ -71,5 +71,7 @@ exception
    --  the user called the executable with "-h" or "--help"
    when GNAT.Command_Line.Exit_From_Command_Line =>
       New_Line;
+
+   when Utils.Exit_Exc => null;
 
 end Main;

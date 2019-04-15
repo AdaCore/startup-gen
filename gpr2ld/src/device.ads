@@ -34,8 +34,8 @@ package Device is
    --    No overlapping memory_regions
    --    Boot memory exists
    --    No overlapping interrupts in the interrupt vector.
-   --  Throws if there is an error
-   procedure Validate (Self : in out Spec);
+   --  return False if there is an error
+   function  Valid (Self : in out Spec) return Boolean;
 
    procedure Dump_Linker_Script (Self : in out Spec; Filename : String);
 
@@ -128,10 +128,10 @@ private
    --  Checks that the input is coherent IE:
    --    Boot memory is a valid memory region.
    --    All memory regions have an address and a size in a relevant format.
-   procedure Validate_Input (Self : in out Spec);
+   function Valid_Input (Self : in out Spec) return Boolean;
 
    --  Checks that there are no overlapping memory regions.
-   procedure Validate_Memory_Regions (Self : in out Spec);
+   function Valid_Memory_Regions (Self : in out Spec) return Boolean;
 
    --  Verify that two memory regions are not overlapping each other.
    function Memory_Regions_Overlap (Memory_1 : Memory_Region;
