@@ -1,9 +1,6 @@
 with Ada.Text_IO;       use Ada.Text_IO;
 with GNAT.Command_Line; use GNAT.Command_Line;
-
------------
--- Setup --
------------
+with Utils;
 
 package body Setup is
 
@@ -28,9 +25,17 @@ package body Setup is
           "-s:",
           Help => "Name of the generated startup code.");
 
+      Define_Switch
+         (Config,
+          Values.Project_File'Access,
+          "-P:",
+          Help => "Name of the project file with the device configuation.");
+
       Getopt (Config);
 
-      Values.Project_File := new String'(Get_Argument);
+      if Values.Project_File = null or else Values.Project_File.all = "" then
+         Utils.Fatal_Error ("Project file required (-P)");
+      end if;
    end Get_Arguments;
 
    -------------
