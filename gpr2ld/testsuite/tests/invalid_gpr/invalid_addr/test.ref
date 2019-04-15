@@ -1,0 +1,5 @@
+command failed:
+Error: Invalid memory address expression for 'rom1' : -1
+Error: Invalid memory address expression for 'rom2' : 0x0bad!
+Error: Invalid memory address expression for 'rom3' : 19bad!87
+Error: Invalid memory address expression for 'rom4' : bad!0

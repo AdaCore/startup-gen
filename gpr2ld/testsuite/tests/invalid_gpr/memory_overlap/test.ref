@@ -1,0 +1,7 @@
+command failed:
+Error: Memory overlap :
+rom1 : Size = 0x100  and Address = 0x10
+rom2 : Size = 0x100  and Address = 0x10
+Error: Memory overlap :
+rom2 : Size = 0x100  and Address = 0x10
+rom1 : Size = 0x100  and Address = 0x10
