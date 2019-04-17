@@ -1,5 +1,5 @@
-Main ROM: @_MAIN_ROM_@ Addr: @_MAIN_ROM_ADDR_@ Size: @_MAIN_ROM_SIZE_@
-Other ROMs:
+Boot Mmmory: @_BOOT_MEM_@ Addr: @_BOOT_MEM_ADDR_@ Size: @_BOOT_MEM_SIZE_@
+ROMs:
 @@TABLE@@
  - @_ROM_REGION_@ Addr: @_ROM_ADDR_@ Size: @_ROM_SIZE_@
 @@END_TABLE@@
