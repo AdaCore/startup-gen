@@ -1,0 +1,9 @@
+=== Test for STM32F407 disco ===
+Boot memory: FLASH
+PASS: Memories checks
+=== Test for STM32F407 disco ===
+Boot memory: SRAM
+PASS: Memories checks
+=== Test for STM32F407 disco ===
+Boot memory: CCM
+PASS: Memories checks
