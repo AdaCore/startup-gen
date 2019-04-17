@@ -367,7 +367,8 @@ package body Device is
          end if;
       end loop;
 
-      return (Templates_Parser.Assoc ("MAIN_RAM", Main_RAM),
+      return (Templates_Parser.Assoc ("BOOT_FROM_ROM", Self.Boot_From_ROM),
+              Templates_Parser.Assoc ("MAIN_RAM", Main_RAM),
               Templates_Parser.Assoc ("MAIN_RAM_ADDR", Main_RAM_Addr),
               Templates_Parser.Assoc ("MAIN_RAM_SIZE", Main_RAM_Size),
               Templates_Parser.Assoc ("MAIN_ROM", Main_ROM),
@@ -526,6 +527,8 @@ package body Device is
          if Memory_Region.Name = Self.Boot_Memory then
             --  We found the boot memory.
             Boot_Mem_Is_Valid := True;
+
+            Self.Boot_From_ROM := Memory_Region.Kind = ROM;
          end if;
 
          --  If the size or the memory are not matching, we raise an exception.

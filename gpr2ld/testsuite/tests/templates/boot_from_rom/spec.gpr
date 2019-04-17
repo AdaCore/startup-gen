@@ -1,0 +1,25 @@
+project Spec is
+
+   type Boot_Mem is ("ram", "rom");
+   Boot : Boot_Mem := external ("BOOT_MEM", "ram");
+   package Device_Configuration is
+
+      for Name use "cortex-m4f";
+
+      for Memories use ("rom", "ram");
+
+      for Boot_Memory use Boot;
+
+      for Mem_Kind ("rom") use "ROM";
+      for Address  ("rom") use "0x10";
+      for Size     ("rom") use "0x1";
+
+      for Mem_Kind ("ram") use "RAM";
+      for Address  ("ram") use "0x30";
+      for Size     ("ram") use "0x3";
+
+      for Startup_Template use "./boot_from_rom.tmplt";
+
+   end Device_Configuration;
+
+end Spec;
