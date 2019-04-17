@@ -79,6 +79,11 @@ fault:	b fault
 
 _start:
 
+	/* Set the stack pointer */
+	movw	r1,#:lower16:__stack_end
+	movt	r1,#:upper16:__stack_end
+	mov     sp, r1
+
 @@IF@@ @_BOOT_FROM_ROM_@
 	/* Copy .data */
 	.thumb_func
