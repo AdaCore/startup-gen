@@ -9,7 +9,7 @@
 __vectors:
 	/* Cortex-M core interrupts */
 	.word   __stack_end          /* stack top address */
-	.word   _start_rom           /* 1 Reset */
+	.word   _start               /* 1 Reset */
 	.word   fault                /* 2 NMI. */
 	.word   fault                /* 3 Hard fault. */
 	.word   fault                /* 4 Mem manage. */
@@ -75,10 +75,11 @@ fault:	b fault
 
 	.text
 	.thumb_func
-	.globl _start_rom
+	.globl _start
 
-_start_rom:
+_start:
 
+@@IF@@ @_BOOT_FROM_ROM_@
 	/* Copy .data */
 	.thumb_func
 _startup_copy_data:
@@ -112,6 +113,7 @@ _startup_copy_@_RAM_REGION_@_data:
 1:
         .size _startup_copy_@_RAM_REGION_@_data, . - _startup_copy_@_RAM_REGION_@_data
 @@END_TABLE@@
+@@END_IF@@
 
 	/* Clear .bss */
 	.thumb_func

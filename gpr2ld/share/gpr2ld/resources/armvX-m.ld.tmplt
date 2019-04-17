@@ -1,3 +1,19 @@
+@@MACRO(TEXT_REGION)@@
+  @@IF@@ @_BOOT_FROM_ROM_@
+    @_MAIN_ROM_@
+  @@ELSE@@
+    @_MAIN_RAM_@
+  @@END_IF@@
+@@END_MACRO@@
+
+@@MACRO(RODATA_REGION)@@
+  @@IF@@ @_BOOT_FROM_ROM_@
+    @_MAIN_ROM_@
+  @@ELSE@@
+    @_MAIN_RAM_@
+  @@END_IF@@
+@@END_MACRO@@
+
 /* This is a ARM specific version of this file */
 
 /* This script replaces ld's default linker script, providing the
@@ -8,20 +24,28 @@ __DYNAMIC  =  0;
 
 _DEFAULT_STACK_SIZE = @_DEFAULT_STACK_SIZE_@;
 
-ENTRY(_start_rom);
+ENTRY(_start);
 
 MEMORY
 {
-  @_MAIN_ROM_@ (rx) : ORIGIN = @_MAIN_ROM_ADDR_@, LENGTH = @_MAIN_ROM_SIZE_@
+@@IF@@ @_BOOT_FROM_ROM_@
+  @_BOOT_MEM_@ (rx) : ORIGIN = @_BOOT_MEM_ADDR_@, LENGTH = @_BOOT_MEM_SIZE_@
+  @_MAIN_RAM_@ (rwx) : ORIGIN = @_MAIN_RAM_ADDR_@, LENGTH = @_MAIN_RAM_SIZE_@
+@@ELSE@@
+  @_BOOT_MEM_@ (rwx) : ORIGIN = @_BOOT_MEM_ADDR_@, LENGTH = @_BOOT_MEM_SIZE_@
+@@END_IF@@
 @@TABLE@@
   @_ROM_REGION_@ (rx) : ORIGIN = @_ROM_ADDR_@, LENGTH = @_ROM_SIZE_@
 @@END_TABLE@@
-
-  @_MAIN_RAM_@ (rwx) : ORIGIN = @_MAIN_RAM_ADDR_@, LENGTH = @_MAIN_RAM_SIZE_@
 @@TABLE@@
   @_RAM_REGION_@ (rwx) : ORIGIN = @_RAM_ADDR_@, LENGTH = @_RAM_SIZE_@
 @@END_TABLE@@
 }
+
+/*
+ * Boot memory (.text, .ro_data, interrupt vector): @_BOOT_MEM_@
+ * Main RAM memory (.data, .bss, stacks, interrupt stacks): @_BOOT_MEM_@
+ */
 
 SECTIONS
 {
@@ -31,11 +55,11 @@ SECTIONS
     KEEP (*(.vectors))
     *(.text .text.* .gnu.linkonce.t*)
     *(.gnu.warning)
-  } > @_MAIN_ROM_@
+  } > @_BOOT_MEM_@
 
-  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } > flash
+  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } > @_BOOT_MEM_@
   PROVIDE_HIDDEN (__exidx_start = .);
-  .ARM.exidx   : { *(.ARM.exidx* .gnu.linkonce.armexidx.*) } > flash
+  .ARM.exidx   : { *(.ARM.exidx* .gnu.linkonce.armexidx.*) } > @_BOOT_MEM_@
   PROVIDE_HIDDEN (__exidx_end = .);
 
   .rodata :
@@ -44,7 +68,7 @@ SECTIONS
     *(.rodata .rodata.* .gnu.linkonce.r*)
     . = ALIGN(0x4);
     __rom_end = .;
-  } > @_MAIN_ROM_@
+  } > @_BOOT_MEM_@
 
   __data_load = LOADADDR(.data);
   .data :
@@ -59,12 +83,13 @@ SECTIONS
 
     . = ALIGN(0x4);
     __data_end = .;
-  } > @_MAIN_RAM_@ AT> @_MAIN_ROM_@
+  } > @_MAIN_RAM_@ AT> @_BOOT_MEM_@
   __data_words = (__data_end - __data_start) >> 2;
 
 @@TABLE@@
   .@_ROM_REGION_@_rodata :
   {
+
     *(.@_ROM_REGION_@_rodata .@_ROM_REGION_@_rodata.*)
     . = ALIGN(0x4);
     __@_ROM_REGION_@_rom_end = .;
@@ -87,7 +112,7 @@ SECTIONS
 
     . = ALIGN(0x4);
     __@_RAM_REGION_@_data_end = .;
-  } >  @_RAM_REGION_@ AT> @_MAIN_ROM_@
+  } >  @_RAM_REGION_@ AT> @_BOOT_MEM_@
   __@_RAM_REGION_@_data_words = (__@_RAM_REGION_@_data_end - __@_RAM_REGION_@_data_start) >> 2;
 
 @@END_TABLE@@
