@@ -307,13 +307,13 @@ package body Device is
    is
       use type Tmplt.Vector_Tag;
 
+      Boot_Mem      : Tmplt.Tag;
+      Boot_Mem_Addr : Tmplt.Tag;
+      Boot_Mem_Size : Tmplt.Tag;
+
       Main_RAM      : Tmplt.Tag;
       Main_RAM_Addr : Tmplt.Tag;
       Main_RAM_Size : Tmplt.Tag;
-
-      Main_ROM      : Tmplt.Tag;
-      Main_ROM_Addr : Tmplt.Tag;
-      Main_ROM_Size : Tmplt.Tag;
 
       RAM_Regions : Tmplt.Vector_Tag;
       RAM_Addr    : Tmplt.Vector_Tag;
@@ -328,11 +328,31 @@ package body Device is
       Interrupt_Names : Tmplt.Vector_Tag;
       Interrupt_Ids   : Tmplt.Vector_Tag;
    begin
+
+      --  First search for the boot memory
       for Mem of Self.Memory loop
-         case Mem.Kind is
+         if Mem.name = Self.Boot_Memory then
+            Boot_Mem      := +Mem.Name;
+            Boot_Mem_Addr := +Mem.Address;
+            Boot_Mem_Size := +Mem.Size;
+
+            if Mem.Kind = RAM then
+               --  Set the main RAM as the boot memory
+               Main_RAM      := +Mem.Name;
+               Main_RAM_Addr := +Mem.Address;
+               Main_RAM_Size := +Mem.Size;
+            end if;
+         end if;
+      end loop;
+
+      --  Then set the other memories
+      for Mem of Self.Memory loop
+         if Mem.name /= Self.Boot_Memory then
+            case Mem.Kind is
             when RAM =>
                if Templates_Parser.Size (Main_RAM) = 0 then
-                  --  FIXME: hack to set the main RAM as the first in the list
+                  --  If not already set, use the first in the list RAM in the
+                  --  list as Main RAM.
                   Main_RAM      := +Mem.Name;
                   Main_RAM_Addr := +Mem.Address;
                   Main_RAM_Size := +Mem.Size;
@@ -342,16 +362,11 @@ package body Device is
                   RAM_Size    := RAM_Size & Mem.Size;
                end if;
             when ROM =>
-               if Mem.name = Self.Boot_Memory then
-                  Main_ROM      := +Mem.Name;
-                  Main_ROM_Addr := +Mem.Address;
-                  Main_ROM_Size := +Mem.Size;
-               else
-                  ROM_Regions := ROM_Regions & Mem.Name;
-                  ROM_Addr    := ROM_Addr & Mem.Address;
-                  ROM_Size    := ROM_Size & Mem.Size;
-               end if;
-         end case;
+               ROM_Regions := ROM_Regions & Mem.Name;
+               ROM_Addr    := ROM_Addr & Mem.Address;
+               ROM_Size    := ROM_Size & Mem.Size;
+            end case;
+         end if;
       end loop;
 
       for Int_Id in 0 .. Integer'Max (Self.Interrupts.Last_Index,
@@ -368,12 +383,12 @@ package body Device is
       end loop;
 
       return (Templates_Parser.Assoc ("BOOT_FROM_ROM", Self.Boot_From_ROM),
+              Templates_Parser.Assoc ("BOOT_MEM", Boot_Mem),
+              Templates_Parser.Assoc ("BOOT_MEM_ADDR", Boot_Mem_Addr),
+              Templates_Parser.Assoc ("BOOT_MEM_SIZE", Boot_Mem_Size),
               Templates_Parser.Assoc ("MAIN_RAM", Main_RAM),
               Templates_Parser.Assoc ("MAIN_RAM_ADDR", Main_RAM_Addr),
               Templates_Parser.Assoc ("MAIN_RAM_SIZE", Main_RAM_Size),
-              Templates_Parser.Assoc ("MAIN_ROM", Main_ROM),
-              Templates_Parser.Assoc ("MAIN_ROM_ADDR", Main_ROM_Addr),
-              Templates_Parser.Assoc ("MAIN_ROM_SIZE", Main_ROM_Size),
               Templates_Parser.Assoc ("RAM_REGION", RAM_Regions),
               Templates_Parser.Assoc ("RAM_ADDR", RAM_Addr),
               Templates_Parser.Assoc ("RAM_SIZE", RAM_Size),

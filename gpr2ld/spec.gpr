@@ -2,6 +2,9 @@ with "interruptions";
 
 project Spec is
 
+   type Boot_Mem is ("flash", "sram", "ccm");
+   Boot : Boot_Mem := external ("BOOT_MEM", "flash");
+
    package Device_Configuration is
 
       for Name use "cortex-m4f";
@@ -14,7 +17,7 @@ project Spec is
       --  MEMORY MAP
       for Memories use ("flash", "sram", "ccm");
 
-      for Boot_Memory use "flash";
+      for Boot_Memory use Boot;
 
       --  flash
       for Mem_Kind ("flash") use "ROM";

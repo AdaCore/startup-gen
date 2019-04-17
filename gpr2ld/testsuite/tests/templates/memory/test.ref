@@ -1,5 +1,5 @@
-Main ROM: rom2 Addr: 0x20 Size: 0x2
-Other ROMs:
+Boot Mmmory: rom2 Addr: 0x20 Size: 0x2
+ROMs:
  - rom1 Addr: 0x10 Size: 0x1
 
 Main RAM: ram1 Addr: 0x30 Size: 0x3
