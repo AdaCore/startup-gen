@@ -1,5 +1,6 @@
 with GNAT.Strings;      use GNAT.Strings;
 with Ada.IO_Exceptions; use Ada.IO_Exceptions;
+with GNATCOLL.Projects; use GNATCOLL.Projects;
 
 -----------
 -- Setup --
@@ -18,6 +19,8 @@ package Setup is
       with Post => (Values.Project_File.all /= "")
      or else raise Name_Error
         with "You must pass a file on the command line.";
+
+   procedure Apply_Scenario_Variables (Env : Project_Environment_Access);
 
    procedure Display (Values : in out Command_Line_Values);
 

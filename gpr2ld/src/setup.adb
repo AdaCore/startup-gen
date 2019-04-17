@@ -1,8 +1,51 @@
-with Ada.Text_IO;       use Ada.Text_IO;
-with GNAT.Command_Line; use GNAT.Command_Line;
+with Ada.Text_IO;                            use Ada.Text_IO;
+with Ada.Containers.Indefinite_Ordered_Maps;
+with GNAT.Command_Line;                      use GNAT.Command_Line;
 with Utils;
 
 package body Setup is
+
+   package Scv_Maps is
+     new Ada.Containers.Indefinite_Ordered_Maps
+       (Key_Type     => String,
+        Element_Type => String);
+   Scv_Map : Scv_Maps.Map;
+   --  All defined scenario variables
+
+   procedure Add_Scenario_Var (Key, Value : String);
+   procedure Handle_Scenerio_Arg (Switch, Value : String);
+
+   ----------------------
+   -- Add_Scenario_Var --
+   ----------------------
+
+   procedure Add_Scenario_Var (Key, Value : String) is
+   begin
+      Scv_Map.Include (Key, Value);
+   end Add_Scenario_Var;
+
+   -------------------------
+   -- Handle_Scenerio_Arg --
+   -------------------------
+
+   procedure Handle_Scenerio_Arg (Switch, Value : String) is
+      pragma Unreferenced (Switch);
+      Name_First, Name_Last, Value_First : Natural;
+   begin
+      Name_First := Value'First;
+      Name_Last := Name_First - 1;
+      while Name_Last < Value'Last
+        and then Value (Name_Last + 1) /= '='
+      loop
+         Name_Last := Name_Last + 1;
+      end loop;
+
+      Value_First := Name_Last + 2;
+
+      Add_Scenario_Var
+        (Key   => Value (Name_First .. Name_Last),
+         Value => Value (Value_First .. Value'Last));
+   end Handle_Scenerio_Arg;
 
    -------------------
    -- Get_Arguments --
@@ -12,6 +55,7 @@ package body Setup is
 
    is
       Config : Command_Line_Configuration;
+
    begin
       Define_Switch
          (Config,
@@ -27,6 +71,12 @@ package body Setup is
 
       Define_Switch
          (Config,
+          Handle_Scenerio_Arg'Access,
+          "-X:",
+          Help => "Specify an external reference for Project Files.");
+
+      Define_Switch
+         (Config,
           Values.Project_File'Access,
           "-P:",
           Help => "Name of the project file with the device configuation.");
@@ -37,6 +87,18 @@ package body Setup is
          Utils.Fatal_Error ("Project file required (-P)");
       end if;
    end Get_Arguments;
+
+   ------------------------------
+   -- Apply_Scenario_Variables --
+   ------------------------------
+
+   procedure Apply_Scenario_Variables (Env : Project_Environment_Access) is
+      use Scv_Maps;
+   begin
+      for Scv_C in Scv_Map.Iterate loop
+         Change_Environment (Env.all, Key (Scv_C), Element (Scv_C));
+      end loop;
+   end Apply_Scenario_Variables;
 
    -------------
    -- Display --
