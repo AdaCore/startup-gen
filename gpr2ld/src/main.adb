@@ -26,14 +26,20 @@ begin
    Utils.Register_Memory_Map_Attributes;
 
    declare
-      Tree        : Project_Tree;
+      Env          : Project_Environment_Access;
+      Tree         : Project_Tree;
 
       Project_File : constant Virtual_File :=
         Create_From_Base (Filesystem_String (Input.Project_File.all));
 
    begin
+      Initialize (Env);
+
+      Apply_Scenario_Variables (Env);
+
       Tree.Load
         (Root_Project_Path => Project_File,
+         Env               => Env,
          Packages_To_Check => All_Packs);
 
       --  TODO: Put all that in a function that prepares the spec.
