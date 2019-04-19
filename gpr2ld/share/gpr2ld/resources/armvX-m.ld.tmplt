@@ -86,6 +86,7 @@ SECTIONS
   } > @_MAIN_RAM_@ AT> @_BOOT_MEM_@
   __data_words = (__data_end - __data_start) >> 2;
 
+@@IF@@ @_SIZE:ROM_REGION_@ > 0
 @@TABLE@@
   .@_ROM_REGION_@_rodata :
   {
@@ -96,7 +97,9 @@ SECTIONS
   } > @_ROM_REGION_@
 
 @@END_TABLE@@
+@@END_IF@@
 
+@@IF@@ @_SIZE:RAM_REGION_@ > 0
 @@TABLE@@
 
   __@_RAM_REGION_@_data_load = LOADADDR(.@_RAM_REGION_@_data);
@@ -116,6 +119,7 @@ SECTIONS
   __@_RAM_REGION_@_data_words = (__@_RAM_REGION_@_data_end - __@_RAM_REGION_@_data_start) >> 2;
 
 @@END_TABLE@@
+@@END_IF@@
 
   .bss (NOLOAD): {
    . = ALIGN(0x8);
