@@ -367,7 +367,7 @@ package body Device is
                   Main_RAM      := +Mem.Name;
                   Main_RAM_Addr := +To_C_Hexadecimal (Addr);
                   Main_RAM_Size := +To_C_Hexadecimal (Size);
-               else
+               elsif Mem.Name /= Tmplt.Item (Main_RAM, 1) then
                   RAM_Regions := RAM_Regions & Mem.Name;
                   RAM_Addr    := RAM_Addr & To_C_Hexadecimal (Addr);
                   RAM_Size    := RAM_Size & To_C_Hexadecimal (Size);
