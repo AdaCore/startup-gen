@@ -1,13 +1,15 @@
 with Ada.Text_IO;              use Ada.Text_IO;
-with Ada.Long_Integer_Text_IO; use Ada.Long_Integer_Text_IO;
+with Interfaces;               use Interfaces;
 
-with GNAT.Regexp;
+with GNAT.Regpat;
 with GNAT.Strings;
 
 with GNATCOLL.Utils;
 with GNATCOLL.Strings;
 with GNATCOLL.VFS;   use GNATCOLL.VFS;
+
 with Utils;          use Utils;
+with Number_Input;   use Number_Input;
 
 package body Device is
 
@@ -58,19 +60,19 @@ package body Device is
    function Arch_From_CPU (CPU_Name : String) return String is
 
       function Match (Pattern : String) return Boolean
-      is (GNAT.Regexp.Match (CPU_Name,
-                             GNAT.Regexp.Compile (Pattern,
-                                                 Case_Sensitive => False)));
+      is (GNAT.Regpat.Match (GNAT.Regpat.Compile (Pattern,
+                                                  GNAT.Regpat.Case_Insensitive),
+                             CPU_Name));
 
    begin
 
-      if Match ("cortex-m(0(\+|plus)?|1)") then
+      if Match ("^cortex-m(0(\+|plus)?|1)$") then
          return "armv6-m";
-      elsif Match ("cortex-m3") then
+      elsif Match ("^cortex-m3$") then
          return "armv7-m";
-      elsif Match ("cortex-m(4|7)(f|d)?") then
+      elsif Match ("^cortex-m(4|7)(f|d)?$") then
          return "armv7e-m";
-      elsif Match ("cortex-m(23|33)(f|d)?") then
+      elsif Match ("^cortex-m(23|33)(f|d)?$") then
          return "armv8-m";
       end if;
       raise Program_Error with "Unknown CPU name: '" & CPU_Name & "'";
@@ -115,8 +117,8 @@ package body Device is
 
                Memory_Unit : constant Memory_Region :=
                  (Name    => To_Unbounded_String (Memory.all),
-                  Address => To_Unbounded_String (To_Size_String (Address)),
-                  Size    => To_Unbounded_String (To_Size_String (Size)),
+                  Address => To_Unbounded_String (Address),
+                  Size    => To_Unbounded_String (Size),
                   Kind    => Memory_Kind'Value (Kind));
             begin
                Self.Memory := Self.Memory & Memory_Unit;
@@ -327,20 +329,25 @@ package body Device is
 
       Interrupt_Names : Tmplt.Vector_Tag;
       Interrupt_Ids   : Tmplt.Vector_Tag;
+
+      Addr, Size : Unsigned_64;
    begin
 
       --  First search for the boot memory
       for Mem of Self.Memory loop
          if Mem.name = Self.Boot_Memory then
             Boot_Mem      := +Mem.Name;
-            Boot_Mem_Addr := +Mem.Address;
-            Boot_Mem_Size := +Mem.Size;
+
+            Addr := Convert (Mem.Address);
+            Size := Convert (Mem.Size);
+            Boot_Mem_Addr := +To_C_Hexadecimal (Addr);
+            Boot_Mem_Size := +To_C_Hexadecimal (Size);
 
             if Mem.Kind = RAM then
                --  Set the main RAM as the boot memory
                Main_RAM      := +Mem.Name;
-               Main_RAM_Addr := +Mem.Address;
-               Main_RAM_Size := +Mem.Size;
+               Main_RAM_Addr := +To_C_Hexadecimal (Addr);
+               Main_RAM_Size := +To_C_Hexadecimal (Size);
             end if;
          end if;
       end loop;
@@ -348,23 +355,27 @@ package body Device is
       --  Then set the other memories
       for Mem of Self.Memory loop
          if Mem.name /= Self.Boot_Memory then
+
+            Addr := Convert (Mem.Address);
+            Size := Convert (Mem.Size);
+
             case Mem.Kind is
             when RAM =>
                if Templates_Parser.Size (Main_RAM) = 0 then
                   --  If not already set, use the first in the list RAM in the
                   --  list as Main RAM.
                   Main_RAM      := +Mem.Name;
-                  Main_RAM_Addr := +Mem.Address;
-                  Main_RAM_Size := +Mem.Size;
+                  Main_RAM_Addr := +To_C_Hexadecimal (Addr);
+                  Main_RAM_Size := +To_C_Hexadecimal (Size);
                else
                   RAM_Regions := RAM_Regions & Mem.Name;
-                  RAM_Addr    := RAM_Addr & Mem.Address;
-                  RAM_Size    := RAM_Size & Mem.Size;
+                  RAM_Addr    := RAM_Addr & To_C_Hexadecimal (Addr);
+                  RAM_Size    := RAM_Size & To_C_Hexadecimal (Size);
                end if;
             when ROM =>
                ROM_Regions := ROM_Regions & Mem.Name;
-               ROM_Addr    := ROM_Addr & Mem.Address;
-               ROM_Size    := ROM_Size & Mem.Size;
+               ROM_Addr    := ROM_Addr & To_C_Hexadecimal (Addr);
+               ROM_Size    := ROM_Size & To_C_Hexadecimal (Size);
             end case;
          end if;
       end loop;
@@ -453,88 +464,12 @@ package body Device is
              Key       => Index));
    end Get_Name;
 
-   -----------------------
-   -- Is_Based_Litteral --
-   -----------------------
-
-   function Is_Based_Literal (Number : String) return Boolean
-   is
-      use GNAT.Regexp;
-      Numeral       : constant String := "([0-9]+)";
-      Base          : constant String := "([2-9])|(1[0-6])";
-      Based_Numeral : constant String := "(([0-9])|([A-F]|[a-f]))+";
-
-      Exponent      : constant String :=
-        "((" & "E-" & Numeral & ")|(" & "E\+?" & Numeral & "))*";
-
-      Pattern       : constant String :=
-        Base & "#" & "\.?" & Based_Numeral & "#" & Exponent;
-
-      Expr : constant Regexp := Compile (Pattern => Pattern);
-   begin
-      return Match (Number, Expr);
-   end Is_Based_Literal;
-
-   --------------------
-   -- To_Size_String --
-   --------------------
-
-   function To_Size_String (Size : String) return String
-   is
-      Size_Temp : constant String :=
-         (if Is_Based_Literal (Size)
-          then Ada_Based_Literal_To_C_Style_Hex (Size)
-          else Size
-         );
-   begin
-      return Size_Temp;
-   end To_Size_String;
-
-   --------------------------------------
-   -- Ada_Based_Literal_To_C_Style_Hex --
-   --------------------------------------
-
-   function Ada_Based_Literal_To_C_Style_Hex (Value : String) return String
-   is
-      Integer_Form : constant Long_Integer := Long_Integer'Value (Value);
-
-      Temp_String : String (1 .. 256);
-      Result      : Unbounded_String;
-   begin
-      Put
-         (To   => Temp_String,
-          Item => Integer_Form,
-          Base => 16);
-
-      Result := To_Unbounded_String (Temp_String);
-      Trim (Result, Ada.Strings.Left);
-
-      return ("0x" & Slice (Result, 4, Length (Result) - 1));
-   end Ada_Based_Literal_To_C_Style_Hex;
-
    -----------------
    -- Valid_Input --
    -----------------
 
    function Valid_Input (Self : in out Spec) return Boolean is
-      use GNAT.Regexp;
       Boot_Mem_Is_Valid : Boolean := False;
-
-      Dec_Number : constant String :=
-         "([0-9]+)";
-
-      Dec_Number_And_Unit : constant String :=
-         "(" & Dec_Number & "(k|K|m|M))";
-
-      Hex_Number : constant String := "(0x([0-9]|[A-F]|[a-f])+)";
-
-      Address_Pattern : constant String := Hex_Number;
-
-      Size_Pattern : constant String :=
-         Hex_Number & "|" & Dec_Number_And_Unit;
-
-      Address_Reg : constant Regexp := Compile (Pattern => Address_Pattern);
-      Size_Reg    : constant Regexp := Compile (Pattern => Size_Pattern);
 
       Result : Boolean := True;
    begin
@@ -547,17 +482,17 @@ package body Device is
          end if;
 
          --  If the size or the memory are not matching, we raise an exception.
-         if not Match (To_String (Memory_Region.Size), Size_Reg) then
+         if not Number_Input.Valid (To_String (Memory_Region.Size)) then
             Error ("Invalid memory size expression for '" &
-                     To_String (Memory_Region.Name) & "' : " &
-                     To_String (Memory_Region.Size));
+                     To_String (Memory_Region.Name) & "' : '" &
+                     To_String (Memory_Region.Size) & "'");
             Result := False;
          end if;
 
-         if not Match (To_String (Memory_Region.Address), Address_Reg) then
+         if not Number_Input.Valid (To_String (Memory_Region.Address)) then
             Error ("Invalid memory address expression for '" &
-                     To_String (Memory_Region.Name) & "' : " &
-                     To_String (Memory_Region.Address));
+                     To_String (Memory_Region.Name) & "' : '" &
+                     To_String (Memory_Region.Address) & "'");
             Result := False;
          end if;
       end loop;
@@ -606,17 +541,10 @@ package body Device is
                                     Memory_2 : Memory_Region)
                                     return Boolean
    is
-      Memory_1_Address : constant Long_Integer :=
-         LD_Hex_String_To_Long_Integer (Memory_1.Address);
-
-      Memory_1_Size : constant Long_Integer :=
-         LD_Hex_String_To_Long_Integer (Memory_1.Size);
-
-      Memory_2_Address : constant Long_Integer :=
-         LD_Hex_String_To_Long_Integer (Memory_2.Address);
-
-      Memory_2_Size : constant Long_Integer :=
-         LD_Hex_String_To_Long_Integer (Memory_2.Size);
+      Memory_1_Address : constant Unsigned_64 := Convert (Memory_1.Address);
+      Memory_1_Size    : constant Unsigned_64 := Convert (Memory_1.Size);
+      Memory_2_Address : constant Unsigned_64 := Convert (Memory_2.Address);
+      Memory_2_Size    : constant Unsigned_64 := Convert (Memory_2.Size);
 
    begin
       -- Memory size cannot be zero.
@@ -631,49 +559,6 @@ package body Device is
          return True;
       end if;
    end Memory_Regions_Overlap;
-
-   ----------------------------------
-   -- LD_Hex_String_To_Long_Integer --
-   ----------------------------------
-
-   function LD_Hex_String_To_Long_Integer (Number : Unbounded_String)
-      return Long_Integer
-   is
-      Nb_Str : constant String := To_String (Number);
-
-      Last_Char : constant Character :=
-        Element
-            (Source => Number,
-             Index  => Length (Number));
-
-      Last_Index  :  Integer := Nb_Str'Last;
-      First_Index :  Integer := 3;
-
-      Unit_Multiplier :  Long_Integer := 1;
-
-      Int_Repr :  Long_Integer := 0;
-   begin
-
-      -- When we are dealing with an expression, we need to change the
-      -- range of the splice in order to convert the string an Ada
-      -- based literal.
-      case Last_Char is
-         when 'k' | 'K' =>
-            Unit_Multiplier := 1024;
-            Last_Index  := Last_Index - 1;
-            First_Index := 1;
-         when 'm' | 'M' =>
-            Unit_Multiplier := 1024 * 1024;
-            Last_Index  := Last_Index - 1;
-            First_Index := 1;
-         when others => null;
-      end case;
-
-      Int_Repr :=
-         Long_Integer'Value ("16#" & Nb_Str (First_Index .. Last_Index) & "#");
-
-      return Int_Repr * Unit_Multiplier;
-   end LD_Hex_String_To_Long_Integer;
 
    ---------------------
    -- Get_Info_String --
