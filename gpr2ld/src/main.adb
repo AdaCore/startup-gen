@@ -78,6 +78,9 @@ exception
    when GNAT.Command_Line.Exit_From_Command_Line =>
       New_Line;
 
+   when GNATCOLL.Projects.Invalid_Project =>
+      Utils.Error
+        ("Project file """ & Input.Project_File.all & """ not found.");
    when Utils.Exit_Exc => null;
 
 end Main;
