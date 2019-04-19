@@ -114,18 +114,6 @@ private
       (Self  : Interrupt_Vector;
        Index : Integer) return String;
 
-   --  Translate the size string into a C style hexa notation if needed.
-   --  If it is already C style or if it is of the form `192K` we dont
-   --  change it and return it untouched.
-   function To_Size_String (Size : String) return String;
-
-   --  Translates an Ada based literal string to a C style hexa string.
-   function Ada_Based_Literal_To_C_Style_Hex (Value : String) return String;
-
-   --  Returns True if the String passed
-   --  in parameter is an Ada based literal.
-   function Is_Based_Literal (Number : String) return Boolean;
-
    --  Checks that the input is coherent IE:
    --    Boot memory is a valid memory region.
    --    All memory regions have an address and a size in a relevant format.
@@ -138,10 +126,6 @@ private
    function Memory_Regions_Overlap (Memory_1 : Memory_Region;
                                     Memory_2 : Memory_Region)
                                     return Boolean;
-
-   --  Convert a ld hexadecimal string to a Long_Integer.
-   function LD_Hex_String_To_Long_Integer (Number : Unbounded_String)
-      return Long_Integer;
 
    --  Return a string of the following form
    --  <region.name> with Size = <region.size> and Address = <region.address>;
