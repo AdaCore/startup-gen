@@ -27,11 +27,12 @@ def gprbuild(args, output='gprbuild.out', error='gprbuild.err'):
         print contents_of(error)
 
 
-def gnatemu(args, output='gnatemu.out', error='gnatemu.err'):
-    p = Run(['arm-eabi-gnatemu'] + args, output=output, error=error)
+def runcross(target, board, bin, output='runcross.out', error='runcross.err'):
+    args = ['run-cross', '--target=%s,,%s' % (target, board), bin]
+    p = Run(args, output=output, error=error)
 
     if p.status != 0:
-        print "GNATemu failed:"
+        print "runcross failed:"
         print contents_of(output)
         print contents_of(error)
 
