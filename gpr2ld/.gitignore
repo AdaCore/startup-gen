@@ -2,3 +2,8 @@ obj
 gpr2ld
 gnatinspect.db
 spec-loc.xml
+*.pyc
+testsuite/out
+testsuite/**/crt0.S
+testsuite/**/linker.ld
+
