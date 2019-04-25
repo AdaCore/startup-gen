@@ -1,6 +1,8 @@
 from gnatpython.fileutils import mkdir
 from gnatpython.ex import Run
+from gnatpython.env import Env
 import os
+
 
 def contents_of(filename):
     """Return contents of file FILENAME"""
@@ -94,11 +96,11 @@ def nm_symbols(binary):
     output = 'nm.out'
     error  = 'nm.err'
 
-    args = [target_prefix + 'nm', binary]
+    args = [Env().target.triplet + '-nm', binary]
     p = Run(args, output=output, error=error)
 
     if p.status != 0:
-        print target_prefix + "nm failed:"  + " ".join(args)
+        print "nm failed:"
         print contents_of(output)
         print contents_of(error)
 

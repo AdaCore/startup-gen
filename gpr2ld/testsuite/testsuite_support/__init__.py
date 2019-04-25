@@ -9,6 +9,8 @@ class Testsuite(BaseTestsuite):
         'python': python_driver.PythonDriver
     }
 
+    CROSS_SUPPORT = True
+
     def add_options(self):
         self.main.add_option(
             '--with-python', default=None,
