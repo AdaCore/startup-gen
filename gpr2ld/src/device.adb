@@ -42,6 +42,7 @@ package body Device is
    exception
          when Constraint_Error => return 0;
    end To_Number_Of_Interrupt;
+
    ------------------------------
    -- Resources_Base_Directory --
    ------------------------------
@@ -74,6 +75,8 @@ package body Device is
          return "armv7e-m";
       elsif Match ("^cortex-m(23|33)(f|d)?$") then
          return "armv8-m";
+      elsif Match ("^(riscv|risc-v|rv)(32|64|128)?$") then
+         return "risc-v";
       end if;
       raise Program_Error with "Unknown CPU name: '" & CPU_Name & "'";
    end Arch_From_CPU;
@@ -583,6 +586,8 @@ package body Device is
          Arch = "armv7e-m" or else Arch = "armv8-m"
       then
          return Join_Path (Resources_Base_Directory, "armvX-m.ld.tmplt");
+      elsif Arch = "risc-v" then
+         return Join_Path (Resources_Base_Directory, "riscv.ld.tmplt");
       end if;
 
       Fatal_Error ("No default linker template for this configuration, " &
@@ -602,6 +607,8 @@ package body Device is
          Arch = "armv7e-m" or else Arch = "armv8-m"
       then
          return Join_Path (Resources_Base_Directory, "armvX-m.S.tmplt");
+      elsif Arch = "risc-v" then
+         return Join_Path (Resources_Base_Directory, "riscv.S.tmplt");
       end if;
 
       Fatal_Error ("No default startup template for this configuration, " &
