@@ -1,1 +1,2 @@
 driver: python
+target: riscv32-elf
