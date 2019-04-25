@@ -103,6 +103,11 @@ class PythonDriver(TestDriver):
         super(PythonDriver, self).tear_up()
         fileutils.sync_tree(self.test_env['test_dir'], self.test_working_dir())
 
+        if 'target' in self.test_env and self.test_env['target'] != Env().target.triplet:
+            self.result.set_status('XFAIL', 'skip: test for %s' % self.test_env['target'])
+            return
+
+
         # See if we expect a failure for this testcase
         try:
             comment = self.test_env['expect_failure']
