@@ -1,0 +1,9 @@
+Testing CPU: Cortex-M4F run-time: zfp-cortex-m4f
+With boot_mem = flash:
+Symbol '_start' defined in 'flash'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'
+With boot_mem = ram:
+Symbol '_start' defined in 'ram'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'
