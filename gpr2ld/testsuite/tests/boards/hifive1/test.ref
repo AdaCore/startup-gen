@@ -1,0 +1,4 @@
+Boot memory: FLASH
+PASS: Memories checks
+Boot memory: RAM
+PASS: Memories checks
