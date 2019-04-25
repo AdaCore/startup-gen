@@ -1,0 +1,46 @@
+project Prj is
+
+   for Target use "riscv32-elf";
+   for Runtime ("Ada") use "zfp-rv32imc";
+
+   for Languages use ("Ada", "Asm_CPP");
+   for Source_Dirs use ("src");
+   for Object_Dir use "obj";
+   for Main use ("main.adb");
+   for Create_Missing_Dirs use "True";
+
+   package Linker is
+      for Switches ("Ada") use ("-T", "src/linker.ld");
+   end Linker;
+
+   type Boot_Mem is ("flash", "ram");
+   Boot : Boot_Mem := external ("BOOT_MEM", "flash");
+
+   package Naming is
+      for Spec ("Test") use "test-" & Boot & ".ads";
+      for Body ("Test") use "test-" & Boot & ".adb";
+   end Naming;
+
+   package Device_Configuration is
+
+      for Name use "riscv32";
+      for Float_Handling use "hard";
+
+      --  MEMORY MAP
+      for Memories use ("flash", "ram");
+
+      for Boot_Memory use Boot;
+
+      --  flash
+      for Mem_Kind ("flash") use "ROM";
+      for Address ("flash")  use "0x20400000";
+      for Size ("flash")     use "512M";
+
+      --  ram
+      for Mem_Kind ("ram") use "RAM";
+      for Address ("ram")  use "0x80000000";
+      for Size ("ram")     use "16K";
+
+   end Device_Configuration;
+
+end Prj;
