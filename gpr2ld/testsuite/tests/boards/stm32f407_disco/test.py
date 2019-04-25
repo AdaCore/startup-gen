@@ -1,4 +1,4 @@
-from testsuite_support.utils import run_tool, gprbuild, gnatemu, contents_of
+from testsuite_support.utils import run_tool, gprbuild, runcross, contents_of
 
 
 for boot_mem in ['flash', 'sram', 'ccm']:
@@ -8,6 +8,6 @@ for boot_mem in ['flash', 'sram', 'ccm']:
 
     gprbuild(['-f', '-P', 'prj.gpr', '-XBOOT_MEM=%s' % boot_mem])
 
-    gnatemu(['--board=STM32F4', 'obj/main'], output='gnatemu.out')
+    runcross('arm-elf', 'qemu-stm32', 'obj/main', output='runcross.out')
 
-    print contents_of('gnatemu.out')
+    print contents_of('runcross.out')
