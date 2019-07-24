@@ -51,7 +51,7 @@ package body Device is
       Exec_Loc : constant String := GNATCOLL.Utils.Executable_Location;
    begin
       return GNATCOLL.Utils.Join_Path
-        (Exec_Loc, "share", "gpr2ld", "resources");
+        (Exec_Loc, "share", "startup-gen", "resources");
    end Resources_Base_Directory;
 
    -------------------
@@ -389,10 +389,8 @@ package body Device is
          Interrupt_Ids := Interrupt_Ids & Int_Id;
          if Self.Interrupts.Is_Index_Used (Int_Id) then
             Interrupt_Names := Interrupt_Names & Self.Interrupts.Get_Name (Int_Id);
-            Ada.Text_IO.Put_Line (Self.Interrupts.Get_Name (Int_Id));
          else
             Interrupt_Names := Interrupt_Names & "unknown_interrupt";
-            Ada.Text_IO.Put_Line ("unknown_interrupt");
          end if;
       end loop;
 
