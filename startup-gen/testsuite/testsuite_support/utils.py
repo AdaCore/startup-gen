@@ -11,8 +11,8 @@ def contents_of(filename):
 
     return contents
 
-def run_tool(args, output='gpr2ld.out', error='gpr2ld.err'):
-    p = Run(['gpr2ld'] + args, output=output, error=error)
+def run_tool(args, output='startup-gen.out', error='startup-gen.err'):
+    p = Run(['startup-gen'] + args, output=output, error=error)
 
     if p.status != 0:
         print "command failed:"
