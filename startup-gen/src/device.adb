@@ -199,7 +199,8 @@ package body Device is
    is
       Name : constant Unbounded_String :=
         To_Unbounded_String
-            (Spec_Project.Attribute_Value (Build (Prj_Package_Name, "name")));
+          (Spec_Project.Attribute_Value (Build (Prj_Package_Name,
+           "cpu_name")));
 
       Arch : constant String := Arch_From_CPU (To_String (Name));
 

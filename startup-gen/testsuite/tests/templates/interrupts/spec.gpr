@@ -2,7 +2,7 @@ project Spec is
 
    package Device_Configuration is
 
-      for Name use "cortex-m4f";
+      for CPU_Name use "cortex-m4f";
 
       for Interrupt ("2") use "int_2_name";
       for Interrupt ("6") use "int_6_name";

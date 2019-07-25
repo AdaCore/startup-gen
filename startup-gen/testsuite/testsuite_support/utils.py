@@ -131,7 +131,7 @@ def generate_gpr(filename, runtime, target, CPU, memmap, boot_mem):
         f.write("      for Switches (\"Ada\") use (\"-T\", \"src/linker.ld\");\n")
         f.write("   end Linker;\n")
         f.write("   package Device_Configuration is\n")
-        f.write("      for Name use \"%s\";\n" % CPU)
+        f.write("      for CPU_Name use \"%s\";\n" % CPU)
         f.write("      for Memories use (\"%s\");\n" % "\", \"".join(memmap))
         f.write("      for Boot_Memory use \"%s\";\n" % boot_mem)
         for mem in memmap:

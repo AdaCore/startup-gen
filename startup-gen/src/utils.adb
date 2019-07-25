@@ -40,7 +40,7 @@ package body Utils is
 
          -- CPU --
          new String'(Register_New_Attribute
-                      ("Name",
+                      ("CPU_Name",
                        Prj_Package_Name)),
          new String'(Register_New_Attribute
                       ("Float_Handling",
