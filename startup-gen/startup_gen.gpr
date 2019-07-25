@@ -21,8 +21,7 @@ project Startup_Gen is
    end Compiler;
 
    package Install is
-      for Artifacts ("./bin/") use
-         ("./configuration.gpr", "./architectures");
+      for Artifacts (".") use ("share");
    end Install;
 
 end Startup_Gen;
