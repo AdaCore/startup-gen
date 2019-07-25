@@ -23,7 +23,7 @@ project Prj is
 
    package Device_Configuration is
 
-      for Name use "riscv32";
+      for CPU_Name use "riscv32";
       for Float_Handling use "hard";
 
       --  MEMORY MAP

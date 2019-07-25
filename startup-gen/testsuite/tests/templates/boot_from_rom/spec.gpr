@@ -4,7 +4,7 @@ project Spec is
    Boot : Boot_Mem := external ("BOOT_MEM", "ram");
    package Device_Configuration is
 
-      for Name use "cortex-m4f";
+      for CPU_Name use "cortex-m4f";
 
       for Memories use ("rom", "ram");
 

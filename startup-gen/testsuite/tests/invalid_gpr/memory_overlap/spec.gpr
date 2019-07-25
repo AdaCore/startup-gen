@@ -2,7 +2,7 @@ project Spec is
 
    package Device_Configuration is
 
-      for Name use "cortex-m4f";
+      for CPU_Name use "cortex-m4f";
 
       for Memories use ("rom1", "rom2");
       
