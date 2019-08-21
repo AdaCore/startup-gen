@@ -1,5 +1,5 @@
 	.syntax unified
-	.cpu cortex-m4
+	.cpu cortex-m0
 	.thumb
 
 	.text
@@ -80,22 +80,22 @@ fault:	b fault
 _start:
 
 	/* Set the stack pointer */
-	movw	r1,#:lower16:__stack_end
-	movt	r1,#:upper16:__stack_end
+	ldr	r1,=__stack_end
 	mov     sp, r1
 
 @@IF@@ @_BOOT_FROM_ROM_@
 	/* Copy .data */
 	.thumb_func
 _startup_copy_data:
-	movw	r0,#:lower16:__data_start
-	movt	r0,#:upper16:__data_start
-	movw	r1,#:lower16:__data_words
-	movw	r2,#:lower16:__data_load
-	movt	r2,#:upper16:__data_load
-	cbz	r1,1f
-0:	ldr	r4,[r2],#4
-	str	r4,[r0],#4
+	ldr	r0,=__data_start
+	ldr	r1,=__data_words
+	ldr	r2,=__data_load
+	cmp     r1,#0
+	beq     1f
+0:	ldr	r4,[r2]
+	str	r4,[r0]
+        adds    r2,#4
+        adds    r0,#4
 	subs	r1,r1,#1
 	bne	0b
 1:
@@ -105,14 +105,15 @@ _startup_copy_data:
 	/* Copy .@_RAM_REGION_@_data */
 	.thumb_func
 _startup_copy_@_RAM_REGION_@_data:
-	movw	r0,#:lower16:__@_RAM_REGION_@_data_start
-	movt	r0,#:upper16:__@_RAM_REGION_@_data_start
-	movw	r1,#:lower16:__@_RAM_REGION_@_data_words
-	movw	r2,#:lower16:__@_RAM_REGION_@_data_load
-	movt	r2,#:upper16:__@_RAM_REGION_@_data_load
-	cbz	r1,1f
-0:	ldr	r4,[r2],#4
-	str	r4,[r0],#4
+	ldr	r0,=__@_RAM_REGION_@_data_start
+	ldr	r1,=__@_RAM_REGION_@_data_words
+	ldr	r2,=__@_RAM_REGION_@_data_load
+	cmp     r1,#0
+	beq     1f
+0:	ldr	r4,[r2]
+	str	r4,[r0]
+        adds    r2,#4
+        adds    r0,#4
 	subs	r1,r1,#1
 	bne	0b
 1:
@@ -123,12 +124,13 @@ _startup_copy_@_RAM_REGION_@_data:
 	/* Clear .bss */
 	.thumb_func
 _startup_clear_bss:
-	movw	r0,#:lower16:__bss_start
-	movt	r0,#:upper16:__bss_start
-	movw	r1,#:lower16:__bss_words
-	mov	r2,#0
-	cbz	r1,1f
-0:	str	r2,[r0],#4
+	ldr	r0,=__bss_start
+	ldr	r1,=__bss_words
+	movs	r2,#0
+	cmp     r1,#0
+	beq     1f
+0:	str	r2,[r0]
+        adds    r0,#4
 	subs	r1,r1,#1
 	bne	0b
 1:
@@ -138,12 +140,13 @@ _startup_clear_bss:
 	/* Clear .@_RAM_REGION_@_bss */
 	.thumb_func
 _startup_clear_@_RAM_REGION_@_bss:
-	movw	r0,#:lower16:__@_RAM_REGION_@_bss_start
-	movt	r0,#:upper16:__@_RAM_REGION_@_bss_start
-	movw	r1,#:lower16:__@_RAM_REGION_@_bss_words
-	mov	r2,#0
-	cbz	r1,1f
-0:	str	r2,[r0],#4
+	ldr	r0,=__@_RAM_REGION_@_bss_start
+	ldr	r1,=__@_RAM_REGION_@_bss_words
+	movs	r2,#0
+	cmp     r1,#0
+	beq     1f
+0:	str	r2,[r0]
+        adds    r0,#4
 	subs	r1,r1,#1
 	bne	0b
 1:
