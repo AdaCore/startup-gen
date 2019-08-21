@@ -61,19 +61,20 @@ package body Device is
    function Arch_From_CPU (CPU_Name : String) return String is
 
       function Match (Pattern : String) return Boolean
-      is (GNAT.Regpat.Match (GNAT.Regpat.Compile (Pattern,
-                                                  GNAT.Regpat.Case_Insensitive),
+      is (GNAT.Regpat.Match (GNAT.Regpat.Compile
+                             (Pattern,
+                              GNAT.Regpat.Case_Insensitive),
                              CPU_Name));
 
    begin
 
-      if Match ("^cortex-m(0(\+|plus)?|1)$") then
+      if Match ("^(arm)?\s*cortex-m(0(\+|plus)?|1)$") then
          return "armv6-m";
-      elsif Match ("^cortex-m3$") then
+      elsif Match ("^(arm)?\s*cortex-m3$") then
          return "armv7-m";
-      elsif Match ("^cortex-m(4|7)(f|d)?$") then
+      elsif Match ("^(arm)?\s*cortex-m(4|7)(f|d)?$") then
          return "armv7e-m";
-      elsif Match ("^cortex-m(23|33)(f|d)?$") then
+      elsif Match ("^(arm)?\s*cortex-m(23|33)(f|d)?$") then
          return "armv8-m";
       elsif Match ("^(riscv|risc-v|rv)(32|64|128)?$") then
          return "risc-v";
