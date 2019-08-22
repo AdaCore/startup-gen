@@ -96,7 +96,8 @@ def nm_symbols(binary):
     output = 'nm.out'
     error  = 'nm.err'
 
-    args = [Env().target.triplet + '-nm', binary]
+    triplet = os.environ['target-triplet']
+    args = [triplet + '-nm', binary]
     p = Run(args, output=output, error=error)
 
     if p.status != 0:
