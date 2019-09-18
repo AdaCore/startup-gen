@@ -74,6 +74,10 @@ begin
          return;
       end if;
 
+      if Input.Print_Tags then
+         Spec.Dump_Translate_Table;
+      end if;
+
       if Input.Linker_File /= null
         and then
          Input.Linker_File.all /= ""

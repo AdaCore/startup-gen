@@ -1,0 +1,36 @@
+--- Template tags ---
+BOOT_FROM_ROM => TRUE
+BOOT_MEM => ("rom2")
+BOOT_MEM_ADDR => ("0x20")
+BOOT_MEM_SIZE => ("0x2")
+MAIN_RAM => ("ram1")
+MAIN_RAM_ADDR => ("0x30")
+MAIN_RAM_SIZE => ("0x3")
+RAM_REGION => ("ram2")
+RAM_ADDR => ("0x40")
+RAM_SIZE => ("0x3")
+ROM_REGION => ("rom1")
+ROM_ADDR => ("0x10")
+ROM_SIZE => ("0x1")
+DEFAULT_STACK_SIZE => ("2048")
+INTERRUPT_NAME => ()
+INTERRUPT_ID => ()
+---------------------
+CPU: cortex-m4f
+Float_Handling: SOFT
+Name    : rom1
+Address : 0x10
+Size    : 0x1
+Kind    : ROM
+Name    : ram1
+Address : 0x30
+Size    : 0x3
+Kind    : RAM
+Name    : rom2
+Address : 0x20
+Size    : 0x2
+Kind    : ROM
+Name    : ram2
+Address : 0x40
+Size    : 0x3
+Kind    : RAM

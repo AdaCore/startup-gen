@@ -59,6 +59,8 @@ package Device is
 
    procedure Dump_Startup_Code (Self : in out Spec; Filename : String);
 
+   procedure Dump_Translate_Table (Self : in out Spec);
+
    function To_Translate_Table
      (Self : Spec)
       return Templates_Parser.Translate_Table;
