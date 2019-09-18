@@ -1,3 +1,4 @@
+with interrupts:
 ID: 0 Name: unknown_interrupt
 ID: 1 Name: unknown_interrupt
 ID: 2 Name: int_2_name
@@ -23,3 +24,4 @@ ID: 21 Name: unknown_interrupt
 ID: 22 Name: unknown_interrupt
 ID: 23 Name: unknown_interrupt
 ID: 24 Name: unknown_interrupt
+without interrupts:
