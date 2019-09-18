@@ -103,7 +103,7 @@ private
 
    type Interrupt_Vector is tagged record
       Interrupts  : Interrupt_Hashed_Maps.Map;
-      Last_Index  : Integer := 0;
+      Last_Index  : Integer := -1;
    end record;
 
    type Spec is tagged record

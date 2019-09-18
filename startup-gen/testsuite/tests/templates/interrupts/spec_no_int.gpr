@@ -1,0 +1,19 @@
+project Spec is
+
+   package Device_Configuration is
+
+      for CPU_Name use "cortex-m4f";
+
+      for Startup_Template use "./interrupt_list.tmplt";
+
+
+
+      for Memories use ("flash");
+      for Boot_Memory use "flash";
+      for Mem_Kind ("flash") use "ROM";
+      for Address ("flash")  use "0x0";
+      for Size ("flash")     use "0x1";
+
+   end Device_Configuration;
+
+end Spec;
