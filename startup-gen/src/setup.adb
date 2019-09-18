@@ -99,6 +99,13 @@ package body Setup is
           "-P:",
           Help => "Name of the project file with the device configuation.");
 
+      Define_Switch
+         (Config,
+          Values.Print_Tags'Access,
+          Switch => "",
+          Long_Switch => "--print-tags",
+          Help => "Print the tags available in templates.");
+
       Getopt (Config);
 
       if Values.Project_File = null or else Values.Project_File.all = "" then

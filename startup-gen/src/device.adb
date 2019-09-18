@@ -26,6 +26,9 @@ with GNATCOLL.Utils;
 with GNATCOLL.Strings;
 with GNATCOLL.VFS;   use GNATCOLL.VFS;
 
+with Templates_Parser.Query;
+with Templates_Parser.Utils;
+
 with Utils;          use Utils;
 with Number_Input;   use Number_Input;
 
@@ -321,6 +324,35 @@ package body Device is
       GNATCOLL.VFS.Write (File, Output);
       GNATCOLL.VFS.Close (File);
    end Dump_Startup_Code;
+
+   --------------------------
+   -- Dump_Translate_Table --
+   --------------------------
+
+   procedure Dump_Translate_Table (Self : in out Spec) is
+   begin
+      Put_Line ("--- Template tags ---");
+
+      for Assoc of Self.To_Translate_Table loop
+
+         case Tmplt.Query.Kind (Assoc) is
+
+            when Tmplt.Std =>
+               Put_Line (Tmplt.Query.Variable (Assoc) & " => " &
+                           Tmplt.Get (Assoc));
+
+            when Tmplt.Composite =>
+               declare
+                  Tag : constant Tmplt.Tag := Tmplt.Get (Assoc);
+               begin
+                  Put_line (Tmplt.Query.Variable (Assoc) & " => " &
+                              Tmplt.Utils.Image (Tag));
+               end;
+         end case;
+      end loop;
+
+      Put_Line ("---------------------");
+   end Dump_Translate_Table;
 
    ------------------------
    -- To_Translate_Table --

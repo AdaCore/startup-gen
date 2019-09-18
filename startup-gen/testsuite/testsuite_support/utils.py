@@ -19,6 +19,8 @@ def run_tool(args, output='startup-gen.out', error='startup-gen.err'):
         print contents_of(output)
         print contents_of(error)
 
+    return contents_of(output)
+
 
 def gprbuild(args, output='gprbuild.out', error='gprbuild.err'):
     p = Run(['gprbuild'] + args, output=output, error=error)

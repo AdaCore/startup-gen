@@ -26,6 +26,7 @@ package Setup is
       Project_File      : aliased String_Access := null;
       Linker_File       : aliased String_Access := null;
       Startup_Code_File : aliased String_Access := null;
+      Print_Tags        : aliased Boolean       := False;
    end record;
 
    --  We verify that the mandatory arguments are correct.
