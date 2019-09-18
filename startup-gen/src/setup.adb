@@ -97,7 +97,7 @@ package body Setup is
          (Config,
           Values.Project_File'Access,
           "-P:",
-          Help => "Name of the project file with the device configuation.");
+          Help => "Name of the project file with the device configuration.");
 
       Define_Switch
          (Config,
