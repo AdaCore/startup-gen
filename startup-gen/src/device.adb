@@ -100,7 +100,7 @@ package body Device is
       elsif Match ("^(riscv|risc-v|rv)(32|64|128)?$") then
          return "risc-v";
       end if;
-      raise Program_Error with "Unknown CPU name: '" & CPU_Name & "'";
+      Fatal_Error ("Unknown CPU name: '" & CPU_Name & "'");
    end Arch_From_CPU;
 
    ----------------------------------
