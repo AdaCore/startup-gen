@@ -1,0 +1,6 @@
+command failed:
+Error: Unknown CPU name: 'startup-gen'
+command failed:
+Error: Unknown CPU name: 'defined_on_cmd_line'
+command failed:
+Error: Unknown CPU name: 'defined_in_env'

@@ -19,6 +19,7 @@
 with Ada.Text_IO;                            use Ada.Text_IO;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with GNAT.Command_Line;                      use GNAT.Command_Line;
+with GNAT.OS_Lib;
 with Utils;
 
 package body Setup is
@@ -123,6 +124,30 @@ package body Setup is
       for Scv_C in Scv_Map.Iterate loop
          Change_Environment (Env.all, Key (Scv_C), Element (Scv_C));
       end loop;
+
+      --  Make sure GPR_TOOL is initalized. There are several ways to
+      --  initialize it: by decreasing order of precedence:
+      --
+      --    * explicitly set through a -X option;
+      --    * set through an environment variable;
+      --    * implicitly initialized by startup-gen.
+
+      if Scv_Map.Contains ("GPR_TOOL") then
+         null;
+
+      else
+         declare
+            GPR_Tool_Env_Var : GNAT.Strings.String_Access :=
+               GNAT.OS_Lib.Getenv ("GPR_TOOL");
+            GPR_Tool_Value   : constant String :=
+              (if GPR_Tool_Env_Var.all = ""
+               then "startup-gen"
+               else GPR_Tool_Env_Var.all);
+         begin
+            Change_Environment (Env.all, "GPR_TOOL", GPR_Tool_Value);
+            Free (GPR_Tool_Env_Var);
+         end;
+      end if;
    end Apply_Scenario_Variables;
 
    -------------

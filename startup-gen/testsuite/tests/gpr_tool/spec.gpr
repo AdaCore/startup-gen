@@ -1,0 +1,19 @@
+project Spec is
+
+   Tool := External ("GPR_TOOL", "undefined");
+
+   package Device_Configuration is
+
+      for CPU_Name use Tool;
+
+      for Memories use ("rom");
+
+      for Boot_Memory use "rom";
+
+      for Mem_Kind ("rom") use "ROM";
+      for Address  ("rom") use "0";
+      for Size     ("rom") use "0x100";
+
+   end Device_Configuration;
+
+end Spec;
