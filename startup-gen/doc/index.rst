@@ -56,7 +56,7 @@ Here is an example of project file:
       for Address ("sram")  use "16#20000000#";
       for Size ("sram")     use "128K";
 
-   end Device_Configuration;
+    end Device_Configuration;
 
   end Spec;
 
@@ -98,9 +98,9 @@ Architecture and CPU
    the default templates that will be used for output generation.
 
  * ``for Float_Handling use "<soft|hard>";`` This attribute is optional and
-   specifies if the floating point support is provided by the CPU/hardware
+   specifies whether the floating point support is provided by the CPU/hardware
    (``hard``) or by the compiler/software (``soft``). It is used, for instance,
-   to determine if the Floating Point Unit (FPU) is initialized in the
+   to determine whether the Floating Point Unit (FPU) is initialized in the
    ``crt0``. Note that you can decide to not use hardware floating point even
    if the target device has an FPU.
 
@@ -112,11 +112,14 @@ Memory
    bank of this list, the ``Kind``, ``Address`` and ``Size`` attributes are
    **required**.
 
- * ``for Boot_Memory use "flash";``
+ * ``for Boot_Memory use "<BANK_NAME>";`` This attribute specifies the memory
+   bank from which the program will start. It can be a ROM bank if the program
+   is written to a non-volatile memory such as flash, or a RAM bank if the
+   program is loaded by a debugger or a bootloader.
 
  * ``for Mem_Kind (<BANK_NAME>) use "<ROM|RAM>";`` This attribute specifies the
    kind of memory ``<BANK_NAME>``, either ``ROM`` (read-only) or ``RAM``. This
-   attribute is used to determine what linker sections will allocated to the
+   attribute is used to determine what linker sections will be allocated to the
    bank. For instance a ``.data`` or ``.bss`` cannot be allocated in read-only
    memory.
 
@@ -147,11 +150,11 @@ Templates
 ---------
 
  * ``for Startup_Template use "<PATH>";`` This attribute specifies a path to a
-   custom template file used to startup (``crt0``) generation (see `Custom
-   Templates`_).
+   custom template file used to control startup (``crt0``) generation (see
+   `Custom Templates`_).
 
  * ``for Linker_Template use "<PATH>"`` This attribute specifies a path to a
-   custom template file used to liner script generation (see `Custom
+   custom template file used to control linker script generation (see `Custom
    Templates`_).
 
 Advanced Topics
@@ -164,7 +167,7 @@ Scenario Variables
 <https://docs.adacore.com/gprbuild-docs/html/gprbuild_ug/gnat_project_manager.html#expressions>`_
 in the input project file.
 
-This can be used in multiple ways, here are some examples:
+These can be used in multiple ways, here are some examples:
 
 Select boot memory
 ^^^^^^^^^^^^^^^^^^
@@ -224,8 +227,8 @@ Select boards with different device configuration
 Custom Templates
 ----------------
 
-You can provide you own templates for startup and linker script files using the
-``Startup_Template`` and ``Linker_Template`` attributes (see `Templates`_).
+You can provide your own templates for startup and linker script files using
+the ``Startup_Template`` and ``Linker_Template`` attributes (see `Templates`_).
 
 The output files are generated using the `template-parser
 <https://github.com/AdaCore/templates-parser>`_ library, you can therefore
@@ -233,7 +236,7 @@ refer to this `documentation
 <http://docs.adacore.com/live/wave/aws/html/template_parser/index.html>`_ to
 write your templates.
 
-To know the list of predefined tags available for your templates, use the
+To see the list of predefined tags available for your templates, use the
 ``--print-tags`` command line switch.
 
 For instance:
