@@ -1,22 +1,36 @@
-GPR2LD is a tool to generate a linker script, a memory map and the startup code
-matching the description in a GPR file.
+# startup-gen
 
-You must call it with the gpr file as a command line argument.
+`startup-gen` generates startup files (crt0 and linker script) based on
+properties of the target device such as: architecture, memory layout, number of
+interrupts.
 
-In order to generate the interrupt vector, we need a separate GPR file
-that will describe it. You must import it from the main GPR file used for
-the specs.
+One of the goals of this tool is to make it easier to start developing on
+micro-controllers by providing the basic elements of a Board Support Package
+(BSP).
 
-Options:
-+ -c ARG : Path to the project file mapping supported processors to their
-         architecture. The default configuration file is installed with
-		 the executable.
-        Default value is configuration.gpr.
-+ -l ARG : Arg is the name of the generated ldscript.
-        Default value is linker.ld.
-+ -s ARG: Arg is the name of the generated startup code.
-        Default value is startup.S
+# Build
 
-Known limitations:
-+ When booting from RAM, the tool does not generate the code necessary
-  to reloc the interrupt vector (on ARM cortex m).
+`startup-gen` depends on the
+[template-parser](https://github.com/AdaCore/templates-parser) library. Clone
+or download the repository and set the `GPR_PROJECT_FILE` path:
+```
+$  export GPR_PROJECT_PATH=/path/to/templates-parser/
+```
+
+Download and install a native GNAT Community compiler at
+[adacore.com/download](https://www.adacore.com/download).
+
+Build with this command:
+```
+$ gprbuild -P startup_gen.gpr
+```
+
+# Usage
+
+See [documentation](doc/index.rst).
+
+# Work-in-progress
+
+The `dev` branch of this repository also contains work-in-progress tools to
+build a database of target properties for more than 3000 ARM micro-controllers
+from CMSIS-Pack files.
