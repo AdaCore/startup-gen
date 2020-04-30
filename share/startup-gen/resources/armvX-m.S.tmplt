@@ -1,6 +1,13 @@
 	.syntax unified
+
+#if defined(__SOFTFP__)
 	.cpu cortex-m0
-	.thumb
+#else
+        /* FPU support means at least cortex-m4 compatibility */
+        .cpu cortex-m4
+#endif
+
+        .thumb
 
 	.text
 	.globl __vectors
@@ -153,6 +160,21 @@ _startup_clear_@_RAM_REGION_@_bss:
         .size _startup_clear_@_RAM_REGION_@_bss, . - _startup_clear_@_RAM_REGION_@_bss
 
 @@END_TABLE@@
+
+#if !defined(__SOFTFP__)
+        /**************/
+        /* Enable FPU */
+        /**************/
+
+        movw     r0,#0xED88
+        movt     r0,#0xE000
+        ldr      r1,[r0]
+        orr      r1,r1,#(0xF << 20)
+        str      r1,[r0]
+
+        dsb
+        isb
+#endif
 
 	bl	main
 
