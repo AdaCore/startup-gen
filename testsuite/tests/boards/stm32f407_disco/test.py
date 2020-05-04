@@ -8,6 +8,6 @@ for boot_mem in ['flash', 'sram', 'ccm']:
 
     gprbuild(['-f', '-P', 'prj.gpr', '-XBOOT_MEM=%s' % boot_mem])
 
-    runcross('arm-elf', 'qemu-stm32', 'obj/main', output='runcross.out')
+    runcross('obj/main', output='runcross.out')
 
     print contents_of('runcross.out')

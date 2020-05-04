@@ -1,8 +1,14 @@
 from gnatpython.fileutils import mkdir
 from gnatpython.ex import Run
-from gnatpython.env import Env
 import os
 
+try:
+    from pycross.runcross.main import run_cross
+except ImportError:
+    # Make pycross an optional dependency
+
+    def run_cross(*args, **kwargs):
+        raise ImportError("Could not import pycross.runcross.main")
 
 def contents_of(filename):
     """Return contents of file FILENAME"""
@@ -31,14 +37,12 @@ def gprbuild(args, output='gprbuild.out', error='gprbuild.err'):
         print contents_of(error)
 
 
-def runcross(target, board, bin, output='runcross.out', error='runcross.err'):
-    args = ['run-cross', '--target=%s,,%s' % (target, board), bin]
-    p = Run(args, output=output, error=error)
+def runcross(bin, output='runcross.out'):
+    p = run_cross([bin], output=output)
 
     if p.status != 0:
         print "runcross failed:"
         print contents_of(output)
-        print contents_of(error)
 
 
 class MemoryDescription:
