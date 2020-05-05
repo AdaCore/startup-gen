@@ -155,9 +155,6 @@ class PythonDriver(TestDriver):
         env = os.environ.copy()
         env['EXT_SRC'] = self.external_sources_dir
         env['target-triplet'] = str(self.env.target.triplet)
-        env['EXCROSS_TARGET'] = ','.join([self.env.target.platform,
-                                          self.env.target.os.version,
-                                          self.env.target.machine])
 
         p = Run(argv, timeout=self.timeout, output=PIPE, error=STDOUT,
                 cwd=self.test_working_dir(), env=env)

@@ -8,6 +8,6 @@ for boot_mem in ['flash', 'ram']:
 
     gprbuild(['-f', '-P', 'prj.gpr', '-XBOOT_MEM=%s' % boot_mem])
 
-    runcross('obj/main', output='runcross.out')
+    runcross('riscv32-elf', 'qemu-hifive1', 'obj/main', output='runcross.out')
 
     print contents_of('runcross.out')

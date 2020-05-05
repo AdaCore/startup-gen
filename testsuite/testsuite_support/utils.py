@@ -1,5 +1,6 @@
 from gnatpython.fileutils import mkdir
 from gnatpython.ex import Run
+from gnatpython.env import Env
 import os
 
 try:
@@ -37,7 +38,9 @@ def gprbuild(args, output='gprbuild.out', error='gprbuild.err'):
         print contents_of(error)
 
 
-def runcross(bin, output='runcross.out'):
+def runcross(target, board, bin, output='runcross.out'):
+    Env().set_target(target, '', board)
+
     p = run_cross([bin], output=output)
 
     if p.status != 0:
