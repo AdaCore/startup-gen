@@ -89,7 +89,7 @@ package body Device is
 
    begin
 
-      if Match ("^(arm)?\s*cortex-m(0(\+|plus)?|1)$") then
+      if Match ("^(arm)?\s*cortex-m(0(\+|plus|p)?|1)$") then
          return "armv6-m";
       elsif Match ("^(arm)?\s*cortex-m3$") then
          return "armv7-m";
