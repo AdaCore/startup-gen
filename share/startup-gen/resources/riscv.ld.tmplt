@@ -31,13 +31,46 @@ SECTIONS
     *(.gnu.warning)
   } >  @_BOOT_MEM_@
 
+  .eh_frame_hdr :
+  {
+      *(.eh_frame_hdr)
+  } > @_BOOT_MEM_@
+
+  .eh_frame :
+  {
+      __EH_FRAME__ = .;
+      KEEP(*(.eh_frame))
+      LONG(0);
+  } > @_BOOT_MEM_@
+
+  .gcc_except_table :
+  {
+      *(.gcc_except_table .gcc_except_table.*)
+  } > @_BOOT_MEM_@
+
+  .init_array :
+  {
+    PROVIDE_HIDDEN (__init_array_start = .);
+    KEEP (*(SORT(.init_array.*)))
+    KEEP (*(.init_array*))
+    PROVIDE_HIDDEN (__init_array_end = .);
+  } > @_BOOT_MEM_@
+
+  .fini_array :
+  {
+    PROVIDE_HIDDEN (__fini_array_start = .);
+    KEEP (*(SORT(.fini_array.*)))
+    KEEP (*(.fini_array*))
+    PROVIDE_HIDDEN (__fini_array_end = .);
+  } > @_BOOT_MEM_@
+
   .rodata :
   {
     *(.rdata)
     *(.rodata .rodata.* .gnu.linkonce.r*)
     . = ALIGN(0x4);
     __rom_end = .;
-  } >  @_BOOT_MEM_@
+  } > @_BOOT_MEM_@
 
   .data :
   {

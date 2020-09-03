@@ -1,3 +1,15 @@
+        /*********/
+        /* .data */
+        /*********/
+         .section .data.argv
+argv_str:
+        .ascii  "main\0"
+
+        .align 4
+argv:
+        .word argv_str
+        .word 0
+
         /**********/
         /* _start */
         /**********/
@@ -79,7 +91,31 @@ _startup_clear_@_RAM_REGION_@_bss:
 
 @@END_TABLE@@
 
+        /* Call static constructors */
+.weak __libc_init_array
+        la t0, __libc_init_array
+        beq t0, zero, .skip_libc_init
+        jalr t0
+.skip_libc_init:
+
+        /* Call main, with argc, argv  */
+        la a0, 1
+        la a1, argv
         call main
+
+        /* Save main's return value */
+        mv t0, a0
+
+        /* static destructors */
+.weak __libc_fini_array
+        la t0, __libc_fini_array
+        beq t0, zero, .skip_libc_fini
+        jalr t0
+.skip_libc_fini:
+
+        /* Restore main's return value */
+        mv a0, t0
+
         call __gnat_exit
 2:      j 2b
 

@@ -80,6 +80,22 @@ __gnat_sys_tick_trap:
 fault:	b fault
 
 
+        /*********/
+        /* .data */
+        /*********/
+        .section .data.argv
+argv_str:
+        .ascii  "main\0"
+
+        .align 4
+argv:
+        .word argv_str
+        .word 0
+
+        /**********/
+        /* _start */
+        /**********/
+
 	.text
 	.thumb_func
 	.globl _start
@@ -176,9 +192,34 @@ _startup_clear_@_RAM_REGION_@_bss:
         isb
 #endif
 
-	bl	main
+        /* Call static constructors */
+.weak __libc_init_array
+        ldr     r5,=__libc_init_array
+        cmp     r5,#0
+        beq     .skip_libc_init
+        blx     r5
+.skip_libc_init:
 
-	bl	_exit
+        /* Call main, with argc, argv */
+        mov     r0,#1
+        ldr	r1,=argv
+        bl	main
+
+        /* Save main's return value */
+        mov r4, r0
+
+        /* static destructors */
+.weak __libc_fini_array
+        ldr     r5,=__libc_fini_array
+        cmp     r5,#0
+        beq     .skip_libc_fini
+        blx     r5
+.skip_libc_fini:
+
+        /* Restore main's return value */
+        mov r0, r4
+
+        bl	_exit
 
 hang:   b .
 
