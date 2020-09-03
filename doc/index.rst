@@ -42,6 +42,8 @@ Here is an example of project file:
       for CPU_Name use "cortex-m4f";
       for Number_Of_Interrupts use "25";
 
+      for Main_Stack_Size use ("4K");
+
       for Memories use ("flash", "sram");
 
       for Boot_Memory use "flash";
@@ -130,6 +132,11 @@ Memory
  * ``for Size (<BANK_NAME>) use "<VALUE>";`` This attribute specifies the size
    of the memory bank. ``<VALUE>`` is a string containing a numeric literal.
    Multiplier suffix ``K`` and ``M`` are supported, e.g. ``16K``.
+
+ * ``for Main_Stack_Size use "<VALUE>";`` This attribute specifies the size of
+   the main program stack statically allocated in the linker script. The value
+   is a string containing a numeric literal. Multiplier suffix ``K`` and ``M``
+   are supported, e.g. ``16K``
 
 
 Interrupts

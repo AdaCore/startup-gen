@@ -1,6 +1,6 @@
 /* This is a RISC-V specific version of this file */
 
-_DEFAULT_STACK_SIZE = 2*1024;
+_DEFAULT_STACK_SIZE = @_MAIN_STACK_SIZE_@;
 
 OUTPUT_ARCH("riscv")
 

@@ -234,6 +234,10 @@ package body Device is
         Spec_Project.Attribute_Value (Build (Prj_Package_Name,
                                       "number_of_interrupts"));
 
+      Main_Stack_Size : constant String :=
+        Spec_Project.Attribute_Value (Build (Prj_Package_Name,
+                                      "main_stack_size"));
+
       Linker_Template : constant String :=
         Spec_Project.Attribute_Value (Build (Prj_Package_Name,
                                       "linker_template"));
@@ -247,6 +251,12 @@ package body Device is
          Float_Handling       => Convert (Float_Handling),
          Number_Of_Interrupts => To_Number_Of_Interrupt (Number_Of_Interrupts),
          Arch                 => To_Unbounded_String (Arch));
+
+      if Main_Stack_Size /= "" then
+         Self.Main_Stack_Size := To_Unbounded_String (Main_Stack_Size);
+      else
+         Self.Main_Stack_Size := To_Unbounded_String ("0x1000");
+        end if;
 
       if Linker_Template /= "" then
          Self.Linker_Template := To_Unbounded_String (Linker_Template);
@@ -273,7 +283,7 @@ package body Device is
       --  NOTE: In the case where we have 2 interrupts with the same
       --  attribute number, we will see only the last one due to how
       --  GNATCOLL handles indexed values.
-      return Self.Valid_Input and then  Self.Valid_Memory_Regions;
+      return Self.Valid_Input and then Self.Valid_Memory_Regions;
    end Valid;
 
    -------------
@@ -380,7 +390,8 @@ package body Device is
       ROM_Addr    : Tmplt.Vector_Tag;
       ROM_Size    : Tmplt.Vector_Tag;
 
-      Default_Stack_Size : constant Tmplt.Tag := +(2 * 1024);
+      Stack_Size : constant Tmplt.Tag :=
+        +To_C_Hexadecimal (Convert (Self.Main_Stack_Size));
 
       Interrupt_Names : Tmplt.Vector_Tag;
       Interrupt_Ids   : Tmplt.Vector_Tag;
@@ -459,7 +470,7 @@ package body Device is
               Templates_Parser.Assoc ("ROM_REGION", ROM_Regions),
               Templates_Parser.Assoc ("ROM_ADDR", ROM_Addr),
               Templates_Parser.Assoc ("ROM_SIZE", ROM_Size),
-              Templates_Parser.Assoc ("DEFAULT_STACK_SIZE", Default_Stack_Size),
+              Templates_Parser.Assoc ("MAIN_STACK_SIZE", Stack_Size),
               Templates_Parser.Assoc ("INTERRUPT_NAME", Interrupt_Names),
               Templates_Parser.Assoc ("INTERRUPT_ID", Interrupt_Ids));
    end To_Translate_Table;
@@ -552,6 +563,12 @@ package body Device is
 
       if not Boot_Mem_Is_Valid then
          Error ("Invalid boot memory : " & To_String (Self.Boot_Memory));
+         Result := False;
+      end if;
+
+      if not Number_Input.Valid (To_String (Self.Main_Stack_Size)) then
+         Error ("Invalid main stack size : " &
+                  To_String (Self.Main_Stack_Size));
          Result := False;
       end if;
 

@@ -3,3 +3,4 @@ Error: Invalid memory size expression for 'rom1' : '-1'
 Error: Invalid memory size expression for 'rom2' : '0x0bad!'
 Error: Invalid memory size expression for 'rom3' : '19bad!87'
 Error: Invalid memory size expression for 'rom4' : 'bad!0'
+Error: Invalid main stack size : -1

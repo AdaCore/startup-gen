@@ -4,8 +4,10 @@ project Spec is
 
       for CPU_Name use "cortex-m4f";
 
+      for Main_Stack_Size use "16K";
+
       for Memories use ("rom1", "ram1", "rom2", "ram2");
-      
+
       for Boot_Memory use "rom2";
 
       for Mem_Kind ("rom1") use "ROM";
@@ -15,7 +17,7 @@ project Spec is
       for Mem_Kind ("rom2") use "ROM";
       for Address  ("rom2") use "0x20";
       for Size     ("rom2") use "0x2";
-      
+
       for Mem_Kind ("ram1") use "RAM";
       for Address  ("ram1") use "0x30";
       for Size     ("ram1") use "0x3";

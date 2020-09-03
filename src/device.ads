@@ -116,6 +116,7 @@ private
       Interrupts       : Interrupt_Vector;
       Linker_Template  : Unbounded_String;
       Startup_Template : Unbounded_String;
+      Main_Stack_Size  : Unbounded_String;
    end record;
 
    --  Private procedures  --
