@@ -128,7 +128,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'startup-gen.tex', 'startup-gen Documentation',
+    (master_doc, 'startup-gen.tex', 'Startup-gen User\'s Guide',
      'AdaCore', 'manual'),
 ]
 

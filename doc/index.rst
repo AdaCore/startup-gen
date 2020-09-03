@@ -1,6 +1,6 @@
-=========================
-startup-gen Documentation
-=========================
+========================
+Startup-gen User's Guide
+========================
 
 .. |startup-gen| replace:: ``startup-gen``
 
