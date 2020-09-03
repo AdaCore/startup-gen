@@ -41,7 +41,7 @@ def gprbuild(args, output='gprbuild.out', error='gprbuild.err'):
 def runcross(target, board, bin, output='runcross.out'):
     Env().set_target(target, '', board)
 
-    p = run_cross([bin], output=output)
+    p = run_cross([bin], output=output, timeout=5)
 
     if p.status != 0:
         print "runcross failed:"
