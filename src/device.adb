@@ -23,7 +23,6 @@ with GNAT.Regpat;
 with GNAT.Strings;
 
 with GNATCOLL.Utils;
-with GNATCOLL.Strings;
 with GNATCOLL.VFS;   use GNATCOLL.VFS;
 
 with Templates_Parser.Query;
