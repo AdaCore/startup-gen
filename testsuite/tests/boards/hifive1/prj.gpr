@@ -1,7 +1,7 @@
 project Prj is
 
    for Target use "riscv32-elf";
-   for Runtime ("Ada") use "zfp-rv32imc";
+   for Runtime ("Ada") use "zfp-rv32imac";
 
    for Languages use ("Ada", "Asm_CPP");
    for Source_Dirs use ("src");

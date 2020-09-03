@@ -7,7 +7,7 @@ memmap.add('ram', 'RAM', 0x80000000, 16 * 1024)
 for boot_mem in memmap:
     print "With boot_mem = %s:" % boot_mem
     bin = make_simple_project('test_simple_project+' + boot_mem,
-                              'zfp-rv32imc',
+                              'zfp-rv32imac',
                               'riscv32-elf',
                               'RISC-V32',
                               memmap,
