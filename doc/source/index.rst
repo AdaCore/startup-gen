@@ -5,8 +5,6 @@ Startup-gen User's Guide
 .. |startup-gen| replace:: ``startup-gen``
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
 
 
 About startup-gen
