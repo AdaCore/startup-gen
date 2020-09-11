@@ -1,3 +1,48 @@
+Testing CPU: Cortex-M0 run-time: zfp-cortex-m0
+With boot_mem = flash:
+Symbol '_start' defined in 'flash'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'
+With boot_mem = ram:
+Symbol '_start' defined in 'ram'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'
+Testing CPU: Cortex-M0+ run-time: zfp-cortex-m0p
+With boot_mem = flash:
+Symbol '_start' defined in 'flash'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'
+With boot_mem = ram:
+Symbol '_start' defined in 'ram'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'
+Testing CPU: Cortex-M1 run-time: zfp-cortex-m1
+With boot_mem = flash:
+Symbol '_start' defined in 'flash'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'
+With boot_mem = ram:
+Symbol '_start' defined in 'ram'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'
+Testing CPU: Cortex-M3 run-time: zfp-cortex-m3
+With boot_mem = flash:
+Symbol '_start' defined in 'flash'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'
+With boot_mem = ram:
+Symbol '_start' defined in 'ram'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'
+Testing CPU: Cortex-M4 run-time: zfp-cortex-m4
+With boot_mem = flash:
+Symbol '_start' defined in 'flash'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'
+With boot_mem = ram:
+Symbol '_start' defined in 'ram'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'
 Testing CPU: Cortex-M4F run-time: zfp-cortex-m4f
 With boot_mem = flash:
 Symbol '_start' defined in 'flash'
