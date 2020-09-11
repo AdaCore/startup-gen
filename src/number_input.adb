@@ -107,5 +107,4 @@ package body Number_Input is
       return ("0x" & Slice (Result, 4, Length (Result) - 1));
    end To_C_Hexadecimal;
 
-
 end Number_Input;

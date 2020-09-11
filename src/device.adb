@@ -130,14 +130,16 @@ package body Device is
          for Memory of Memories.all loop
             declare
                Size : constant String :=
-                 Spec_Project.Attribute_Value (Size_Table, Index => Memory.all);
+                 Spec_Project.Attribute_Value
+                 (Size_Table, Index => Memory.all);
 
                Address : constant String :=
                  Spec_Project.Attribute_Value
                    (Address_Table, Index => Memory.all);
 
                Kind : constant String :=
-                 Spec_Project.Attribute_Value (Kind_Table, Index => Memory.all);
+                 Spec_Project.Attribute_Value
+                 (Kind_Table, Index => Memory.all);
 
                Memory_Unit : constant Memory_Region :=
                  (Name    => To_Unbounded_String (Memory.all),
@@ -255,7 +257,7 @@ package body Device is
          Self.Main_Stack_Size := To_Unbounded_String (Main_Stack_Size);
       else
          Self.Main_Stack_Size := To_Unbounded_String ("0x1000");
-        end if;
+      end if;
 
       if Linker_Template /= "" then
          Self.Linker_Template := To_Unbounded_String (Linker_Template);
@@ -354,7 +356,7 @@ package body Device is
                declare
                   Tag : constant Tmplt.Tag := Tmplt.Get (Assoc);
                begin
-                  Put_line (Tmplt.Query.Variable (Assoc) & " => " &
+                  Put_Line (Tmplt.Query.Variable (Assoc) & " => " &
                               Tmplt.Utils.Image (Tag));
                end;
          end case;
@@ -400,7 +402,7 @@ package body Device is
 
       --  First search for the boot memory
       for Mem of Self.Memory loop
-         if Mem.name = Self.Boot_Memory then
+         if Mem.Name = Self.Boot_Memory then
             Boot_Mem      := +Mem.Name;
 
             Addr := Convert (Mem.Address);
@@ -419,7 +421,7 @@ package body Device is
 
       --  Then set the other memories
       for Mem of Self.Memory loop
-         if Mem.name /= Self.Boot_Memory then
+         if Mem.Name /= Self.Boot_Memory then
 
             Addr := Convert (Mem.Address);
             Size := Convert (Mem.Size);
@@ -450,7 +452,8 @@ package body Device is
       loop
          Interrupt_Ids := Interrupt_Ids & Int_Id;
          if Self.Interrupts.Is_Index_Used (Int_Id) then
-            Interrupt_Names := Interrupt_Names & Self.Interrupts.Get_Name (Int_Id);
+            Interrupt_Names := Interrupt_Names &
+              Self.Interrupts.Get_Name (Int_Id);
          else
             Interrupt_Names := Interrupt_Names & "unknown_interrupt";
          end if;
@@ -474,7 +477,7 @@ package body Device is
               Templates_Parser.Assoc ("INTERRUPT_ID", Interrupt_Ids));
    end To_Translate_Table;
 
-  -------------------
+   -------------------
    -- Add_Interrupt --
    -------------------
 
@@ -616,7 +619,7 @@ package body Device is
       Memory_2_Size    : constant Unsigned_64 := Convert (Memory_2.Size);
 
    begin
-      -- Memory size cannot be zero.
+      --  Memory size cannot be zero.
       if Memory_2_Size = 0 or else Memory_1_Size = 0 then
          return True;
       end if;
