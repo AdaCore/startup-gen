@@ -1,0 +1,2 @@
+driver: python
+target: riscv64-elf

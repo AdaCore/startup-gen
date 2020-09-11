@@ -1,0 +1,45 @@
+Testing run-time: zfp-rv64imac
+With boot_mem = flash:
+Symbol '_start' defined in 'flash'
+Symbol '__global_pointer$' defined in 'ram'
+Symbol '__stack_start' defined in 'ram'
+Symbol '__stack_end' defined in 'ram'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'
+With boot_mem = ram:
+Symbol '_start' defined in 'ram'
+Symbol '__global_pointer$' defined in 'ram'
+Symbol '__stack_start' defined in 'ram'
+Symbol '__stack_end' defined in 'ram'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'
+Testing run-time: zfp-rv64imafc
+With boot_mem = flash:
+Symbol '_start' defined in 'flash'
+Symbol '__global_pointer$' defined in 'ram'
+Symbol '__stack_start' defined in 'ram'
+Symbol '__stack_end' defined in 'ram'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'
+With boot_mem = ram:
+Symbol '_start' defined in 'ram'
+Symbol '__global_pointer$' defined in 'ram'
+Symbol '__stack_start' defined in 'ram'
+Symbol '__stack_end' defined in 'ram'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'
+Testing run-time: zfp-rv64imafdc
+With boot_mem = flash:
+Symbol '_start' defined in 'flash'
+Symbol '__global_pointer$' defined in 'ram'
+Symbol '__stack_start' defined in 'ram'
+Symbol '__stack_end' defined in 'ram'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'
+With boot_mem = ram:
+Symbol '_start' defined in 'ram'
+Symbol '__global_pointer$' defined in 'ram'
+Symbol '__stack_start' defined in 'ram'
+Symbol '__stack_end' defined in 'ram'
+Symbol '__heap_start' defined in 'ram'
+Symbol '__heap_end' defined in 'ram'

@@ -1,0 +1,3 @@
+=== Test for RISC-V64 PolarFire SOC ===
+Boot memory: RAM
+PASS: Memories checks

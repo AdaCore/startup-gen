@@ -1,4 +1,6 @@
+=== Test for RISC-V32 HiFive1 ===
 Boot memory: FLASH
 PASS: Memories checks
+=== Test for RISC-V32 HiFive1 ===
 Boot memory: RAM
 PASS: Memories checks
