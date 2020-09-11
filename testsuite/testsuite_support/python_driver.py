@@ -104,7 +104,7 @@ class PythonDriver(TestDriver):
         fileutils.sync_tree(self.test_env['test_dir'], self.test_working_dir())
 
         if 'target' in self.test_env and self.test_env['target'] != Env().target.triplet:
-            self.result.set_status('XFAIL', 'skip: test for %s' % self.test_env['target'])
+            self.result.set_status('DEAD', 'skip: test for %s' % self.test_env['target'])
             return
 
 
