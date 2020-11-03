@@ -12,12 +12,14 @@ except ImportError:
     def run_cross(*args, **kwargs):
         raise ImportError("Could not import pycross.runcross.main")
 
+
 def contents_of(filename):
     """Return contents of file FILENAME"""
     with open(filename) as f:
         contents = f.read()
 
     return contents
+
 
 def run_tool(args, output='startup-gen.out', error='startup-gen.err'):
     p = Run(['startup-gen'] + args, output=output, error=error)
@@ -59,7 +61,7 @@ class MemoryDescription:
 
 class MemoryMap(dict):
     def add(self, name, kind, addr, size):
-        self [name] = MemoryDescription (name, kind, addr, size)
+        self[name] = MemoryDescription(name, kind, addr, size)
 
 
 class SymbolList:
@@ -67,7 +69,7 @@ class SymbolList:
         self.list = []
 
     def append(self, name, addr):
-        self.list.append ((name, addr))
+        self.list.append((name, addr))
 
     def defined(self, symbol):
         return symbol in (x[0] for x in self.list)
@@ -85,6 +87,7 @@ class SymbolList:
         return self.in_range(symbol,
                              memmap[mem].addr,
                              memmap[mem].addr + memmap[mem].size)
+
 
 def check_symbols(symbols, memmap, to_check):
     """
@@ -104,7 +107,7 @@ def nm_symbols(binary):
     """Return a SymbolList from a binary file"""
 
     output = 'nm.out'
-    error  = 'nm.err'
+    error = 'nm.err'
 
     triplet = os.environ['target-triplet']
     args = [triplet + '-nm', binary]
@@ -117,9 +120,9 @@ def nm_symbols(binary):
 
     result = SymbolList()
     for line in contents_of(output).splitlines():
-        addr, typ, symbol = line.split(' ');
+        addr, typ, symbol = line.split(' ')
 
-        if typ in ['A', 'B', 'C', 'D', 'd', 'G', 'g', \
+        if typ in ['A', 'B', 'C', 'D', 'd', 'G', 'g',
                    'R', 'r', 'S', 's', 'T', 't']:
             result.append(symbol, int('0x' + addr, base=16))
 
@@ -130,27 +133,30 @@ def generate_gpr(filename, runtime, target, CPU, memmap, boot_mem):
     """ Generate a simple project file from the provided memory layout"""
 
     with open(filename, "w") as f:
-        f.write("project Prj is\n")
-        f.write("   for Target use \"%s\";\n" % target)
-        f.write("   for Runtime (\"Ada\") use \"%s\";\n" % runtime)
-        f.write("   for Languages use (\"Ada\", \"Asm_CPP\");\n")
-        f.write("   for Source_Dirs use (Project'Project_Dir & \"src\");\n")
-        f.write("   for Object_Dir use Project'Project_Dir & \"obj\";\n")
-        f.write("   for Main use (\"main.adb\");\n")
-        f.write("   for Create_Missing_Dirs use \"True\";\n")
-        f.write("   package Linker is\n")
-        f.write("      for Switches (\"Ada\") use (\"-T\", \"src/linker.ld\");\n")
-        f.write("   end Linker;\n")
-        f.write("   package Device_Configuration is\n")
-        f.write("      for CPU_Name use \"%s\";\n" % CPU)
-        f.write("      for Memories use (\"%s\");\n" % "\", \"".join(memmap))
-        f.write("      for Boot_Memory use \"%s\";\n" % boot_mem)
+        f.write('project Prj is\n')
+        f.write('   for Target use "%s";\n' % target)
+        f.write('   for Runtime ("Ada") use "%s";\n' % runtime)
+        f.write('   for Languages use ("Ada", "Asm_CPP");\n')
+        f.write('   for Source_Dirs use (Project\'Project_Dir & "src");\n')
+        f.write('   for Object_Dir use Project\'Project_Dir & "obj";\n')
+        f.write('   for Main use ("main.adb");\n')
+        f.write('   for Create_Missing_Dirs use "True";\n')
+        f.write('   package Linker is\n')
+        f.write('      for Switches ("Ada") use ("-T", "src/linker.ld");\n')
+        f.write('   end Linker;\n')
+        f.write('   package Device_Configuration is\n')
+        f.write('      for CPU_Name use "%s";\n' % CPU)
+        f.write('      for Memories use ("%s");\n' % '", "'.join(memmap))
+        f.write('      for Boot_Memory use \"%s\";\n' % boot_mem)
         for mem in memmap:
-            f.write("      for Mem_Kind (\"%s\") use \"%s\";\n" % (memmap[mem].name, memmap[mem].kind))
-            f.write("      for Address (\"%s\")  use \"%d\";\n" % (memmap[mem].name, memmap[mem].addr))
-            f.write("      for Size (\"%s\")     use \"%d\";\n" % (memmap[mem].name, memmap[mem].size))
-        f.write("   end Device_Configuration;\n")
-        f.write("end Prj;\n")
+            f.write('      for Mem_Kind ("%s") use "%s";\n' %
+                    (memmap[mem].name, memmap[mem].kind))
+            f.write('      for Address ("%s")  use "%d";\n' %
+                    (memmap[mem].name, memmap[mem].addr))
+            f.write('      for Size ("%s")     use "%d";\n' %
+                    (memmap[mem].name, memmap[mem].size))
+        f.write('   end Device_Configuration;\n')
+        f.write('end Prj;\n')
 
 
 def make_simple_project(dir, runtime, target, CPU, mems, boot_mem):
@@ -170,13 +176,12 @@ def make_simple_project(dir, runtime, target, CPU, mems, boot_mem):
                  target, CPU, mems, boot_mem)
 
     # Generate crt0 and linker script
-    run_tool (['-P', os.path.join (dir, 'prj.gpr'),
-               '-s', os.path.join (dir, 'src', 'crt0.S'),
-               '-l', os.path.join (dir, 'src', 'linker.ld')])
+    run_tool(['-P', os.path.join(dir, 'prj.gpr'),
+              '-s', os.path.join(dir, 'src', 'crt0.S'),
+              '-l', os.path.join(dir, 'src', 'linker.ld')])
 
     # Build
-    gprbuild(['-f', '-P', os.path.join (dir, 'prj.gpr')])
+    gprbuild(['-f', '-P', os.path.join(dir, 'prj.gpr')])
 
     # Return path to the binary file
     return os.path.join(dir, 'obj', 'main')
-
