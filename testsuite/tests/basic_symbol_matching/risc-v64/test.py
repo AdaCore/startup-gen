@@ -7,9 +7,9 @@ memmap.add('ram', 'RAM', 0x80000000, 16 * 1024)
 for runtime in ['zfp-rv64imac',
                 'zfp-rv64imafc',
                 'zfp-rv64imafdc']:
-    print "Testing run-time: %s" % runtime
+    print("Testing run-time: %s" % runtime)
     for boot_mem in memmap:
-        print "With boot_mem = %s:" % boot_mem
+        print("With boot_mem = %s:" % boot_mem)
         bin = make_simple_project('test_simple_project+' + boot_mem,
                                   runtime,
                                   'riscv64-elf',

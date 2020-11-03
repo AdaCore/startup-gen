@@ -10,4 +10,4 @@ for boot_mem in ['flash', 'sram', 'ccm']:
 
     runcross('arm-elf', 'qemu-stm32', 'obj/main', output='runcross.out')
 
-    print contents_of('runcross.out')
+    print(contents_of('runcross.out'))

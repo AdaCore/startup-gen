@@ -10,4 +10,4 @@ for boot_mem in ['flash', 'ram']:
 
     runcross('riscv32-elf', 'qemu-hifive1', 'obj/main', output='runcross.out')
 
-    print contents_of('runcross.out')
+    print(contents_of('runcross.out'))

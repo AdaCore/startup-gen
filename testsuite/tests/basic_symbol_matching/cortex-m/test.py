@@ -10,9 +10,9 @@ for CPU, runtime in [('Cortex-M0', 'zfp-cortex-m0'),
                      ('Cortex-M3', 'zfp-cortex-m3'),
                      ('Cortex-M4', 'zfp-cortex-m4'),
                      ('Cortex-M4F', 'zfp-cortex-m4f')]:
-    print "Testing CPU: %s run-time: %s" % (CPU, runtime)
+    print("Testing CPU: %s run-time: %s" % (CPU, runtime))
     for boot_mem in memmap:
-        print "With boot_mem = %s:" % boot_mem
+        print("With boot_mem = %s:" % boot_mem)
         bin = make_simple_project('test_simple_project_%s_%s' % (boot_mem, runtime),
                                   runtime,
                                   'arm-eabi',

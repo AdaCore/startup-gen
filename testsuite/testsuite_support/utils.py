@@ -1,6 +1,7 @@
-from gnatpython.fileutils import mkdir
-from gnatpython.ex import Run
-from gnatpython.env import Env
+from e3.os.process import Run
+from e3.fs import mkdir
+from e3.env import Env
+
 import os
 
 try:
@@ -22,9 +23,9 @@ def run_tool(args, output='startup-gen.out', error='startup-gen.err'):
     p = Run(['startup-gen'] + args, output=output, error=error)
 
     if p.status != 0:
-        print "command failed:"
-        print contents_of(output)
-        print contents_of(error)
+        print("command failed:")
+        print(contents_of(output))
+        print(contents_of(error))
 
     return contents_of(output)
 
@@ -33,9 +34,9 @@ def gprbuild(args, output='gprbuild.out', error='gprbuild.err'):
     p = Run(['gprbuild'] + args, output=output, error=error)
 
     if p.status != 0:
-        print "Build failed:"
-        print contents_of(output)
-        print contents_of(error)
+        print("Build failed:")
+        print(contents_of(output))
+        print(contents_of(error))
 
 
 def runcross(target, board, bin, output='runcross.out'):
@@ -44,8 +45,8 @@ def runcross(target, board, bin, output='runcross.out'):
     p = run_cross([bin], output=output, timeout=5)
 
     if p.status != 0:
-        print "runcross failed:"
-        print contents_of(output)
+        print("runcross failed:")
+        print(contents_of(output))
 
 
 class MemoryDescription:
@@ -92,11 +93,11 @@ def check_symbols(symbols, memmap, to_check):
     """
     for name, mem in to_check:
         if not symbols.defined(name):
-            print "Symbol '%s' is not defined" % name
+            print("Symbol '%s' is not defined" % name)
         elif not symbols.in_memmap(name, memmap, mem):
-            print "Symbol '%s' is not defined in '%s'" % (name, mem)
+            print("Symbol '%s' is not defined in '%s'" % (name, mem))
         else:
-            print "Symbol '%s' defined in '%s'" % (name, mem)
+            print("Symbol '%s' defined in '%s'" % (name, mem))
 
 
 def nm_symbols(binary):
@@ -110,9 +111,9 @@ def nm_symbols(binary):
     p = Run(args, output=output, error=error)
 
     if p.status != 0:
-        print "nm failed:"
-        print contents_of(output)
-        print contents_of(error)
+        print("nm failed:")
+        print(contents_of(output))
+        print(contents_of(error))
 
     result = SymbolList()
     for line in contents_of(output).splitlines():

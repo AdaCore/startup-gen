@@ -26,4 +26,4 @@ gprbuild(['-f', '-P', 'prj.gpr'])
 
 runcross('riscv64-elf', 'qemu-polarfiresoc', 'obj/main', output='runcross.out')
 
-print contents_of('runcross.out')
+print(contents_of('runcross.out'))
