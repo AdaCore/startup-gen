@@ -1,2 +1,3 @@
 driver: python
-target: arm-eabi
+control:
+- [SKIP, "env.target.triplet != 'arm-eabi'", "Test for arm-eabi"]

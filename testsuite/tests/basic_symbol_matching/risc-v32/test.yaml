@@ -1,2 +1,3 @@
 driver: python
-target: riscv32-elf
+control:
+- [SKIP, "env.target.triplet != 'riscv32-elf'", "Test for riscv32-elf"]

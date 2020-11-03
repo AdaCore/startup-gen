@@ -10,9 +10,9 @@ for runtime in ['zfp-rv32i',
                 'zfp-rv32imac',
                 'zfp-rv32imafc',
                 'zfp-rv32imafdc']:
-    print "Testing run-time: %s" % runtime
+    print("Testing run-time: %s" % runtime)
     for boot_mem in memmap:
-        print "With boot_mem = %s:" % boot_mem
+        print("With boot_mem = %s:" % boot_mem)
         bin = make_simple_project('test_simple_project+' + boot_mem,
                                   runtime,
                                   'riscv32-elf',
