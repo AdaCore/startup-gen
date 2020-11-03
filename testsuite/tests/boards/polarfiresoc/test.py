@@ -1,7 +1,7 @@
-import fileinput
 from testsuite_support.utils import run_tool, gprbuild, runcross, contents_of
 
-run_tool (['-P', 'prj.gpr', '-s', 'src/crt0.S', '-l', 'src/linker.ld'])
+run_tool(['-P', 'prj.gpr', '-s', 'src/crt0.S', '-l', 'src/linker.ld'])
+
 
 def add_hard_busy_loop(filename):
     f = open(filename, "r")
@@ -19,6 +19,7 @@ def add_hard_busy_loop(filename):
     contents = "".join(contents)
     f.write(contents)
     f.close()
+
 
 add_hard_busy_loop("src/crt0.S")
 

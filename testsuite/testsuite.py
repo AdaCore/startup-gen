@@ -8,6 +8,7 @@ import sys
 from e3.testsuite import Testsuite
 from testsuite_support.python_driver import PythonDriver
 
+
 class StartupgenTestsuite(Testsuite):
     tests_subdir = 'tests'
     test_driver_map = {'python': PythonDriver}
