@@ -10,6 +10,9 @@ project Spec is
 
       for Boot_Memory use "rom2";
 
+      for Main_Stack_Size use "8K";
+      for Main_Stack_Memory use "ram2";
+
       for Mem_Kind ("rom1") use "ROM";
       for Address  ("rom1") use "0x10";
       for Size     ("rom1") use "0x1";

@@ -7,3 +7,5 @@ testsuite/out
 testsuite/**/crt0.S
 testsuite/**/linker.ld
 doc/_build
+startup-gen
+database

@@ -31,6 +31,10 @@ project Hello is
       --  Specify from which memory bank the program will load
       for Boot_Memory use "FLASH";
 
+      --  Allocate the main stack in CCM with 8K size
+      for Main_Stack_Memory use "SRAM";
+      for Main_Stack_Size use "8K";
+
       --  Specification of the SRAM
       for Mem_Kind ("SRAM") use "ram";
       for Address ("SRAM") use "0x20000000";

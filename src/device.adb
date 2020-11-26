@@ -17,6 +17,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Text_IO;              use Ada.Text_IO;
+with Ada.Strings.Fixed;
 with Interfaces;               use Interfaces;
 
 with GNAT.Regpat;
@@ -239,6 +240,10 @@ package body Device is
         Spec_Project.Attribute_Value (Build (Prj_Package_Name,
                                       "main_stack_size"));
 
+      Main_Stack_Memory : constant String :=
+        Spec_Project.Attribute_Value (Build (Prj_Package_Name,
+                                      "main_stack_memory"));
+
       Linker_Template : constant String :=
         Spec_Project.Attribute_Value (Build (Prj_Package_Name,
                                       "linker_template"));
@@ -257,6 +262,10 @@ package body Device is
          Self.Main_Stack_Size := To_Unbounded_String (Main_Stack_Size);
       else
          Self.Main_Stack_Size := To_Unbounded_String ("0x1000");
+      end if;
+
+      if Main_Stack_Memory /= "" then
+         Self.Main_Stack_Memory := To_Unbounded_String (Main_Stack_Memory);
       end if;
 
       if Linker_Template /= "" then
@@ -393,6 +402,7 @@ package body Device is
 
       Stack_Size : constant Tmplt.Tag :=
         +To_C_Hexadecimal (Convert (Self.Main_Stack_Size));
+      Stack_Region : Tmplt.Tag;
 
       Interrupt_Names : Tmplt.Vector_Tag;
       Interrupt_Ids   : Tmplt.Vector_Tag;
@@ -427,10 +437,10 @@ package body Device is
             Size := Convert (Mem.Size);
 
             case Mem.Kind is
+
             when RAM =>
                if Templates_Parser.Size (Main_RAM) = 0 then
-                  --  If not already set, use the first in the list RAM in the
-                  --  list as Main RAM.
+                  --  If not already set, use the RAM in the list as Main RAM
                   Main_RAM      := +Mem.Name;
                   Main_RAM_Addr := +To_C_Hexadecimal (Addr);
                   Main_RAM_Size := +To_C_Hexadecimal (Size);
@@ -439,13 +449,36 @@ package body Device is
                   RAM_Addr    := RAM_Addr & To_C_Hexadecimal (Addr);
                   RAM_Size    := RAM_Size & To_C_Hexadecimal (Size);
                end if;
+
             when ROM =>
                ROM_Regions := ROM_Regions & Mem.Name;
                ROM_Addr    := ROM_Addr & To_C_Hexadecimal (Addr);
                ROM_Size    := ROM_Size & To_C_Hexadecimal (Size);
+
             end case;
          end if;
       end loop;
+
+      --  Select stack region
+      if Self.Main_Stack_Memory /= "" then
+         if not (for some Mem of Self.Memory
+                 => Mem.Name = Self.Main_Stack_Memory)
+         then
+            Fatal_Error ("Undefined memory used for main stack: '" &
+                         To_String (Self.Main_Stack_Memory) & "'");
+         end if;
+
+         if (for some Mem of Self.Memory
+             => Mem.Name = Self.Main_Stack_Memory and then Mem.Kind = ROM)
+         then
+            Fatal_Error ("Main stack memory cannot be ROM: '" &
+                         To_String (Self.Main_Stack_Memory) & "'");
+         end if;
+
+         Stack_Region := +Self.Main_Stack_Memory;
+      else
+         Stack_Region := Main_RAM;
+      end if;
 
       for Int_Id in 0 .. Integer'Max (Self.Interrupts.Last_Index,
                                       Self.CPU.Number_Of_Interrupts - 1)
@@ -473,6 +506,7 @@ package body Device is
               Templates_Parser.Assoc ("ROM_ADDR", ROM_Addr),
               Templates_Parser.Assoc ("ROM_SIZE", ROM_Size),
               Templates_Parser.Assoc ("MAIN_STACK_SIZE", Stack_Size),
+              Templates_Parser.Assoc ("MAIN_STACK_REGION", Stack_Region),
               Templates_Parser.Assoc ("INTERRUPT_NAME", Interrupt_Names),
               Templates_Parser.Assoc ("INTERRUPT_ID", Interrupt_Ids));
    end To_Translate_Table;
@@ -684,4 +718,43 @@ package body Device is
                      "please specify a custom template.");
    end Default_Startup_Template;
 
+   --------------------------
+   -- C_Comment_Box_Filter --
+   --------------------------
+
+   function C_Comment_Box_Filter
+     (Value      : in String;
+      Parameters : in String;
+      Context    : in Templates_Parser.Filter_Context)
+      return String
+   is
+      use Templates_Parser;
+      use Ada.Strings.Fixed;
+
+      Separator_Index : constant Natural := Index (Parameters, "/");
+
+      Indent_Cnt : constant Natural := Natural'Value
+        ((if Parameters'Length = 0
+         then "0"
+         elsif Separator_Index /= 0
+         then Head (Parameters, Separator_Index - 1)
+         else Parameters));
+
+      Prefix : constant String :=
+        (if Separator_Index /= 0
+         then Tail (Parameters, Parameters'Length - Separator_Index)
+         else "");
+
+      Text   : constant String := Prefix & Value;
+      Indent : constant String := Indent_Cnt * ' ';
+      Bar    : constant String := "/**" & (Text'Length * '*') & "**/";
+   begin
+      return Indent & Bar & ASCII.LF &
+        Indent & "/* " & Text & " */" & ASCII.LF &
+        Indent & Bar;
+   end C_Comment_Box_Filter;
+
+begin
+   Templates_Parser.Register_Filter
+     ("C_COMMENT_BOX", C_Comment_Box_Filter'Access);
 end Device;

@@ -129,7 +129,7 @@ def nm_symbols(binary):
     return result
 
 
-def generate_gpr(filename, runtime, target, CPU, memmap, boot_mem):
+def generate_gpr(filename, runtime, target, CPU, memmap, boot_mem, stack_mem):
     """ Generate a simple project file from the provided memory layout"""
 
     with open(filename, "w") as f:
@@ -148,6 +148,7 @@ def generate_gpr(filename, runtime, target, CPU, memmap, boot_mem):
         f.write('      for CPU_Name use "%s";\n' % CPU)
         f.write('      for Memories use ("%s");\n' % '", "'.join(memmap))
         f.write('      for Boot_Memory use \"%s\";\n' % boot_mem)
+        f.write('      for Main_Stack_Memory use \"%s\";\n' % stack_mem)
         for mem in memmap:
             f.write('      for Mem_Kind ("%s") use "%s";\n' %
                     (memmap[mem].name, memmap[mem].kind))
@@ -159,7 +160,7 @@ def generate_gpr(filename, runtime, target, CPU, memmap, boot_mem):
         f.write('end Prj;\n')
 
 
-def make_simple_project(dir, runtime, target, CPU, mems, boot_mem):
+def make_simple_project(dir, runtime, target, CPU, mems, boot_mem, stack_mem):
     """
     Create and build a simple project with empty main procedure, and return the
     path to the output binary.
@@ -173,7 +174,7 @@ def make_simple_project(dir, runtime, target, CPU, mems, boot_mem):
 
     # Generate the project file from memory layout
     generate_gpr(os.path.join(dir, 'prj.gpr'), runtime,
-                 target, CPU, mems, boot_mem)
+                 target, CPU, mems, boot_mem, stack_mem)
 
     # Generate crt0 and linker script
     run_tool(['-P', os.path.join(dir, 'prj.gpr'),

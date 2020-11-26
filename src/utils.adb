@@ -70,6 +70,9 @@ package body Utils is
                       ("Main_Stack_Size",
                        Prj_Package_Name)),
          new String'(Register_New_Attribute
+                      ("Main_Stack_Memory",
+                       Prj_Package_Name)),
+         new String'(Register_New_Attribute
                       ("Linker_Template",
                        Prj_Package_Name)),
          new String'(Register_New_Attribute

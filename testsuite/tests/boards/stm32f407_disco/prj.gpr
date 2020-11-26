@@ -16,6 +16,9 @@ project Prj is
    type Boot_Mem is ("flash", "sram", "ccm");
    Boot : Boot_Mem := external ("BOOT_MEM", "flash");
 
+   type Stack_Mem is ("sram", "ccm");
+   Stack: Stack_Mem := external ("STACK_MEM", "sram");
+
    package Naming is
       case Boot is
          when "sram" | "ccm" =>
@@ -37,6 +40,8 @@ project Prj is
       for Memories use ("flash", "sram", "ccm");
 
       for Boot_Memory use Boot;
+
+      for Main_Stack_Memory use Stack;
 
       --  flash
       for Mem_Kind ("flash") use "ROM";

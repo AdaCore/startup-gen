@@ -1,0 +1,2 @@
+command failed:
+Error: Main stack memory cannot be ROM: 'rom1'

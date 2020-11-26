@@ -1,3 +1,74 @@
+@@-----------------------------------------------------------------------------
+@@--  MACROS
+@@--
+@@--
+@@--  ALLOCATE_MAIN_STACK
+@@--
+@@MACRO(ALLOCATE_MAIN_STACK)@@
+    /* Interrupt stacks. Statically allocated in System.BB.Interrupts */
+    __interrupt_stack_start = .;
+    *(.interrupt_stacks)
+    . = ALIGN(0x10); /* Align stack to 128 bits as required in the ABI */
+    __interrupt_stack_end = .;
+
+    __stack_start = .;
+    . += DEFINED (__stack_size) ? __stack_size : _DEFAULT_STACK_SIZE;
+    . = ALIGN(0x10); /* Align stack to 128 bits as required in the ABI */
+    __stack_end = .;
+@@END_MACRO@@
+@@--
+@@--
+@@--  CREATE_RAM_SECTIONS
+@@--
+@@MACRO(CREATE_RAM_SECTIONS)@@
+  __@_$1_@_data_load = LOADADDR(.@_$1_@_data);
+  .@_$1_@_data :
+  {
+    __@_$1_@_data_start = .;
+    *(.@_$1_@_data .@_$1_@_data.*)
+
+    /* Ensure that the end of the data section is always word aligned.
+       Initial values are stored in 4-bytes blocks so we must guarantee
+       that these blocks do not fall out the section (otherwise they are
+       truncated and the initial data for the last block are lost). */
+
+    . = ALIGN(0x4);
+    __@_$1_@_data_end = .;
+  } >  @_$1_@ AT> @_BOOT_MEM_@
+  __@_$1_@_data_words = (__@_$1_@_data_end - __@_$1_@_data_start) >> 2;
+
+  .@_$1_@_bss (NOLOAD): {
+    . = ALIGN(0x8);
+    __@_$1_@_bss_start = .;
+
+    *(.@_$1_@_bss .@_$1_@_bss.*)
+@@IF@@ @_MAIN_STACK_REGION_@ = @_$1_@
+@_ALLOCATE_MAIN_STACK()_@
+@@END_IF@@
+
+     __@_$1_@_bss_end = .;
+     __@_$1_@_heap_start = .;
+     __@_$1_@_heap_end = ORIGIN(@_$1_@) + LENGTH(@_$1_@);
+  } > @_$1_@
+  __@_$1_@_bss_words = (__@_$1_@_bss_end - __@_$1_@_bss_start) >> 2;
+@@END_MACRO@@
+@@--
+@@--
+@@--  CREATE_ROM_SECTIONS
+@@--
+@@MACRO(CREATE_ROM_SECTIONS)@@
+  .@_$1_@_rodata :
+  {
+    __@_$1_@_rom_start = .;
+
+    *(.@_$1_@rdata)
+    *(.@_$1_@_rodata .@_$1_@_rodata.*)
+    . = ALIGN(0x4);
+    __@_$1_@_rom_end = .;
+  } > @_$1_@
+@@END_MACRO@@
+@@-----------------------------------------------------------------------------
+
 /* This is a RISC-V specific version of this file */
 
 _DEFAULT_STACK_SIZE = @_MAIN_STACK_SIZE_@;
@@ -24,6 +95,7 @@ MEMORY
 
 SECTIONS
 {
+@_C_COMMENT_BOX(2):BOOT_MEM_@
   .text :
   {
     KEEP (*(SORT_NONE(.start)))
@@ -71,7 +143,9 @@ SECTIONS
     . = ALIGN(0x4);
     __rom_end = .;
   } > @_BOOT_MEM_@
+@_C_COMMENT_BOX(2/End of ):BOOT_MEM_@
 
+@_C_COMMENT_BOX(2):MAIN_RAM_@
   .data :
   {
     __data_start = .;
@@ -106,19 +180,6 @@ SECTIONS
    */
   __data_load = LOADADDR(.data);
 
-@@IF@@ @_SIZE:ROM_REGION_@ > 0
-@@TABLE@@
-  .@_ROM_REGION_@_rodata :
-  {
-
-    *(.@_ROM_REGION_@rdata)
-    *(.@_ROM_REGION_@_rodata .@_ROM_REGION_@_rodata.*)
-    . = ALIGN(0x4);
-  } > @_ROM_REGION_@
-@@END_TABLE@@
-@@END_IF@@
-
-
   .bss (NOLOAD): {
     . = ALIGN(0x8);
     __bss_start = .;
@@ -129,25 +190,42 @@ SECTIONS
     *(.gnu.linkonce.b.*)
     *(COMMON)
 
-    /* Interrupt stacks. Statically allocated in System.BB.Interrupts */
-    __interrupt_stack_start = .;
-    *(.interrupt_stacks)
-    . = ALIGN(0x10); /* Align stack to 128 bits as required in the ABI */
-    __interrupt_stack_end = .;
-
-    __stack_start = .;
-    . += DEFINED (__stack_size) ? __stack_size : _DEFAULT_STACK_SIZE;
-    . = ALIGN(0x10); /* Align stack to 128 bits as required in the ABI */
-    __stack_end = .;
+@@IF@@ @_MAIN_STACK_REGION_@ = @_MAIN_RAM_@
+@_ALLOCATE_MAIN_STACK()_@
+@@END_IF@@
 
     _end = .;
     __heap_start = .;
     __heap_end = ORIGIN(@_MAIN_RAM_@) + LENGTH(@_MAIN_RAM_@);
     __bss_end = .;
   } > @_MAIN_RAM_@
-
   __bss_words = (__bss_end - __bss_start) >> 2;
+@_C_COMMENT_BOX(2/End of ):MAIN_RAM_@
 
+@@--
+@@--
+@@-- For all ROM regions besides BOOT_MEM
+@@--
+@@IF@@ @_SIZE:ROM_REGION_@ > 0
+@@TABLE@@
+@_C_COMMENT_BOX(2):ROM_REGION_@
+@_CREATE_ROM_SECTIONS(@_ROM_REGION_@)_@
+@_C_COMMENT_BOX(2/End of ):ROM_REGION_@
+
+@@END_TABLE@@
+@@END_IF@@
+@@--
+@@--
+@@-- For all RAM regions besides main RAM
+@@--
+@@IF@@ @_SIZE:RAM_REGION_@ > 0
+@@TABLE@@
+@_C_COMMENT_BOX(2):RAM_REGION_@
+@_CREATE_RAM_SECTIONS(@_RAM_REGION_@)_@
+@_C_COMMENT_BOX(2/End of ):RAM_REGION_@
+
+@@END_TABLE@@
+@@END_IF@@
   /* DWARF debug sections.
      Symbols in the DWARF debugging sections are relative to the beginning
      of the section so we begin them at 0.  */

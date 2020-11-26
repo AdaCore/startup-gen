@@ -1,9 +1,24 @@
+testing -> boot:flash stack:sram
 === Test for STM32F407 disco ===
 Boot memory: FLASH
 PASS: Memories checks
+testing -> boot:flash stack:ccm
+=== Test for STM32F407 disco ===
+Boot memory: FLASH
+PASS: Memories checks
+testing -> boot:sram stack:sram
 === Test for STM32F407 disco ===
 Boot memory: SRAM
 PASS: Memories checks
+testing -> boot:sram stack:ccm
+=== Test for STM32F407 disco ===
+Boot memory: SRAM
+PASS: Memories checks
+testing -> boot:ccm stack:sram
+=== Test for STM32F407 disco ===
+Boot memory: CCM
+PASS: Memories checks
+testing -> boot:ccm stack:ccm
 === Test for STM32F407 disco ===
 Boot memory: CCM
 PASS: Memories checks

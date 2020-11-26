@@ -109,14 +109,15 @@ private
    end record;
 
    type Spec is tagged record
-      Memory           : Memory_Region_Vectors.Vector;
-      Boot_Memory      : Unbounded_String;
-      Boot_From_ROM    : Boolean;
-      CPU              : CPU_Type;
-      Interrupts       : Interrupt_Vector;
-      Linker_Template  : Unbounded_String;
-      Startup_Template : Unbounded_String;
-      Main_Stack_Size  : Unbounded_String;
+      Memory            : Memory_Region_Vectors.Vector;
+      Boot_Memory       : Unbounded_String;
+      Boot_From_ROM     : Boolean;
+      CPU               : CPU_Type;
+      Interrupts        : Interrupt_Vector;
+      Linker_Template   : Unbounded_String;
+      Startup_Template  : Unbounded_String;
+      Main_Stack_Size   : Unbounded_String;
+      Main_Stack_Memory : Unbounded_String;
    end record;
 
    --  Private procedures  --
