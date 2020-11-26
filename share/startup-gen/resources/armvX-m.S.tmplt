@@ -15,22 +15,22 @@
 	.section .vectors,"a"
 __vectors:
 	/* Cortex-M core interrupts */
-	.word   __stack_end          /* stack top address */
-	.word   _start               /* 1 Reset */
-	.word   fault                /* 2 NMI. */
-	.word   fault                /* 3 Hard fault. */
-	.word   fault                /* 4 Mem manage. */
-	.word   fault                /* 5 Bus fault. */
-	.word   fault                /* 6 Usage fault. */
-	.word   fault                /* 7 reserved. */
-	.word   fault                /* 8 reserved. */
-	.word   fault                /* 9 reserved. */
-	.word   fault                /* 10 reserved. */
-	.word   __gnat_sv_call_trap  /* 11 SVCall. */
-	.word   __gnat_bkpt_trap     /* 12 Breakpoint. */
-	.word   fault                /* 13 reserved. */
-	.word   __gnat_pend_sv_trap  /* 14 PendSV. */
-	.word   __gnat_sys_tick_trap /* 15 Systick. */
+	.word   __stack_end              /* stack top address */
+	.word   Reset_Handler            /* 1 Reset */
+	.word   NMI_Handler              /* 2 NMI. */
+	.word   HardFault_Handler        /* 3 Hard fault. */
+	.word   MemoryManagement_Handler /* 4 Mem manage. */
+	.word   BusFault_Handler         /* 5 Bus fault. */
+	.word   UsageFault_Handler       /* 6 Usage fault. */
+	.word   Reserved_Handler         /* 7 reserved. */
+	.word   Reserved_Handler         /* 8 reserved. */
+	.word   Reserved_Handler         /* 9 reserved. */
+	.word   Reserved_Handler         /* 10 reserved. */
+	.word   SVC_Handler              /* 11 SVCall. */
+	.word   DebugMon_Handler         /* 12 Breakpoint. */
+	.word   Reserved_Handler         /* 13 reserved. */
+	.word   PendSV_Handler           /* 14 PendSV. */
+	.word   SysTick_Handler          /* 15 Systick. */
 	/* MCU interrupts */
 @@TABLE@@
         .word __@_INTERRUPT_NAME_@_handler /* @_INTERRUPT_ID_@ */
@@ -39,46 +39,35 @@ __vectors:
 @@TABLE@@
 @@IF@@ @_INTERRUPT_NAME_@ /= unknown_interrupt
    .weak      __@_INTERRUPT_NAME_@_handler
-   .thumb_set __@_INTERRUPT_NAME_@_handler,__gnat_irq_trap
+   .thumb_set __@_INTERRUPT_NAME_@_handler,__common_int_handler
 @@END_IF@@
 @@END_TABLE@@
 
 	.text
 
    .weak      __unknown_interrupt_handler
-   .thumb_set __unknown_interrupt_handler,__gnat_irq_trap
+   .thumb_set __unknown_interrupt_handler,__common_int_handler
 
+.macro weak_handler name
 	.thumb_func
-.weak __gnat_irq_trap
-.type __gnat_irq_trap, %function
-__gnat_irq_trap:
+.weak \name
+.type \name, %function
+\name:
 0:	b 0b
-	.size __gnat_irq_trap, . - __gnat_irq_trap
+	.size \name, . - \name
+.endm
 
-	.thumb_func
-.weak __gnat_sv_call_trap
-.type __gnat_sv_call_trap, %function
-__gnat_sv_call_trap:
-0:	b 0b
-	.size __gnat_sv_call_trap, . - __gnat_sv_call_trap
-
-	.thumb_func
-.weak __gnat_pend_sv_trap
-.type __gnat_pend_sv_trap, %function
-__gnat_pend_sv_trap:
-0:	b 0b
-	.size __gnat_pend_sv_trap, . - __gnat_pend_sv_trap
-
-	.thumb_func
-.weak __gnat_sys_tick_trap
-.type __gnat_sys_tick_trap, %function
-__gnat_sys_tick_trap:
-0:	b 0b
-	.size __gnat_sys_tick_trap, . - __gnat_sys_tick_trap
-
-	.thumb_func
-fault:	b fault
-
+weak_handler NMI_Handler
+weak_handler HardFault_Handler
+weak_handler MemoryManagement_Handler
+weak_handler BusFault_Handler
+weak_handler UsageFault_Handler
+weak_handler Reserved_Handler
+weak_handler SVC_Handler
+weak_handler DebugMon_Handler
+weak_handler PendSV_Handler
+weak_handler SysTick_Handler
+weak_handler __common_int_handler
 
         /*********/
         /* .data */
@@ -92,15 +81,15 @@ argv:
         .word argv_str
         .word 0
 
-        /**********/
-        /* _start */
-        /**********/
+        /*****************/
+        /* Reset_Handler */
+        /*****************/
 
 	.text
 	.thumb_func
-	.globl _start
+	.globl Reset_Handler
 
-_start:
+Reset_Handler:
 
 	/* Set the stack pointer */
 	ldr	r1,=__stack_end
@@ -220,6 +209,5 @@ _startup_clear_@_RAM_REGION_@_bss:
         mov r0, r4
 
         bl	_exit
-
-hang:   b .
-
+        bl	Reset_Handler
+	.size Reserved_Handler, . - Reset_Handler

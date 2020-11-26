@@ -77,7 +77,7 @@ __DYNAMIC  =  0;
 
 _DEFAULT_STACK_SIZE = @_MAIN_STACK_SIZE_@;
 
-ENTRY(_start);
+ENTRY(Reset_Handler);
 
 MEMORY
 {

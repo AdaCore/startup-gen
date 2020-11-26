@@ -1,24 +1,24 @@
 Testing CPU: Cortex-M0 run-time: zfp-cortex-m0
 With boot_mem = flash stack_mem = ram:
-Symbol '_start' defined in 'flash'
+Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ram'
 Symbol '__stack_end' defined in 'ram'
 With boot_mem = flash stack_mem = ccm:
-Symbol '_start' defined in 'flash'
+Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ccm'
 Symbol '__stack_end' defined in 'ccm'
 With boot_mem = ram stack_mem = ram:
-Symbol '_start' defined in 'ram'
+Symbol 'Reset_Handler' defined in 'ram'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ram'
 Symbol '__stack_end' defined in 'ram'
 With boot_mem = ram stack_mem = ccm:
-Symbol '_start' defined in 'ram'
+Symbol 'Reset_Handler' defined in 'ram'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ccm'
@@ -26,25 +26,25 @@ Symbol '__stack_end' defined in 'ccm'
 
 Testing CPU: Cortex-M0+ run-time: zfp-cortex-m0p
 With boot_mem = flash stack_mem = ram:
-Symbol '_start' defined in 'flash'
+Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ram'
 Symbol '__stack_end' defined in 'ram'
 With boot_mem = flash stack_mem = ccm:
-Symbol '_start' defined in 'flash'
+Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ccm'
 Symbol '__stack_end' defined in 'ccm'
 With boot_mem = ram stack_mem = ram:
-Symbol '_start' defined in 'ram'
+Symbol 'Reset_Handler' defined in 'ram'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ram'
 Symbol '__stack_end' defined in 'ram'
 With boot_mem = ram stack_mem = ccm:
-Symbol '_start' defined in 'ram'
+Symbol 'Reset_Handler' defined in 'ram'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ccm'
@@ -52,25 +52,25 @@ Symbol '__stack_end' defined in 'ccm'
 
 Testing CPU: Cortex-M1 run-time: zfp-cortex-m1
 With boot_mem = flash stack_mem = ram:
-Symbol '_start' defined in 'flash'
+Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ram'
 Symbol '__stack_end' defined in 'ram'
 With boot_mem = flash stack_mem = ccm:
-Symbol '_start' defined in 'flash'
+Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ccm'
 Symbol '__stack_end' defined in 'ccm'
 With boot_mem = ram stack_mem = ram:
-Symbol '_start' defined in 'ram'
+Symbol 'Reset_Handler' defined in 'ram'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ram'
 Symbol '__stack_end' defined in 'ram'
 With boot_mem = ram stack_mem = ccm:
-Symbol '_start' defined in 'ram'
+Symbol 'Reset_Handler' defined in 'ram'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ccm'
@@ -78,25 +78,25 @@ Symbol '__stack_end' defined in 'ccm'
 
 Testing CPU: Cortex-M3 run-time: zfp-cortex-m3
 With boot_mem = flash stack_mem = ram:
-Symbol '_start' defined in 'flash'
+Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ram'
 Symbol '__stack_end' defined in 'ram'
 With boot_mem = flash stack_mem = ccm:
-Symbol '_start' defined in 'flash'
+Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ccm'
 Symbol '__stack_end' defined in 'ccm'
 With boot_mem = ram stack_mem = ram:
-Symbol '_start' defined in 'ram'
+Symbol 'Reset_Handler' defined in 'ram'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ram'
 Symbol '__stack_end' defined in 'ram'
 With boot_mem = ram stack_mem = ccm:
-Symbol '_start' defined in 'ram'
+Symbol 'Reset_Handler' defined in 'ram'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ccm'
@@ -104,25 +104,25 @@ Symbol '__stack_end' defined in 'ccm'
 
 Testing CPU: Cortex-M4 run-time: zfp-cortex-m4
 With boot_mem = flash stack_mem = ram:
-Symbol '_start' defined in 'flash'
+Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ram'
 Symbol '__stack_end' defined in 'ram'
 With boot_mem = flash stack_mem = ccm:
-Symbol '_start' defined in 'flash'
+Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ccm'
 Symbol '__stack_end' defined in 'ccm'
 With boot_mem = ram stack_mem = ram:
-Symbol '_start' defined in 'ram'
+Symbol 'Reset_Handler' defined in 'ram'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ram'
 Symbol '__stack_end' defined in 'ram'
 With boot_mem = ram stack_mem = ccm:
-Symbol '_start' defined in 'ram'
+Symbol 'Reset_Handler' defined in 'ram'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ccm'
@@ -130,25 +130,25 @@ Symbol '__stack_end' defined in 'ccm'
 
 Testing CPU: Cortex-M4F run-time: zfp-cortex-m4f
 With boot_mem = flash stack_mem = ram:
-Symbol '_start' defined in 'flash'
+Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ram'
 Symbol '__stack_end' defined in 'ram'
 With boot_mem = flash stack_mem = ccm:
-Symbol '_start' defined in 'flash'
+Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ccm'
 Symbol '__stack_end' defined in 'ccm'
 With boot_mem = ram stack_mem = ram:
-Symbol '_start' defined in 'ram'
+Symbol 'Reset_Handler' defined in 'ram'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ram'
 Symbol '__stack_end' defined in 'ram'
 With boot_mem = ram stack_mem = ccm:
-Symbol '_start' defined in 'ram'
+Symbol 'Reset_Handler' defined in 'ram'
 Symbol '__heap_start' defined in 'ram'
 Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ccm'

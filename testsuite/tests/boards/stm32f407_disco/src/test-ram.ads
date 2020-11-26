@@ -5,11 +5,11 @@ with System.Storage_Elements; use System.Storage_Elements;
 package Test is
 
    Start : constant Unsigned_32;
-   pragma Import (C, Start, "_start");
+   pragma Import (C, Start, "Reset_Handler");
 
    --  This vector inserted in the flash_rodata section is supposed to be
-   --  allocated at the address zero, and will be used by QEMU to find the reset
-   --  PC address and stack pointer.
+   --  allocated at the address zero, and will be used by QEMU to find the
+   --  reset PC address and stack pointer.
    Boot_Vect : constant array (1 .. 2) of Address :=
      (Null_Address,  -- Stack pointer
       Start'Address) -- Reset address

@@ -26,7 +26,7 @@ for CPU, runtime in [('Cortex-M0', 'zfp-cortex-m0'),
                                       boot_mem,
                                       stack_mem)
             syms = nm_symbols(bin)
-            check_symbols(syms, memmap, [('_start', boot_mem),
+            check_symbols(syms, memmap, [('Reset_Handler', boot_mem),
                                          ('__heap_start', 'ram'),
                                          ('__heap_end', 'ram'),
                                          ('__stack_start', stack_mem),
