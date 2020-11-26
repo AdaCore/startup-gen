@@ -32,7 +32,7 @@ project Hello is
       for Boot_Memory use "FLASH";
 
       --  Allocate the main stack in CCM with 8K size
-      for Main_Stack_Memory use "SRAM";
+      for Main_Stack_Memory use "CCM";
       for Main_Stack_Size use "8K";
 
       --  Specification of the SRAM

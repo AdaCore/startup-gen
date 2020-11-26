@@ -46,6 +46,9 @@ Here is an example of project file:
 
       for Boot_Memory use "flash";
 
+      for Main_Stack_Memory use "sram";
+      for Main_Stack_Size use "8K";
+
       --  flash
       for Mem_Kind ("flash") use "ROM";
       for Address ("flash")  use "16#08000000#";
@@ -136,6 +139,9 @@ Memory
    is a string containing a numeric literal. Multiplier suffix ``K`` and ``M``
    are supported, e.g. ``16K``
 
+ * ``for Main_Stack_Memory use "<BANK_NAME>";`` This attribute specifies the
+   memory bank where the the main program stack is statically allocated in the
+   linker script. The bank must be a RAM bank.
 
 Interrupts
 ----------
@@ -263,6 +269,7 @@ For instance:
   ROM_ADDR => ()
   ROM_SIZE => ()
   MAIN_STACK_SIZE => ("0x1000")
+  MAIN_STACK_REGION => ("ccm")
   INTERRUPT_NAME => ()
   INTERRUPT_ID => ()
   ---------------------
@@ -338,6 +345,10 @@ Here is what the project file looks like:
 
         --  Specify from which memory bank the program will load
         for Boot_Memory use "FLASH";
+
+        --  Allocate the main stack in CCM with 8K size
+        for Main_Stack_Memory use "CCM";
+        for Main_Stack_Size use "8K";
 
         --  Specification of the SRAM
         for Mem_Kind ("SRAM") use "ram";
