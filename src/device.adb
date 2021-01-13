@@ -177,17 +177,38 @@ package body Device is
                  Spec_Project.Attribute_Value
                    (Address_Table, Index => Memory.all);
 
-               Kind : constant String :=
+               Kind_Str : constant String :=
                  Spec_Project.Attribute_Value
                  (Kind_Table, Index => Memory.all);
 
-               Memory_Unit : constant Memory_Region :=
-                 (Name    => To_Unbounded_String (Memory.all),
-                  Address => To_Unbounded_String (Address),
-                  Size    => To_Unbounded_String (Size),
-                  Kind    => Memory_Kind'Value (Kind));
             begin
-               Self.Memory := Self.Memory & Memory_Unit;
+
+               if Size = "" then
+                  Fatal_Error
+                    ("Missing Size for memory: '" & Memory.all & "'");
+               elsif Address = "" then
+                  Fatal_Error
+                    ("Missing Address for memory: '" & Memory.all & "'");
+               elsif Kind_Str = "" then
+                  Fatal_Error
+                    ("Missing Kind for memory: '" & Memory.all & "'");
+               end if;
+
+               begin
+                  declare
+                     Kind : constant Memory_Kind :=
+                       Memory_Kind'Value (Kind_Str);
+                  begin
+                     Self.Memory := Self.Memory &
+                     (Name    => To_Unbounded_String (Memory.all),
+                      Address => To_Unbounded_String (Address),
+                      Size    => To_Unbounded_String (Size),
+                      Kind    => Kind);
+                  end;
+               exception
+                  when Constraint_Error =>
+                     Fatal_Error ("Invalid memory kind: '" & Kind_Str & "'");
+               end;
             end;
          end loop;
       end if;
