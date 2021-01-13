@@ -134,7 +134,7 @@ package body Device is
          return "armv7e-m";
       elsif Match ("^zfp-cortex-m(23|33)(f|d|fd)?$") then
          return "armv8-m";
-      elsif Match ("^zfp-(riscv|risc-v|rv)(32|64|128)?*$") then
+      elsif Match ("^zfp-(riscv|risc-v|rv)(32|64|128)?[imafdgqlcjtpvnh]*$") then
          return "risc-v";
       end if;
 
