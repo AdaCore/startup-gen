@@ -31,8 +31,6 @@ project Prj is
    end Naming;
 
    package Device_Configuration is
-
-      for CPU_Name use "cortex-m4f";
       for Float_Handling use "hard";
       for Number_Of_Interrupts use "82";
 

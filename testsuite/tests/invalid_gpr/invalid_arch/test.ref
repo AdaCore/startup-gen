@@ -1,0 +1,2 @@
+command failed:
+Error: Mismatch between CPU_Name (cortex-m4f) and run-time (zfp-cortex-m0) attributes

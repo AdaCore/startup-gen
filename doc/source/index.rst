@@ -96,9 +96,10 @@ Here are the attributes supported by |startup-gen|:
 Architecture and CPU
 --------------------
 
- * ``for CPU_Name use ("<STRING>");`` This attribute is **required** and
-   specifies the name of the target CPU. It is used, for instance, to determine
-   the default templates that will be used for output generation.
+ * ``for CPU_Name use ("<STRING>");`` This attribute (optional if a supported
+   run-time is defined) specifies the name of the target CPU. It is used, for
+   instance, to determine the default templates that will be used for output
+   generation.
 
  * ``for Float_Handling use "<soft|hard>";`` This attribute is optional and
    specifies whether the floating point support is provided by the CPU/hardware

@@ -41,6 +41,12 @@ package body Device is
    function To_Number_Of_Interrupt (Str : String) return Natural;
    function Resources_Base_Directory return String;
    function Arch_From_CPU (CPU_Name : String) return String;
+   function Arch_From_Runtime (Runtime_Name : String) return String;
+   function C_Comment_Box_Filter
+     (Value      : String;
+      Parameters : String;
+      Context    : Templates_Parser.Filter_Context)
+      return String;
 
    -------------
    -- Convert --
@@ -88,20 +94,53 @@ package body Device is
                              CPU_Name));
 
    begin
+      if CPU_Name = "" then
+         return "";
+      end if;
 
       if Match ("^(arm)?\s*cortex-m(0(\+|plus|p)?|1)$") then
          return "armv6-m";
       elsif Match ("^(arm)?\s*cortex-m3$") then
          return "armv7-m";
-      elsif Match ("^(arm)?\s*cortex-m(4|7)(f|d)?$") then
+      elsif Match ("^(arm)?\s*cortex-m(4|7)(f|d|fd)?$") then
          return "armv7e-m";
-      elsif Match ("^(arm)?\s*cortex-m(23|33)(f|d)?$") then
+      elsif Match ("^(arm)?\s*cortex-m(23|33)(f|d|fd)?$") then
          return "armv8-m";
       elsif Match ("^(riscv|risc-v|rv)(32|64|128)?$") then
          return "risc-v";
       end if;
+
       Fatal_Error ("Unknown CPU name: '" & CPU_Name & "'");
    end Arch_From_CPU;
+
+   function Arch_From_Runtime (Runtime_Name : String) return String is
+
+      function Match (Pattern : String) return Boolean
+      is (GNAT.Regpat.Match (GNAT.Regpat.Compile
+                             (Pattern,
+                              GNAT.Regpat.Case_Insensitive),
+                             Runtime_Name));
+
+   begin
+      if Runtime_Name = "" then
+         return "";
+      end if;
+
+      if Match ("^zfp-cortex-m(0(\+|plus|p)?|1)$") then
+         return "armv6-m";
+      elsif Match ("^zfp-cortex-m3$") then
+         return "armv7-m";
+      elsif Match ("^zfp-cortex-m(4|7)(f|d|fd)?$") then
+         return "armv7e-m";
+      elsif Match ("^zfp-cortex-m(23|33)(f|d|fd)?$") then
+         return "armv8-m";
+      elsif Match ("^zfp-(riscv|risc-v|rv)(32|64|128)?*$") then
+         return "risc-v";
+      end if;
+
+      Warning ("Unknown run-time name: '" & Runtime_Name & "'");
+      return "";
+   end Arch_From_Runtime;
 
    ----------------------------------
    -- Get_Memory_List_From_Project --
@@ -226,7 +265,12 @@ package body Device is
           (Spec_Project.Attribute_Value (Build (Prj_Package_Name,
            "cpu_name")));
 
-      Arch : constant String := Arch_From_CPU (To_String (Name));
+      CPU_Arch : constant String := Arch_From_CPU (To_String (Name));
+
+      RTS_Arch : constant String := Arch_From_Runtime
+        (Spec_Project.Get_Runtime);
+
+      Arch : Unbounded_String;
 
       Float_Handling : constant String :=
         Spec_Project.Attribute_Value (Build (Prj_Package_Name,
@@ -252,11 +296,29 @@ package body Device is
                                       "startup_template"));
    begin
 
+      if RTS_Arch = "" then
+         if CPU_Arch /= "" then
+            Arch := To_Unbounded_String (CPU_Arch);
+         else
+            Fatal_Error
+              ("Unknown CPU, please specify CPU_Name or Rumtime attribute");
+         end if;
+      else
+         if CPU_Arch = "" or else CPU_Arch = RTS_Arch then
+            Arch := To_Unbounded_String (RTS_Arch);
+         else
+            Fatal_Error
+              ("Mismatch between CPU_Name (" & To_String (Name) &
+                 ") and run-time (" & Spec_Project.Get_Runtime &
+                 ") attributes");
+         end if;
+      end if;
+
       Self.CPU :=
         (Name                 => Name,
          Float_Handling       => Convert (Float_Handling),
          Number_Of_Interrupts => To_Number_Of_Interrupt (Number_Of_Interrupts),
-         Arch                 => To_Unbounded_String (Arch));
+         Arch                 => Arch);
 
       if Main_Stack_Size /= "" then
          Self.Main_Stack_Size := To_Unbounded_String (Main_Stack_Size);
@@ -683,7 +745,7 @@ package body Device is
    function Default_Linker_Template (Self : Spec) return String is
       use GNATCOLL.Utils;
 
-      Arch : constant String := Arch_From_CPU (To_String (Self.CPU.Name));
+      Arch : constant String := To_String (Self.CPU.Arch);
    begin
       if Arch = "armv6-m" or else Arch = "armv7-m" or else
          Arch = "armv7e-m" or else Arch = "armv8-m"
@@ -704,7 +766,7 @@ package body Device is
    function Default_Startup_Template (Self : Spec) return String is
       use GNATCOLL.Utils;
 
-      Arch : constant String := Arch_From_CPU (To_String (Self.CPU.Name));
+      Arch : constant String := To_String (Self.CPU.Arch);
    begin
       if Arch = "armv6-m" or else Arch = "armv7-m" or else
          Arch = "armv7e-m" or else Arch = "armv8-m"
@@ -723,12 +785,12 @@ package body Device is
    --------------------------
 
    function C_Comment_Box_Filter
-     (Value      : in String;
-      Parameters : in String;
-      Context    : in Templates_Parser.Filter_Context)
+     (Value      : String;
+      Parameters : String;
+      Context    : Templates_Parser.Filter_Context)
       return String
    is
-      use Templates_Parser;
+      pragma Unreferenced (Context);
       use Ada.Strings.Fixed;
 
       Separator_Index : constant Natural := Index (Parameters, "/");
