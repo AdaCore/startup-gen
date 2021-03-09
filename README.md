@@ -27,7 +27,7 @@ $ gprbuild -P startup_gen.gpr
 
 # Usage
 
-See [documentation](doc/index.rst).
+See [documentation](doc/source/index.rst).
 
 # Work-in-progress
 
