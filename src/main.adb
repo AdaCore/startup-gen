@@ -2,7 +2,7 @@
 --                                                                          --
 --                               startup-gen                                --
 --                                                                          --
---                        Copyright (C) 2019, AdaCore                       --
+--                     Copyright (C) 2019-2021, AdaCore                     --
 --                                                                          --
 -- This is  free  software;  you can redistribute it and/or modify it under --
 -- terms of the  GNU  General Public License as published by the Free Soft- --
@@ -68,6 +68,8 @@ begin
       Spec.Get_Interrupt_Vector_From_Project (Tree.Root_Project);
 
       Spec.Get_CPU_From_Project (Tree.Root_Project);
+
+      Spec.Get_User_Tags_From_Project (Tree.Root_Project);
 
       if not Spec.Valid then
          --  At least one error message should have been displayed.

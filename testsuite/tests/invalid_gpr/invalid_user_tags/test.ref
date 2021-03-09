@@ -1,0 +1,3 @@
+command failed:
+spec.gpr:16:33: wrong expression kind for attribute "user_tag"
+Error: Project file "spec.gpr" not found.

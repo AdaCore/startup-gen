@@ -1,0 +1,19 @@
+project Spec is
+
+   package Device_Configuration is
+
+      for CPU_Name use "cortex-m4f";
+
+      for Memories use ("rom1");
+
+      for Boot_Memory use "rom1";
+
+      for Mem_Kind ("rom1") use "ROM";
+      for Address  ("rom1") use "0";
+      for Size     ("rom1") use "0x100";
+
+
+      for User_Tag ("TEST") use ("42", "21");
+   end Device_Configuration;
+
+end Spec;

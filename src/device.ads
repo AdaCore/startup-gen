@@ -2,7 +2,7 @@
 --                                                                          --
 --                               startup-gen                                --
 --                                                                          --
---                        Copyright (C) 2019, AdaCore                       --
+--                     Copyright (C) 2019-2021, AdaCore                     --
 --                                                                          --
 -- This is  free  software;  you can redistribute it and/or modify it under --
 -- terms of the  GNU  General Public License as published by the Free Soft- --
@@ -17,6 +17,7 @@
 ------------------------------------------------------------------------------
 
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded.Hash;
 with Ada.Strings.Hash;
 with Ada.Containers.Vectors;
 with Ada.Containers.Hashed_Maps;
@@ -42,6 +43,10 @@ package Device is
        Spec_Project : Project_Type);
 
    procedure Get_CPU_From_Project
+      (Self         : in out Spec;
+       Spec_Project : Project_Type);
+
+   procedure Get_User_Tags_From_Project
       (Self         : in out Spec;
        Spec_Project : Project_Type);
 
@@ -108,6 +113,12 @@ private
       Last_Index  : Integer := -1;
    end record;
 
+   package User_Tags_Maps is new Ada.Containers.Hashed_Maps
+     (Key_Type        => Unbounded_String,
+      Element_Type    => Unbounded_String,
+      Hash            => Ada.Strings.Unbounded.Hash,
+      Equivalent_Keys => "=");
+
    type Spec is tagged record
       Memory            : Memory_Region_Vectors.Vector;
       Boot_Memory       : Unbounded_String;
@@ -118,6 +129,7 @@ private
       Startup_Template  : Unbounded_String;
       Main_Stack_Size   : Unbounded_String;
       Main_Stack_Memory : Unbounded_String;
+      User_Tags         : User_Tags_Maps.Map;
    end record;
 
    --  Private procedures  --

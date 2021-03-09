@@ -2,7 +2,7 @@
 --                                                                          --
 --                               startup-gen                                --
 --                                                                          --
---                        Copyright (C) 2019, AdaCore                       --
+--                     Copyright (C) 2019-2021, AdaCore                     --
 --                                                                          --
 -- This is  free  software;  you can redistribute it and/or modify it under --
 -- terms of the  GNU  General Public License as published by the Free Soft- --
@@ -234,8 +234,8 @@ package body Device is
          declare
             Name : constant String :=
               Spec_Project.Attribute_Value
-                        (Attribute => Interrupts,
-                         Index     => Interrupt.all);
+                (Attribute => Interrupts,
+                 Index     => Interrupt.all);
 
             Interrupt_Index : constant Integer :=
               Integer'Value (Interrupt.all);
@@ -367,6 +367,40 @@ package body Device is
 
    end Get_CPU_From_Project;
 
+   --------------------------------
+   -- Get_User_Tags_From_Project --
+   --------------------------------
+
+   procedure Get_User_Tags_From_Project
+      (Self         : in out Spec;
+       Spec_Project : Project_Type)
+   is
+      User_Tags : constant Attribute_Pkg_String :=
+        Build (Package_Name   => Prj_Package_Name,
+               Attribute_Name => "user_tag");
+
+      User_Tag_List : GNAT.Strings.String_List :=
+        Spec_Project.Attribute_Indexes (User_Tags);
+   begin
+
+      for Tag of User_Tag_List loop
+         declare
+            Name : constant String :=
+              Spec_Project.Attribute_Value
+                (Attribute => User_Tags,
+                 Index     => Tag.all);
+         begin
+            if Self.User_Tags.Contains (To_Unbounded_String (Tag.all)) then
+               Fatal_Error ("User tag '" & Tag.all & "' already defined");
+            else
+               Self.User_Tags.Insert (To_Unbounded_String (Tag.all),
+                                      To_Unbounded_String (Name));
+            end if;
+         end;
+      end loop;
+      GNATCOLL.Utils.Free (User_Tag_List);
+   end Get_User_Tags_From_Project;
+
    -----------
    -- Valid --
    -----------
@@ -466,6 +500,7 @@ package body Device is
       return Tmplt.Translate_Table
    is
       use type Tmplt.Vector_Tag;
+      use type Tmplt.Translate_Table;
 
       Boot_Mem      : Tmplt.Tag;
       Boot_Mem_Addr : Tmplt.Tag;
@@ -491,6 +526,11 @@ package body Device is
       Interrupt_Ids   : Tmplt.Vector_Tag;
 
       Addr, Size : Unsigned_64;
+
+      User_Assocs : Tmplt.Translate_Table
+        (1 .. Integer (Self.User_Tags.Length));
+      User_Tags : User_Tags_Maps.Map := Self.User_Tags.Copy;
+
    begin
 
       --  First search for the boot memory
@@ -563,6 +603,7 @@ package body Device is
          Stack_Region := Main_RAM;
       end if;
 
+      --  Interrupts
       for Int_Id in 0 .. Integer'Max (Self.Interrupts.Last_Index,
                                       Self.CPU.Number_Of_Interrupts - 1)
       loop
@@ -575,7 +616,21 @@ package body Device is
          end if;
       end loop;
 
-      return (Templates_Parser.Assoc ("BOOT_FROM_ROM", Self.Boot_From_ROM),
+      --  User defined tags
+      for Assoc of User_Assocs loop
+         declare
+            Cur : constant User_Tags_Maps.Cursor := User_Tags.First;
+            Key : constant Unbounded_String := User_Tags_Maps.Key (Cur);
+            Val : constant Unbounded_String := User_Tags_Maps.Element (Cur);
+         begin
+            Assoc := Templates_Parser.Assoc (To_String (Key),
+                                             To_String (Val));
+            User_Tags.Delete (Key);
+         end;
+      end loop;
+
+      return User_Assocs &
+             (Templates_Parser.Assoc ("BOOT_FROM_ROM", Self.Boot_From_ROM),
               Templates_Parser.Assoc ("BOOT_MEM", Boot_Mem),
               Templates_Parser.Assoc ("BOOT_MEM_ADDR", Boot_Mem_Addr),
               Templates_Parser.Assoc ("BOOT_MEM_SIZE", Boot_Mem_Size),
