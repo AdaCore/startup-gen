@@ -1,0 +1,25 @@
+project Spec is
+
+   package Device_Configuration is
+
+      for CPU_Name use "cortex-m4f";
+
+      for Memories use ("rom1");
+
+      for Boot_Memory use "rom1";
+
+      for Mem_Kind ("rom1") use "ROM";
+      for Address  ("rom1") use "0x10";
+      for Size     ("rom1") use "0x1";
+
+      for User_Tag ("TEST_USER_TAG_1") use "42";
+
+
+      --  Redefining an entry is not an error for gpr files. We do it here to
+      --  check that this behavior will remain in the future.
+      for User_Tag ("TEST_USER_TAG_2") use "21";
+      for User_Tag ("TEST_USER_TAG_2") use "42";
+
+   end Device_Configuration;
+
+end Spec;
