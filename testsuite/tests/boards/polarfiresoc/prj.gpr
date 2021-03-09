@@ -27,6 +27,8 @@ project Prj is
       for Address ("ram")  use "0x80000000";
       for Size ("ram")     use "128M";
 
+      for User_Tag ("polarfire_lsr_root") use "0x20000000";
+      for User_Tag ("qemu_sifive_test_exit") use "True";
    end Device_Configuration;
 
 end Prj;
