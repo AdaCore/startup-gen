@@ -119,6 +119,15 @@ _startup_clear_@_RAM_REGION_@_bss:
         call __gnat_exit
 2:      j 2b
 
+
+
+@@--
+@@--  This part of the template implements an optional exit function for
+@@--  the polarfire SOC and HiFive1 emulation on QEMU. This is included for
+@@--  testing purposes.
+@@--
+@@IF@@ @_EXIST:qemu_sifive_test_exit_@
+
         .globl __gnat_exit
         .type __gnat_exit,@function
         .globl _abort
@@ -135,3 +144,43 @@ __gnat_exit:
         /* Weak alias _exit to __gnat_exit */
         .weak      _exit
         .set _exit,__gnat_exit
+@@END_IF@@
+
+@@--
+@@--  This part of the template implements an optional putchar function for
+@@--  the polarfire SOC board on QEMU. This is included for testing purposes.
+@@--
+@@IF@@ @_EXIST:polarfire_lsr_root_@
+        .globl putchar
+        .type putchar,@function
+putchar:
+        li t1, @_polarfire_lsr_root_@
+
+.loop:
+        lw t3, 0x14(t1)
+        and t3, t3, 0b00100000
+        beqz t3, .loop
+
+        sb a0, 0(t1)
+        ret
+@@END_IF@@
+
+@@--
+@@--  This part of the template implements an optional putchar function for
+@@--  the Hifive1 board on QEMU. This is included for testing purposes.
+@@--
+@@IF@@ @_EXIST:hifive1_uart_root_@
+        .globl putchar
+        .type putchar,@function
+putchar:
+        li t1, @_hifive1_uart_root_@
+        li t1, 0x10013000
+        li t2, 0x80000000
+.loop:
+        lw t3, 0(t1)
+        and t3, t3, t2
+        bnez t3, .loop
+
+        sb a0, 0(t1)
+        ret
+@@END_IF@@

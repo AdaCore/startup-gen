@@ -40,6 +40,9 @@ project Prj is
       for Address ("ram")  use "0x80000000";
       for Size ("ram")     use "16K";
 
+      for User_Tag ("hifive1_uart_root") use "0x10013000";
+      for User_Tag ("qemu_sifive_test_exit") use "True";
+
    end Device_Configuration;
 
 end Prj;

@@ -1,7 +1,7 @@
 with Interfaces; use Interfaces;
 with System;
 
-with Text_IO; use Text_IO;
+with Ada.Text_IO; use Ada.Text_IO;
 
 with Test;
 

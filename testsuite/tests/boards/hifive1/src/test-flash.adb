@@ -1,4 +1,4 @@
-with Text_IO; use Text_IO;
+with Ada.Text_IO; use Ada.Text_IO;
 with Interfaces; use Interfaces;
 
 package body Test is
