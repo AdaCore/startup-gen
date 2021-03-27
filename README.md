@@ -14,7 +14,7 @@ micro-controllers by providing the basic elements of a Board Support Package
 [template-parser](https://github.com/AdaCore/templates-parser) library. Clone
 or download the repository and follow the build instructions.
 
-Once build set the `GPR_PROJECT_PATH` path using:
+Once built set the `GPR_PROJECT_PATH` path using:
 ```
 $  export GPR_PROJECT_PATH=/path/to/built-templates-parser/share/gpr
 ```
