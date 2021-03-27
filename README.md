@@ -12,9 +12,11 @@ micro-controllers by providing the basic elements of a Board Support Package
 
 `startup-gen` depends on the
 [template-parser](https://github.com/AdaCore/templates-parser) library. Clone
-or download the repository and set the `GPR_PROJECT_FILE` path:
+or download the repository and follow the build instructions.
+
+Once build set the `GPR_PROJECT_PATH` path using:
 ```
-$  export GPR_PROJECT_PATH=/path/to/templates-parser/
+$  export GPR_PROJECT_PATH=/path/to/built-templates-parser/share/gpr
 ```
 
 Download and install a native GNAT Community compiler at
