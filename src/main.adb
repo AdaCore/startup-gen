@@ -26,16 +26,13 @@ with GNATCOLL.VFS;          use GNATCOLL.VFS;
 
 with Setup;
 with Utils;
-with Device;                use Device;
+with Device;
 
 procedure Main is
 
    use GNAT.Strings;
-
-   --  Spec representing the target device
-   Spec : Device.Spec;
-
    use Setup;
+
    Input : aliased Command_Line_Values;
 
 begin
@@ -50,6 +47,11 @@ begin
       Project_File : constant Virtual_File :=
         Create_From_Base (Filesystem_String (Input.Project_File.all));
 
+      --  Spec representing the target device
+      Spec : Device.Spec;
+
+      Spec_Valid : Boolean := False;
+
    begin
       Initialize (Env);
 
@@ -60,41 +62,34 @@ begin
          Env               => Env,
          Packages_To_Check => All_Packs);
 
-      --  TODO: Put all that in a function that prepares the spec.
-      Spec.Get_Memory_List_From_Project (Tree.Root_Project);
+      -- Prepare the spec using the root project
+      Spec.Prepare_From_Project
+        (Spec_Project => Tree.Root_Project,
+         Spec_Valid   => Spec_Valid);
 
-      Spec.Get_Boot_Memory_From_Project (Tree.Root_Project);
+      if Spec_Valid then
 
-      Spec.Get_Interrupt_Vector_From_Project (Tree.Root_Project);
+         if Input.Print_Tags then
+            Spec.Dump_Translate_Table;
+         end if;
 
-      Spec.Get_CPU_From_Project (Tree.Root_Project);
+         if Input.Linker_File /= null
+           and then
+            Input.Linker_File.all /= ""
+         then
+            Spec.Dump_Linker_Script (Input.Linker_File.all);
+         end if;
 
-      Spec.Get_User_Tags_From_Project (Tree.Root_Project);
+         if Input.Startup_Code_File /= null
+           and then
+            Input.Startup_Code_File.all /= ""
+         then
+            Spec.Dump_Startup_Code (Input.Startup_Code_File.all);
+         end if;
 
-      if not Spec.Valid then
-         --  At least one error message should have been displayed.
-         return;
+         Spec.Display;
+
       end if;
-
-      if Input.Print_Tags then
-         Spec.Dump_Translate_Table;
-      end if;
-
-      if Input.Linker_File /= null
-        and then
-         Input.Linker_File.all /= ""
-      then
-         Spec.Dump_Linker_Script (Input.Linker_File.all);
-      end if;
-
-      if Input.Startup_Code_File /= null
-        and then
-         Input.Startup_Code_File.all /= ""
-      then
-         Spec.Dump_Startup_Code (Input.Startup_Code_File.all);
-      end if;
-
-      Spec.Display;
    end;
 exception
    --  We catch the exception from the command line when

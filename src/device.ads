@@ -30,35 +30,12 @@ package Device is
 
    type Spec is tagged private;
 
-   procedure Get_Memory_List_From_Project
+   procedure Prepare_From_Project
       (Self         : in out Spec;
-       Spec_Project : Project_Type);
-
-   procedure Get_Interrupt_Vector_From_Project
-      (Self         : in out Spec;
-       Spec_Project : Project_Type);
-
-   procedure Get_Boot_Memory_From_Project
-      (Self         : in out Spec;
-       Spec_Project : Project_Type);
-
-   procedure Get_CPU_From_Project
-      (Self         : in out Spec;
-       Spec_Project : Project_Type);
-
-   procedure Get_User_Tags_From_Project
-      (Self         : in out Spec;
-       Spec_Project : Project_Type);
+       Spec_Project : Project_Type;
+       Spec_Valid   :    out Boolean);
 
    procedure Display (Self : in out Spec);
-
-   --  Checks that the specs are valid, IE:
-   --    Validate Inputs (address, sizes, etc...)
-   --    No overlapping memory_regions
-   --    Boot memory exists
-   --    No overlapping interrupts in the interrupt vector.
-   --  return False if there is an error
-   function  Valid (Self : in out Spec) return Boolean;
 
    procedure Dump_Linker_Script (Self : in out Spec; Filename : String);
 

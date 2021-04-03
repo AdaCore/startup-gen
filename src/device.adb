@@ -413,6 +413,30 @@ package body Device is
       return Self.Valid_Input and then Self.Valid_Memory_Regions;
    end Valid;
 
+   --------------------------
+   -- Prepare_From_Project --
+   --------------------------
+
+   procedure Prepare_From_Project
+      (Self         : in out Spec;
+       Spec_Project : Project_Type;
+       Spec_Valid   :    out Boolean) is
+   begin
+
+      Self.Get_Memory_List_From_Project (Spec_Project);
+
+      Self.Get_Boot_Memory_From_Project (Spec_Project);
+
+      Self.Get_Interrupt_Vector_From_Project (Spec_Project);
+
+      Self.Get_CPU_From_Project (Spec_Project);
+
+      Self.Get_User_Tags_From_Project (Spec_Project);
+
+      Spec_Valid := Self.Valid;
+
+   end Prepare_From_Project;
+
    -------------
    -- Display --
    -------------
