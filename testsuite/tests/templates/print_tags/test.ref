@@ -1,4 +1,5 @@
 --- Template tags ---
+FLOAT_HANDLING => SOFT
 BOOT_FROM_ROM => TRUE
 BOOT_MEM => ("rom2")
 BOOT_MEM_ADDR => ("0x20")

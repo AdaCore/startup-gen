@@ -25,6 +25,16 @@ _start:
 .option pop
         la sp, __stack_end
 
+@@--
+@@--  This part of the template implements an infinite loop for all core with
+@@--  an ID different than the one provided.
+@@--
+@@IF@@ @_EXIST:only_allow_hart_id_@
+        li   t0, @_only_allow_hart_id_@ /* hart id that will be allowed to run */
+        csrr t1, mhartid
+1:      bne t0, t1, 1b
+@@END_IF@@
+
 @@IF@@ @_BOOT_FROM_ROM_@
         /* Load data section */
         .type _startup_copy_data,@function
@@ -90,6 +100,12 @@ _startup_clear_@_RAM_REGION_@_bss:
         .size _startup_clear_@_RAM_REGION_@_bss, . - _startup_clear_@_RAM_REGION_@_bss
 
 @@END_TABLE@@
+
+@@IF@@ @_VAR1_@ = "HARD"
+        /* Enable the FPU */
+        li      t0, 0x00006000
+        csrs    mstatus, t0
+@@END_IF@@
 
         /* Call static constructors */
 .weak __libc_init_array
