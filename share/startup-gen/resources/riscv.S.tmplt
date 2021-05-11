@@ -101,7 +101,7 @@ _startup_clear_@_RAM_REGION_@_bss:
 
 @@END_TABLE@@
 
-@@IF@@ @_VAR1_@ = "HARD"
+@@IF@@ @_FLOAT_HANDLING_@ = "HARD"
         /* Enable the FPU */
         li      t0, 0x00006000
         csrs    mstatus, t0
