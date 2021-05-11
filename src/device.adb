@@ -630,7 +630,9 @@ package body Device is
       end loop;
 
       return User_Assocs &
-             (Templates_Parser.Assoc ("BOOT_FROM_ROM", Self.Boot_From_ROM),
+              (Templates_Parser.Assoc ("FLOAT_HANDLING",
+                                       Self.CPU.Float_Handling'Img),
+              Templates_Parser.Assoc ("BOOT_FROM_ROM", Self.Boot_From_ROM),
               Templates_Parser.Assoc ("BOOT_MEM", Boot_Mem),
               Templates_Parser.Assoc ("BOOT_MEM_ADDR", Boot_Mem_Addr),
               Templates_Parser.Assoc ("BOOT_MEM_SIZE", Boot_Mem_Size),
