@@ -1,4 +1,4 @@
-Testing CPU: Cortex-M0 run-time: zfp-cortex-m0
+Testing CPU: Cortex-M0 run-time: light-cortex-m0
 With boot_mem = flash stack_mem = ram:
 Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'
@@ -24,7 +24,7 @@ Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ccm'
 Symbol '__stack_end' defined in 'ccm'
 
-Testing CPU: Cortex-M0+ run-time: zfp-cortex-m0p
+Testing CPU: Cortex-M0+ run-time: light-cortex-m0p
 With boot_mem = flash stack_mem = ram:
 Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'
@@ -50,7 +50,7 @@ Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ccm'
 Symbol '__stack_end' defined in 'ccm'
 
-Testing CPU: Cortex-M1 run-time: zfp-cortex-m1
+Testing CPU: Cortex-M1 run-time: light-cortex-m1
 With boot_mem = flash stack_mem = ram:
 Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'
@@ -76,7 +76,7 @@ Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ccm'
 Symbol '__stack_end' defined in 'ccm'
 
-Testing CPU: Cortex-M3 run-time: zfp-cortex-m3
+Testing CPU: Cortex-M3 run-time: light-cortex-m3
 With boot_mem = flash stack_mem = ram:
 Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'
@@ -102,7 +102,7 @@ Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ccm'
 Symbol '__stack_end' defined in 'ccm'
 
-Testing CPU: Cortex-M4 run-time: zfp-cortex-m4
+Testing CPU: Cortex-M4 run-time: light-cortex-m4
 With boot_mem = flash stack_mem = ram:
 Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'
@@ -128,7 +128,7 @@ Symbol '__heap_end' defined in 'ram'
 Symbol '__stack_start' defined in 'ccm'
 Symbol '__stack_end' defined in 'ccm'
 
-Testing CPU: Cortex-M4F run-time: zfp-cortex-m4f
+Testing CPU: Cortex-M4F run-time: light-cortex-m4f
 With boot_mem = flash stack_mem = ram:
 Symbol 'Reset_Handler' defined in 'flash'
 Symbol '__heap_start' defined in 'ram'

@@ -1,6 +1,6 @@
 project Spec is
 
-   for Runtime ("Ada") use "zfp-cortex-m0";
+   for Runtime ("Ada") use "light-cortex-m0";
 
    package Device_Configuration is
       for CPU_Name use "cortex-m4f";
