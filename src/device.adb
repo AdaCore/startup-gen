@@ -126,15 +126,15 @@ package body Device is
          return "";
       end if;
 
-      if Match ("^light-cortex-m(0(\+|plus|p)?|1)$") then
+      if Match ("^(light|zfp)-cortex-m(0(\+|plus|p)?|1)$") then
          return "armv6-m";
-      elsif Match ("^light-cortex-m3$") then
+      elsif Match ("^(light|zfp)-cortex-m3$") then
          return "armv7-m";
-      elsif Match ("^light-cortex-m(4|7)(f|d|fd)?$") then
+      elsif Match ("^(light|zfp)-cortex-m(4|7)(f|d|fd)?$") then
          return "armv7e-m";
-      elsif Match ("^light-cortex-m(23|33)(f|d|fd)?$") then
+      elsif Match ("^(light|zfp)-cortex-m(23|33)(f|d|fd)?$") then
          return "armv8-m";
-      elsif Match ("^light-(riscv|risc-v|rv)(32|64|128)?[imafdgqlcjtpvnh]*$") then
+      elsif Match ("^(light|zfp)-(riscv|risc-v|rv)(32|64|128)?[imafdgqlcjtpvnh]*$") then
          return "risc-v";
       end if;
 
