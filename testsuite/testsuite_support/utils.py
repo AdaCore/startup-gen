@@ -157,7 +157,7 @@ def generate_gpr(filename, runtime, target, CPU, memmap, boot_mem, stack_mem):
             f.write('      for Size ("%s")     use "%d";\n' %
                     (memmap[mem].name, memmap[mem].size))
 
-        if runtime.startswith('zfp-rv'):
+        if runtime.startswith('light-rv'):
             f.write('      for User_Tag ("qemu_sifive_test_exit") use "True";')
         f.write('   end Device_Configuration;\n')
         f.write('end Prj;\n')

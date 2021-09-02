@@ -6,12 +6,12 @@ memmap.add('flash', 'ROM', 0x20400000, 512 * 1024 * 1024)
 memmap.add('ram', 'RAM', 0x80000000, 16 * 1024)
 memmap.add('ccm', 'RAM', 0x90000000, 16 * 1024)
 
-for runtime in ['zfp-rv32i',
-                'zfp-rv32iac',
-                'zfp-rv32im',
-                'zfp-rv32imac',
-                'zfp-rv32imafc',
-                'zfp-rv32imafdc']:
+for runtime in ['light-rv32i',
+                'light-rv32iac',
+                'light-rv32im',
+                'light-rv32imac',
+                'light-rv32imafc',
+                'light-rv32imafdc']:
     print("Testing run-time: %s" % runtime)
     for boot_mem in ['flash', 'ram']:
         for stack_mem in ['ram', 'ccm']:
