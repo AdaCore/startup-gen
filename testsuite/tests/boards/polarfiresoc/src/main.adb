@@ -8,8 +8,8 @@ with Test;
 
 procedure Main is
 
-   Test_Device : Unsigned_32
-     with Address => System'To_Address (16#100000#);
+   Mss_Reset_Cr : Unsigned_32
+     with Address => System'To_Address (16#20002018#);
 
 begin
    Put_Line ("=== Test for RISC-V64 PolarFire SOC ===");
@@ -21,6 +21,6 @@ begin
 
    Test.Check_Memories;
 
-   Test_Device := 16#5555#;
+   Mss_Reset_Cr := 16#DEAD#;
 
 end Main;
