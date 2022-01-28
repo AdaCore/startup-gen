@@ -139,10 +139,34 @@ _startup_clear_@_RAM_REGION_@_bss:
 
 @@--
 @@--  This part of the template implements an optional exit function for
-@@--  the polarfire SOC and HiFive1 emulation on QEMU. This is included for
-@@--  testing purposes.
+@@--  the HiFive1 emulation on QEMU. This is included for testing purposes.
 @@--
 @@IF@@ @_EXIST:qemu_sifive_test_exit_@
+
+        .globl __gnat_exit
+        .type __gnat_exit,@function
+        .globl _abort
+        .type abort,@function
+abort:
+__gnat_exit:
+        /* Write to the SiFive Test device on QEMU to shutdown */
+        li t0, 0x5555
+        li t1, 0x100000
+        sw t0, (t1)
+
+        j __gnat_exit
+
+        /* Weak alias _exit to __gnat_exit */
+        .weak      _exit
+        .set _exit,__gnat_exit
+@@END_IF@@
+
+@@--
+@@--  This part of the template implements an optional exit function for
+@@--  the polarfire SOC emulation on QEMU. This is included for testing
+@@--  purposes.
+@@--
+@@IF@@ @_EXIST:qemu_polarfire_test_exit_@
 
         .globl __gnat_exit
         .type __gnat_exit,@function
