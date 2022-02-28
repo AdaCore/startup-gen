@@ -1,0 +1,3 @@
+before_main()
+main()
+after_main()

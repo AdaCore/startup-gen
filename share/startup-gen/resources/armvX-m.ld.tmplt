@@ -109,6 +109,8 @@ SECTIONS
     KEEP (*(.vectors))
     *(.text .text.* .gnu.linkonce.t*)
     *(.gnu.warning)
+    KEEP (*(.init))
+    KEEP (*(.fini))
   } > @_BOOT_MEM_@
 
   .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } > @_BOOT_MEM_@

@@ -1,0 +1,3 @@
+driver: python
+control:
+- [SKIP, "env.target.triplet != 'arm-eabi'", "Test for arm-eabi"]
