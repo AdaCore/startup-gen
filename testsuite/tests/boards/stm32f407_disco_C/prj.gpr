@@ -1,0 +1,52 @@
+project Prj is
+
+   for Target use "arm-eabi";
+   for Languages use ("C", "Asm_CPP");
+   for Source_Dirs use ("src");
+   for Object_Dir use "obj";
+   for Main use ("main.c");
+   for Create_Missing_Dirs use "True";
+
+   Common_Required_Switches := ("-mlittle-endian", "-mthumb", "-mfloat-abi=hard", "-mcpu=cortex-m4", "-mfpu=fpv4-sp-d16");
+   package Compiler is
+
+      for Leading_Required_Switches ("C") use Common_Required_Switches;
+      for Leading_Required_Switches ("Asm_CPP") use Common_Required_Switches;
+   end Compiler;
+
+   package Linker is
+      for Required_Switches use  Common_Required_Switches;
+      for Switches ("C") use ("-T", "src/linker.ld",
+                              "-u__libc_init_array",
+                              "-u__libc_fini_array",
+                              "-Wl,--gc-sections");
+   end Linker;
+
+   package Device_Configuration is
+      for CPU_Name use "cortex-m4f";
+      for Float_Handling use "hard";
+      for Number_Of_Interrupts use "82";
+
+      --  MEMORY MAP
+      for Memories use ("flash", "sram", "ccm");
+      for Boot_Memory use "flash";
+      for Main_Stack_Memory use "sram";
+
+      --  flash
+      for Mem_Kind ("flash") use "ROM";
+      for Address ("flash")  use "16#08000000#";
+      for Size ("flash")     use "1024K";
+
+      --  sram
+      for Mem_Kind ("sram") use "RAM";
+      for Address ("sram")  use "16#20000000#";
+      for Size ("sram")     use "128K";
+
+      --  ccm
+      for Mem_Kind ("ccm") use "RAM";
+      for Address ("ccm")  use "16#10000000#";
+      for Size ("ccm")     use "64K";
+
+   end Device_Configuration;
+
+end Prj;
