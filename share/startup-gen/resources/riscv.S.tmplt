@@ -30,9 +30,11 @@ _start:
 @@--  an ID different than the one provided.
 @@--
 @@IF@@ @_EXIST:only_allow_hart_id_@
+#ifdef __riscv_zicsr /* if CSR instructions are available */
         li   t0, @_only_allow_hart_id_@ /* hart id that will be allowed to run */
         csrr t1, mhartid
 1:      bne t0, t1, 1b
+#endif
 @@END_IF@@
 
 @@IF@@ @_BOOT_FROM_ROM_@
@@ -102,9 +104,11 @@ _startup_clear_@_RAM_REGION_@_bss:
 @@END_TABLE@@
 
 @@IF@@ @_FLOAT_HANDLING_@ = "HARD"
+#ifdef __riscv_zicsr /* if CSR instructions are available */
         /* Enable the FPU */
         li      t0, 0x00006000
         csrs    mstatus, t0
+#endif
 @@END_IF@@
 
         /* Call static constructors */
