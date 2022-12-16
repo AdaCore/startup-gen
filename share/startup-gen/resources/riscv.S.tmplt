@@ -104,7 +104,9 @@ _startup_clear_@_RAM_REGION_@_bss:
 @@END_TABLE@@
 
 @@IF@@ @_FLOAT_HANDLING_@ = "HARD"
-#ifdef __riscv_zicsr /* if CSR instructions are available */
+#ifndef __riscv_f
+#error "floating-point instruction-set extension not enabled"
+#else
         /* Enable the FPU */
         li      t0, 0x00006000
         csrs    mstatus, t0
