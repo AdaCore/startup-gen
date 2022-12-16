@@ -23,7 +23,7 @@ project Prj is
 
    package Device_Configuration is
 
-      for Float_Handling use "hard";
+      for Float_Handling use "soft";
 
       --  MEMORY MAP
       for Memories use ("flash", "ram");
