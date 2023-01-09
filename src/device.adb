@@ -501,14 +501,16 @@ package body Device is
    is
       use type Tmplt.Vector_Tag;
       use type Tmplt.Translate_Table;
+      function "+" (Str : String) return Unbounded_String
+                    renames To_Unbounded_String;
 
-      Boot_Mem      : Tmplt.Tag;
-      Boot_Mem_Addr : Tmplt.Tag;
-      Boot_Mem_Size : Tmplt.Tag;
+      Boot_Mem      : Unbounded_String;
+      Boot_Mem_Addr : Unbounded_String;
+      Boot_Mem_Size : Unbounded_String;
 
-      Main_RAM      : Tmplt.Tag;
-      Main_RAM_Addr : Tmplt.Tag;
-      Main_RAM_Size : Tmplt.Tag;
+      Main_RAM      : Unbounded_String;
+      Main_RAM_Addr : Unbounded_String;
+      Main_RAM_Size : Unbounded_String;
 
       RAM_Regions : Tmplt.Vector_Tag;
       RAM_Addr    : Tmplt.Vector_Tag;
@@ -518,9 +520,9 @@ package body Device is
       ROM_Addr    : Tmplt.Vector_Tag;
       ROM_Size    : Tmplt.Vector_Tag;
 
-      Stack_Size : constant Tmplt.Tag :=
+      Stack_Size : constant Unbounded_String :=
         +To_C_Hexadecimal (Convert (Self.Main_Stack_Size));
-      Stack_Region : Tmplt.Tag;
+      Stack_Region : Unbounded_String;
 
       Interrupt_Names : Tmplt.Vector_Tag;
       Interrupt_Ids   : Tmplt.Vector_Tag;
@@ -536,7 +538,7 @@ package body Device is
       --  First search for the boot memory
       for Mem of Self.Memory loop
          if Mem.Name = Self.Boot_Memory then
-            Boot_Mem      := +Mem.Name;
+            Boot_Mem      := Mem.Name;
 
             Addr := Convert (Mem.Address);
             Size := Convert (Mem.Size);
@@ -545,7 +547,7 @@ package body Device is
 
             if Mem.Kind = RAM then
                --  Set the main RAM as the boot memory
-               Main_RAM      := +Mem.Name;
+               Main_RAM      := Mem.Name;
                Main_RAM_Addr := +To_C_Hexadecimal (Addr);
                Main_RAM_Size := +To_C_Hexadecimal (Size);
             end if;
@@ -562,12 +564,12 @@ package body Device is
             case Mem.Kind is
 
             when RAM =>
-               if Templates_Parser.Size (Main_RAM) = 0 then
+               if Main_RAM = "" then
                   --  If not already set, use the RAM in the list as Main RAM
-                  Main_RAM      := +Mem.Name;
+                  Main_RAM      := Mem.Name;
                   Main_RAM_Addr := +To_C_Hexadecimal (Addr);
                   Main_RAM_Size := +To_C_Hexadecimal (Size);
-               elsif Mem.Name /= Tmplt.Item (Main_RAM, 1) then
+               elsif Mem.Name /= Main_RAM then
                   RAM_Regions := RAM_Regions & Mem.Name;
                   RAM_Addr    := RAM_Addr & To_C_Hexadecimal (Addr);
                   RAM_Size    := RAM_Size & To_C_Hexadecimal (Size);
@@ -598,7 +600,7 @@ package body Device is
                          To_String (Self.Main_Stack_Memory) & "'");
          end if;
 
-         Stack_Region := +Self.Main_Stack_Memory;
+         Stack_Region := Self.Main_Stack_Memory;
       else
          Stack_Region := Main_RAM;
       end if;
