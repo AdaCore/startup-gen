@@ -9,10 +9,8 @@ memmap.add('ccm', 'RAM', 0x90000000, 16 * 1024)
 for runtime in ['light-rv64imac',
                 'light-rv64imafc',
                 'light-rv64imafdc']:
-    print("Testing run-time: %s" % runtime)
     for boot_mem in ['flash', 'ram']:
         for stack_mem in ['ram', 'ccm']:
-            print("With boot_mem = %s stack_mem = %s:" % (boot_mem, stack_mem))
             bin = make_simple_project('test_simple_project_%s_%s_%s' % (boot_mem,
                                                                         stack_mem,
                                                                         runtime),
@@ -23,9 +21,12 @@ for runtime in ['light-rv64imac',
                                       boot_mem,
                                       stack_mem)
             syms = nm_symbols(bin)
-            check_symbols(syms, memmap, [('_start', boot_mem),
-                                         ('__global_pointer$', 'ram'),
-                                         ('__stack_start', stack_mem),
-                                         ('__stack_end', stack_mem),
-                                         ('__heap_start', 'ram'),
-                                         ('__heap_end', 'ram')])
+            if check_symbols(syms, memmap, [('_start', boot_mem),
+                                            ('__global_pointer$', 'ram'),
+                                            ('__stack_start', stack_mem),
+                                            ('__stack_end', stack_mem),
+                                            ('__heap_start', 'ram'),
+                                            ('__heap_end', 'ram')]):
+                print("With boot_mem = %s stack_mem = %s:" % (boot_mem, stack_mem))
+                print("Testing run-time: %s" % runtime)
+                print("------")

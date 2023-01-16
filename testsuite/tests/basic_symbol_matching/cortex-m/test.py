@@ -12,10 +12,8 @@ for CPU, runtime in [('Cortex-M0', 'light-cortex-m0'),
                      ('Cortex-M3', 'light-cortex-m3'),
                      ('Cortex-M4', 'light-cortex-m4'),
                      ('Cortex-M4F', 'light-cortex-m4f')]:
-    print("Testing CPU: %s run-time: %s" % (CPU, runtime))
     for boot_mem in ['flash', 'ram']:
         for stack_mem in ['ram', 'ccm']:
-            print("With boot_mem = %s stack_mem = %s:" % (boot_mem, stack_mem))
             bin = make_simple_project('test_simple_project_%s_%s_%s' % (boot_mem,
                                                                         stack_mem,
                                                                         runtime),
@@ -26,8 +24,11 @@ for CPU, runtime in [('Cortex-M0', 'light-cortex-m0'),
                                       boot_mem,
                                       stack_mem)
             syms = nm_symbols(bin)
-            check_symbols(syms, memmap, [('Reset_Handler', boot_mem),
-                                         ('__heap_start', 'ram'),
-                                         ('__heap_end', 'ram'),
-                                         ('__stack_start', stack_mem),
-                                         ('__stack_end', stack_mem)])
+            if check_symbols(syms, memmap, [('Reset_Handler', boot_mem),
+                                            ('__heap_start', 'ram'),
+                                            ('__heap_end', 'ram'),
+                                            ('__stack_start', stack_mem),
+                                            ('__stack_end', stack_mem)]):
+                print("With boot_mem = %s stack_mem = %s:" % (boot_mem, stack_mem))
+                print("CPU: %s run-time: %s" % (CPU, runtime))
+                print("------")
