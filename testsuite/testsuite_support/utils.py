@@ -92,16 +92,19 @@ class SymbolList:
 def check_symbols(symbols, memmap, to_check):
     """
     With a list of tuple (symbol_name, memory_name), check that the symbol are
-    define in the expected memory region
+    define in the expected memory region.
+
+    Return True on error
     """
+    err = False
     for name, mem in to_check:
         if not symbols.defined(name):
             print("Symbol '%s' is not defined" % name)
+            err = True
         elif not symbols.in_memmap(name, memmap, mem):
             print("Symbol '%s' is not defined in '%s'" % (name, mem))
-        else:
-            print("Symbol '%s' defined in '%s'" % (name, mem))
-
+            err = True
+    return err
 
 def nm_symbols(binary):
     """Return a SymbolList from a binary file"""
