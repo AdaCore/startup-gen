@@ -1,0 +1,27 @@
+name = "startup_gen"
+description = "Start files generator"
+version = "23.0.0"
+
+authors = [
+    "Anthony Leonardo Gracio <leonardo@adacore.com>",
+    "Corentin Gay <gay@adacore.com>",
+    "Fabien Chouteau <chouteau@adacore.com>",
+    "Frederic Konrad <konrad@adacore.com>",
+    "JK <jklmnn@users.noreply.github.com>",
+    "Joel Brobecker <brobecker@adacore.com>",
+    "Martyn Pike <pike@adacore.com>",
+    "pat-rogers <rogers@adacore.com>",
+]
+maintainers = ["Fabien Chouteau <chouteau@adacore.com>"]
+maintainers-logins = ["JeremyGrosser"]
+licenses = "GPL-3.0-or-later"
+website = ""
+tags = []
+
+executables = ["startup-gen"]
+
+[[depends-on]]
+gnatcoll = "^23.0.0"
+
+[[depends-on]]
+templates_parser = "^23.0.0"
