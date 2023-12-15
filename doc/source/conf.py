@@ -80,8 +80,20 @@ html_theme = 'sphinx_rtd_theme'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#
-# html_theme_options = {}
+# https://sphinx-rtd-theme.readthedocs.io/en/stable/configuring.html#theme-options
+html_theme_options = {
+    # Use AdaCore blue in the Table Of Content
+    "style_nav_header_background": "#12284c",
+}
+
+# The name of an image file (relative to this directory) to place at the top
+# of the sidebar.
+html_logo = "adacore-logo-white.png"
+
+# The name of an image file (within the static path) to use as favicon of the
+# docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
+# pixels large.
+html_favicon = "favicon.ico"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
