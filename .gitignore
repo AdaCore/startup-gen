@@ -9,3 +9,5 @@ testsuite/**/linker.ld
 doc/_build
 startup-gen
 database
+/alire/
+/config/
