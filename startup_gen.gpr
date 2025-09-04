@@ -1,6 +1,6 @@
 with "templates_parser.gpr";
-with "gnatcoll";
-with "gpr";
+with "gnatcoll_core";
+with "gnatcoll_projects";
 
 project Startup_Gen is
 
