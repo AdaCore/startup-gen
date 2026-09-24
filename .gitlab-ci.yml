@@ -1,0 +1,2 @@
+include:
+  - component: $CI_SERVER_FQDN/it/gitlab-templates/gitleaks@~latest
